@@ -31,10 +31,10 @@ void Element_t::Reinitializebuffers(float ZIndex)
 {
     double Vertices[] =
     {
-        Dimensions.x1, Dimensions.y1, ZIndex, 1.0, 1.0,
-        Dimensions.x1, Dimensions.y0, ZIndex, 1.0, 0.0,
-        Dimensions.x0, Dimensions.y0, ZIndex, 0.0, 0.0,
-        Dimensions.x0, Dimensions.y1, ZIndex, 0.0, 1.0
+        Margin.x1, Margin.y1, ZIndex, 1.0, 1.0,
+        Margin.x1, Margin.y0, ZIndex, 1.0, 0.0,
+        Margin.x0, Margin.y0, ZIndex, 0.0, 0.0,
+        Margin.x0, Margin.y1, ZIndex, 0.0, 1.0
     };
     uint32_t Indices[] =
     {
@@ -75,14 +75,22 @@ void Element_t::Addchild(Element_t &&Child)
 }
 void Element_t::Renderelement()
 {
+    // Fetch the parent viewport.
+    GLint Viewport[4]{};
+    glGetIntegerv(GL_VIEWPORT, Viewport);
+
     // Draw our item.
     glBindVertexArray(VAO);
     if (Shader) Shader->Select();
     glBindTexture(GL_TEXTURE_2D, Texture);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-    // Render all the children we have.
+    // Render all the children in our viewport.
+    glViewport(Dimensions.x0, Dimensions.y0, Dimensions.x1, Dimensions.y1);
     for (auto &Item : Children) Item.Renderelement();
+
+    // Restore the viewport.
+    glViewport(Viewport[0], Viewport[1], Viewport[2], Viewport[3]);
 }
 
 // Default sourcecode for the shading.

@@ -46,9 +46,11 @@ int main(int argc, char **argv)
     glfwSetMouseButtonCallback(Handle, Application::onMouseclick);
 
     // Create a default element and bind.
-    Element_t Mainwindow("Root-element");
-    Mainwindow.Margin = { -1, -1, 1, 1 };
+    Element_t Mainwindow("The root application element");
+    Mainwindow.Calculatedimentions({ 0, 0, 1280, 720 });
     glfwSetWindowUserPointer(Handle, &Mainwindow);
+    Mainwindow.Margin = { -1, -1, 1, 1 };
+    Mainwindow.Reinitializebuffers(0);
 
     // Trigger the initialization event.
     Application::onInit(Handle);

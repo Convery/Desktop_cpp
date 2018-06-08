@@ -3,7 +3,7 @@
     Started: 08-06-2018
     License: MIT
 
-    Creates the initial scene to render.
+    Process userinput.
 */
 
 #include "../Stdinclude.hpp"
