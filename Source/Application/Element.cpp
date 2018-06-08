@@ -50,10 +50,10 @@ void Element_t::onModifiedstate()
     glEnableVertexAttribArray(1);
 
     // Calculate the dimensions.
-    double Width = Boundingbox.x1 - Boundingbox.x0;
+    double Width = (Boundingbox.x1 - Boundingbox.x0) / 2;
     Dimensions.x0 = std::round(Boundingbox.x0 + Width * Margin.x0);
     Dimensions.x1 = std::round(Boundingbox.x1 - Width * Margin.x1);
-    double Height = Boundingbox.y1 - Boundingbox.y0;
+    double Height = (Boundingbox.y1 - Boundingbox.y0) / 2;
     Dimensions.y0 = std::round(Boundingbox.y0 + Height * Margin.y0);
     Dimensions.y1 = std::round(Boundingbox.y1 - Height * Margin.y1);
 

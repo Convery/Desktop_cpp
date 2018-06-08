@@ -45,8 +45,8 @@ Element_t *Components::Createdevconsole()
                     if (State->Expanded)
                     {
                         // Use the non-expanded view.
-                        State->Inputarea->Margin = { 0, 1.7, 0, 0.2 };
-                        State->Logarea->Margin = { 0, 1.8, 0, 0 };
+                        State->Inputarea->Margin = { 0, 1.9, 0, 0 };
+                        State->Logarea->Margin = { 1, 1, 1, 1 };
                         State->Expanded = false;
                     }
 
@@ -77,8 +77,8 @@ Element_t *Components::Createdevconsole()
             {
                 // Use the non-expanded view.
                 std::memset(State->Input, 0, 1024);
-                State->Inputarea->Margin = { 0, 1.7, 0, 0.2 };
-                State->Logarea->Margin = { 0, 1.8, 0, 0 };
+                State->Inputarea->Margin = { 0, 1.9, 0, 0 };
+                State->Logarea->Margin = { 1, 1, 1, 1 };
                 State->Expanded = false;
                 State->Visible = true;
                 State->Cursorpos = {};
