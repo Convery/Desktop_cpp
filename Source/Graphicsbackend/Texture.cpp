@@ -1,6 +1,6 @@
 /*
     Initial author: Convery (tcn@ayria.se)
-    Started: 07-06-2018
+    Started: 08-06-2018
     License: MIT
 
     Provides simple texture-management.
