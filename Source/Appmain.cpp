@@ -46,11 +46,11 @@ int main(int argc, char **argv)
     glfwSetMouseButtonCallback(Handle, Application::onMouseclick);
 
     // Create a default element and bind.
-    Element_t Mainwindow("The root application element");
-    Mainwindow.Calculatedimentions({ 0, 0, 1280, 720 });
+    Element_t Mainwindow("ui");
+    Mainwindow.Texture = Graphics::Createtexture({});
     glfwSetWindowUserPointer(Handle, &Mainwindow);
-    Mainwindow.Margin = { -1, -1, 1, 1 };
-    Mainwindow.Reinitializebuffers(0);
+    Mainwindow.Boundingbox = { 0, 0, 1280, 720 };
+    Mainwindow.onModifiedstate();
 
     // Trigger the initialization event.
     Application::onInit(Handle);

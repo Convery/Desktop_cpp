@@ -32,35 +32,27 @@ class Element_t
 {
     // Internal rendering-properties.
     uint32_t VBO, VAO, EBO;
-    Texture_t Texture{};
     Shader_t *Shader;
-    float ZIndex{};
 
     public:
     std::vector<Element_t *> Children;
     std::string Identifier;
+    Texture_t Texture{};
     void *Userpointer{};
+    Rect Boundingbox{};
     Rect Dimensions{};
+    float ZIndex{};
     Rect Margin{};
 
     // Callbacks on events, returns if they handled it.
     std::function<bool(Element_t *Caller, uint32_t Key, uint32_t Modifier, bool Released)> onKeyboard;
     std::function<bool(Element_t *Caller, uint32_t Key, bool Released)> onClick;
     std::function<bool(Element_t *Caller, bool Released)> onFocus;
-    std::function<void(Element_t *Caller)> onInit;
 
-    // Create the element state.
-    void Reinitializebuffers(float ZIndex = -12345.0f);
-    void Calculatedimentions(Rect Boundingbox);
-    Texture_t Settexture(Texture_t Newtexture);
-    void Addchild(Element_t &&Child);
-    void Addchild(Element_t *Child);
-    void Resize(Rect Dimensions);
-    void Renderelement();
+    // Manage the state.
+    void onModifiedstate();
+    void onRender();
 
-    // Initialize with default values.
-    Element_t(std::string Identity, Shader_t *Shader, Texture_t Texture);
-    Element_t(std::string Identity, Shader_t *Shader);
+    // Always require an identity.
     Element_t(std::string Identity);
-    Element_t();
 };

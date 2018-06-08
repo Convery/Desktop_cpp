@@ -32,6 +32,7 @@ namespace Application
             Build the scene here.
         */
         auto Root = (Element_t *)glfwGetWindowUserPointer(Handle);
-        Root->Addchild(Components::Createdevconsole());
+        Root->Children.push_back(Components::Createdevconsole());
+        Root->onModifiedstate();
     }
 }

@@ -13,5 +13,5 @@
 namespace Components
 {
     // Simple developer-console.
-    Element_t Createdevconsole();
+    Element_t *Createdevconsole();
 }

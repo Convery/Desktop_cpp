@@ -16,20 +16,19 @@ struct Consolestate
     uint32_t Cursorpos;
 
     // Access to the blocks.
-    Element_t *Tooltiparea;
     Element_t *Inputarea;
     Element_t *Logarea;
 };
 
-Element_t Components::Createdevconsole()
+Element_t *Components::Createdevconsole()
 {
     auto State = new Consolestate();
 
-    Element_t Boundingbox("ui.devcon");
-    Boundingbox.Userpointer = State;
-    Boundingbox.Margin = { -1, -1, 1, 1 };
-    Boundingbox.Settexture(Graphics::Createtexture({ 0, 1, 0, 1 }));
-    Boundingbox.onKeyboard = [](Element_t *Caller, uint32_t Key, uint32_t Modifier, bool Released) -> bool
+    auto Boundingbox = new Element_t("ui.devcon");
+    Boundingbox->Texture = Graphics::Createtexture({0, 1, 1, 0 });
+    Boundingbox->Userpointer = State;
+    Boundingbox->ZIndex = -0.1f;
+    Boundingbox->onKeyboard = [](Element_t *Caller, uint32_t Key, uint32_t Modifier, bool Released) -> bool
     {
         if (Key == GLFW_KEY_GRAVE_ACCENT && !Released)
         {
@@ -46,9 +45,8 @@ Element_t Components::Createdevconsole()
                     if (State->Expanded)
                     {
                         // Use the non-expanded view.
-                        State->Tooltiparea->Resize({ -1, 0.9, 1, 0.7 });
-                        State->Inputarea->Resize({ -1, 1, 1, 0.9 });
-                        State->Logarea->Resize({ -1, -1, -1, -1 });
+                        State->Inputarea->Margin = { 0, 1.7, 0, 0.2 };
+                        State->Logarea->Margin = { 0, 1.8, 0, 0 };
                         State->Expanded = false;
                     }
 
@@ -56,9 +54,8 @@ Element_t Components::Createdevconsole()
                     else
                     {
                         // Use the expanded view.
-                        State->Tooltiparea->Resize({ -1, -0.1, 1, -0.3 });
-                        State->Inputarea->Resize({ -1, 0, 1, -0.1 });
-                        State->Logarea->Resize({ -1, 1, 1, 0 });
+                        State->Inputarea->Margin = { 0, 0.8, 0, 1.1 };
+                        State->Logarea->Margin = { 0, 0.9, 0, 0 };
                         State->Expanded = true;
                     }
                 }
@@ -67,10 +64,8 @@ Element_t Components::Createdevconsole()
                 else
                 {
                     // Reset the console-state.
-                    std::memset(State->Input, 0, 1024);
-                    State->Tooltiparea->Resize({});
-                    State->Inputarea->Resize({});
-                    State->Logarea->Resize({});
+                    State->Inputarea->Margin = { 1, 1, 1, 1};
+                    State->Logarea->Margin = { 1, 1, 1, 1};
                     State->Cursorpos = {};
                     State->Expanded = {};
                     State->Visible = {};
@@ -82,53 +77,47 @@ Element_t Components::Createdevconsole()
             {
                 // Use the non-expanded view.
                 std::memset(State->Input, 0, 1024);
-                State->Tooltiparea->Resize({ -1, 0.9, 1, 0.7 });
-                State->Inputarea->Resize({ -1, 1, 1, 0.9 });
-                State->Logarea->Resize({});
+                State->Inputarea->Margin = { 0, 1.7, 0, 0.2 };
+                State->Logarea->Margin = { 0, 1.8, 0, 0 };
                 State->Expanded = false;
                 State->Visible = true;
                 State->Cursorpos = {};
             }
 
-            // HACK(Convery): Trigger a global recalc.
-            Application::onResize(nullptr, NULL, NULL);
+            State->Inputarea->onModifiedstate();
+            State->Logarea->onModifiedstate();
+
             return true;
         }
 
         return false;
     };
-    Boundingbox.onInit = [](Element_t *Caller) -> void
+
+    // Input area.
+    auto Input = new Element_t("ui.devcon.input");
+    Input->Texture = Graphics::Createtexture({ 0, 1, 0, 0.2f });
+    Input->Margin = {1, 1, 1, 1};
+    Input->Userpointer = State;
+    State->Inputarea = Input;
+    Input->ZIndex = -0.2f;
+    Input->onClick = [](Element_t *Caller, uint32_t Key, bool Released) -> bool
     {
-        auto State = (Consolestate *)Caller->Userpointer;
-
-        // Hide the console.
-        Caller->Resize({});
-
-        // Input area.
-        auto Input = new Element_t("ui.devcon.input");
-        Input->Settexture(Graphics::Createtexture({ 0, 1, 0, 0.2f }));
-        Input->Userpointer = State;
-        State->Inputarea = Input;
-
-        // Tooltip area.
-        auto Tool = new Element_t("ui.devcon.tooltip");
-        Tool->Settexture(Graphics::Createtexture({ 1, 0, 0, 0.2f }));
-        Tool->Userpointer = State;
-        State->Tooltiparea = Tool;
-
-        // Log area.
-        auto Log = new Element_t("ui.devcon.log");
-        Log->Settexture(Graphics::Createtexture({ 0, 0, 1, 0.2f }));
-        Log->Userpointer = State;
-        State->Logarea = Log;
-
-        // Merge into the wrapper.
-        Caller->Addchild(Tool);
-        Caller->Addchild(Input);
-        Caller->Addchild(Log);
+        if (Released) Caller->Texture = Graphics::Createtexture({ 0, 1, 1, 0.2f });
+        else Caller->Texture = Graphics::Createtexture({ 1, 1, 0, 0.2f });
+        return true;
     };
 
+    // Log area.
+    auto Log = new Element_t("ui.devcon.log");
+    Log->Texture = Graphics::Createtexture({ 0, 0, 1, 0.2f });
+    Log->Margin = { 1, 1, 1, 1};
+    Log->Userpointer = State;
+    State->Logarea = Log;
+    Log->ZIndex = -0.2f;
 
+    // Add the items to the box.
+    Boundingbox->Children.push_back(Input);
+    Boundingbox->Children.push_back(Log);
 
     return Boundingbox;
 }
