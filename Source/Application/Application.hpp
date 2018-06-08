@@ -33,6 +33,7 @@ class Element_t
     uint32_t VBO, VAO, EBO;
     Texture_t Texture;
     Shader_t *Shader;
+    float ZIndex;
 
     public:
     std::vector<Element_t> Children;
@@ -48,9 +49,10 @@ class Element_t
 
     // Create the element state.
     void Calculatedimentions(Rect Boundingbox);
-    void Reinitializebuffers(Rect Boundingbox);
     Texture_t Settexture(Texture_t Newtexture);
-    void Renderelement(Rect Boundingbox);
+    void Reinitializebuffers(float ZIndex);
+    void Addchild(Element_t &&Child);
+    void Renderelement();
 
     // Initialize with default values.
     Element_t(std::string Identity, Shader_t *Shader, Texture_t Texture);
