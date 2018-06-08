@@ -18,8 +18,11 @@ void Element_t::Calculatedimentions(Rect Boundingbox)
 
     Dimensions.x1 = std::round(XA + XB);
     Dimensions.y1 = std::round(YA + YB);
-    Dimensions.x0 = std::round(XA);
-    Dimensions.y0 = std::round(YA);
+    Dimensions.x0 = std::round(std::min(XA, XB));
+    Dimensions.y0 = std::round(std::min(YA, YB));
+
+    // Update our children.
+    for (auto &Item : Children) Item.Calculatedimentions(Dimensions);
 }
 Texture_t Element_t::Settexture(Texture_t Newtexture)
 {
