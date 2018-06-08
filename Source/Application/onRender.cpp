@@ -17,6 +17,7 @@ namespace Application
     {
         gWidth = Width;
         gHeight = Height;
+        ((Element_t *)glfwGetWindowUserPointer(Handle))->Calculatedimentions({ 0, 0, (double)Width, (double)Height });
     }
     void onDraw(struct GLFWwindow *Handle)
     {
