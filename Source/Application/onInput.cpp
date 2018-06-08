@@ -17,7 +17,7 @@ namespace Application
     {
         std::function<bool(Element_t *)> Lambda = [&](Element_t *Element) -> bool
         {
-            for (auto &Item : Element->Children) if (Lambda(&Item)) return true;
+            for (auto &Item : Element->Children) if (Lambda(Item)) return true;
             return Element->onKeyboard(Element, Key, Modifier, Action == GLFW_RELEASE);
         };
         Lambda((Element_t *)glfwGetWindowUserPointer(Handle));
@@ -32,7 +32,7 @@ namespace Application
         {
             if (Element->Dimensions.y0 <= Y && Element->Dimensions.y1 >= Y && Element->Dimensions.x0 <= X && Element->Dimensions.x1 >= X)
             {
-                for (auto &Item : Element->Children) if (Lambda(&Item)) return true;
+                for (auto &Item : Element->Children) if (Lambda(Item)) return true;
                 return Element->onClick(Element, Button == GLFW_MOUSE_BUTTON_LEFT, Action == GLFW_PRESS);
             }
 

@@ -56,5 +56,6 @@
 #include <GLFW/glfw3.h>
 
 // Our components.
+#include "Menucomponents/Components.hpp"
 #include "Graphicsbackend/Graphics.hpp"
 #include "Application/Application.hpp"

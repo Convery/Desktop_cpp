@@ -10,6 +10,7 @@
 
 namespace Application
 {
+    GLFWwindow *Fallbackhandle;
     int gWidth{}, gHeight{};
 
     // Pushed events.
@@ -23,9 +24,14 @@ namespace Application
         glfwGetFramebufferSize(Handle, &gWidth, &gHeight);
         glViewport(0, 0, gWidth, gHeight);
 
+        // Set a fallback handle to the window.
+        Fallbackhandle = Handle;
+
         /*
             TODO(Convery):
             Build the scene here.
         */
+        auto Root = (Element_t *)glfwGetWindowUserPointer(Handle);
+        Root->Addchild(Components::Createdevconsole());
     }
 }

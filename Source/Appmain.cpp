@@ -33,7 +33,7 @@ int main(int argc, char **argv)
     glewExperimental = GL_TRUE;
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 
     // Set the callbacks for the application.

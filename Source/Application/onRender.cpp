@@ -11,13 +11,21 @@
 namespace Application
 {
     extern int gWidth, gHeight;
+    extern GLFWwindow *Fallbackhandle;
 
     // Graphics.
     void onResize(struct GLFWwindow *Handle, int Width, int Height)
     {
-        gWidth = Width;
-        gHeight = Height;
-        ((Element_t *)glfwGetWindowUserPointer(Handle))->Calculatedimentions({ 0, 0, (double)Width, (double)Height });
+        if (Handle)
+        {
+            gWidth = Width;
+            gHeight = Height;
+            ((Element_t *)glfwGetWindowUserPointer(Handle))->Calculatedimentions({ 0, 0, (double)gWidth, (double)gHeight });
+        }
+        else
+        {
+            ((Element_t *)glfwGetWindowUserPointer(Fallbackhandle))->Calculatedimentions({ 0, 0, (double)gWidth, (double)gHeight });
+        }
     }
     void onDraw(struct GLFWwindow *Handle)
     {

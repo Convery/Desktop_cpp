@@ -22,7 +22,7 @@ void Element_t::Calculatedimentions(Rect Boundingbox)
     Dimensions.y0 = std::round(std::min(YA, YB));
 
     // Update our children.
-    for (auto &Item : Children) Item.Calculatedimentions(Dimensions);
+    for (auto &Item : Children) Item->Calculatedimentions(Dimensions);
 }
 Texture_t Element_t::Settexture(Texture_t Newtexture)
 {
@@ -75,9 +75,20 @@ void Element_t::Reinitializebuffers(float ZIndex)
 }
 void Element_t::Addchild(Element_t &&Child)
 {
-    Child.Calculatedimentions(Dimensions);
-    Child.Reinitializebuffers(ZIndex + 0.1f);
+    Addchild(new Element_t(Child));
+}
+void Element_t::Addchild(Element_t *Child)
+{
+    Child->Calculatedimentions(Dimensions);
+    Child->Reinitializebuffers(ZIndex - 0.01f);
+    if (Child->onInit) Child->onInit(Child);
+
     Children.push_back(Child);
+}
+void Element_t::Resize(Rect Dimensions)
+{
+    this->Margin = Dimensions;
+    this->Reinitializebuffers();
 }
 void Element_t::Renderelement()
 {
@@ -93,7 +104,7 @@ void Element_t::Renderelement()
 
     // Render all the children in our viewport.
     glViewport(Dimensions.x0, Dimensions.y0, Dimensions.x1, Dimensions.y1);
-    for (auto &Item : Children) Item.Renderelement();
+    for (auto &Item : Children) Item->Renderelement();
 
     // Restore the viewport.
     glViewport(Viewport[0], Viewport[1], Viewport[2], Viewport[3]);

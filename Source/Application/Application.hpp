@@ -37,7 +37,7 @@ class Element_t
     float ZIndex{};
 
     public:
-    std::vector<Element_t> Children;
+    std::vector<Element_t *> Children;
     std::string Identifier;
     void *Userpointer{};
     Rect Dimensions{};
@@ -47,12 +47,15 @@ class Element_t
     std::function<bool(Element_t *Caller, uint32_t Key, uint32_t Modifier, bool Released)> onKeyboard;
     std::function<bool(Element_t *Caller, uint32_t Key, bool Released)> onClick;
     std::function<bool(Element_t *Caller, bool Released)> onFocus;
+    std::function<void(Element_t *Caller)> onInit;
 
     // Create the element state.
     void Reinitializebuffers(float ZIndex = -12345.0f);
     void Calculatedimentions(Rect Boundingbox);
     Texture_t Settexture(Texture_t Newtexture);
     void Addchild(Element_t &&Child);
+    void Addchild(Element_t *Child);
+    void Resize(Rect Dimensions);
     void Renderelement();
 
     // Initialize with default values.
