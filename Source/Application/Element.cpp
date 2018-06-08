@@ -18,7 +18,7 @@ void Element_t::Calculatedimentions(Rect Boundingbox)
 
     Dimensions.x1 = std::round(XA + XB);
     Dimensions.y1 = std::round(YA + YB);
-    Dimensions.x0 = std::round(XB);
+    Dimensions.x0 = std::round(XA);
     Dimensions.y0 = std::round(YA);
 }
 Texture_t Element_t::Settexture(Texture_t Newtexture)
@@ -29,6 +29,9 @@ Texture_t Element_t::Settexture(Texture_t Newtexture)
 }
 void Element_t::Reinitializebuffers(float ZIndex)
 {
+    if (ZIndex == -12345.0f) ZIndex = this->ZIndex;
+    else this->ZIndex = ZIndex;
+
     double Vertices[] =
     {
         Margin.x1, Margin.y1, ZIndex, 1.0, 1.0,

@@ -8,6 +8,7 @@
 
 #pragma once
 #include "../Stdinclude.hpp"
+#include "../Graphicsbackend/Graphics.hpp"
 
 namespace Application
 {
@@ -31,16 +32,16 @@ class Element_t
 {
     // Internal rendering-properties.
     uint32_t VBO, VAO, EBO;
-    Texture_t Texture;
+    Texture_t Texture{};
     Shader_t *Shader;
-    float ZIndex;
+    float ZIndex{};
 
     public:
     std::vector<Element_t> Children;
     std::string Identifier;
-    void *Userpointer;
-    Rect Dimensions;
-    Rect Margin;
+    void *Userpointer{};
+    Rect Dimensions{};
+    Rect Margin{};
 
     // Callbacks on events, returns if they handled it.
     std::function<bool(Element_t *Caller, uint32_t Key, uint32_t Modifier, bool Released)> onKeyboard;
@@ -48,9 +49,9 @@ class Element_t
     std::function<bool(Element_t *Caller, bool Released)> onFocus;
 
     // Create the element state.
+    void Reinitializebuffers(float ZIndex = -12345.0f);
     void Calculatedimentions(Rect Boundingbox);
     Texture_t Settexture(Texture_t Newtexture);
-    void Reinitializebuffers(float ZIndex);
     void Addchild(Element_t &&Child);
     void Renderelement();
 
