@@ -11,6 +11,7 @@
 namespace Application
 {
     extern int gWidth, gHeight;
+    std::vector<std::function<void(int Entered)>> Subscribers{};
 
     // User-input.
     void onKeyclick(struct GLFWwindow *Handle, int Key, int Scancode, int Action, int Modifier)
@@ -56,5 +57,12 @@ namespace Application
     void onMouseenter(struct GLFWwindow *Handle, int Entered)
     {
         if(!Entered) onMousemove(Handle, -40000, -40000);
+        for (const auto &Item : Subscribers) Item(Entered);
+    }
+
+    // Subscribe to the events.
+    void addMouseendersub(std::function<void(int Entered)> Callback)
+    {
+        Subscribers.push_back(Callback);
     }
 }
