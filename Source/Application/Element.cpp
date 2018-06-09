@@ -50,12 +50,26 @@ void Element_t::onModifiedstate()
     glEnableVertexAttribArray(1);
 
     // Calculate the dimensions.
-    double Width = (Boundingbox.x1 - Boundingbox.x0) / 2;
+    double Width = std::abs(Boundingbox.x1 - Boundingbox.x0) / 2;
     Dimensions.x0 = std::round(Boundingbox.x0 + Width * Margin.x0);
     Dimensions.x1 = std::round(Boundingbox.x1 - Width * Margin.x1);
-    double Height = (Boundingbox.y1 - Boundingbox.y0) / 2;
+    double Height = std::abs(Boundingbox.y1 - Boundingbox.y0) / 2;
     Dimensions.y0 = std::round(Boundingbox.y0 + Height * Margin.y0);
     Dimensions.y1 = std::round(Boundingbox.y1 - Height * Margin.y1);
+
+    // Swap the values if needed.
+    if (Dimensions.x0 > Dimensions.x1)
+    {
+        double Temp{ Dimensions.x0 };
+        Dimensions.x0 = Dimensions.x0;
+        Dimensions.x1 = Temp;
+    }
+    if (Dimensions.y0 > Dimensions.y1)
+    {
+        double Temp{ Dimensions.y0 };
+        Dimensions.y0 = Dimensions.y0;
+        Dimensions.y1 = Temp;
+    }
 
     // Update all children.
     for (auto &Item : Children)
@@ -67,7 +81,7 @@ void Element_t::onModifiedstate()
 void Element_t::onRender()
 {
     // Set the viewport to our box.
-    glViewport(Boundingbox.x0, Boundingbox.y0, Boundingbox.x1, Boundingbox.y1);
+    glViewport(Boundingbox.x0, Boundingbox.y0, Boundingbox.x1 - Boundingbox.x0, Boundingbox.y1 - Boundingbox.y0);
 
     // Draw our item.
     glBindVertexArray(VAO);
