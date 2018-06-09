@@ -23,6 +23,9 @@ Element_t *Components::Createtoolbar()
     Boundingbox->Margin = { 0.0, 1.9, 0.0, 0.0 };
     Boundingbox->onClick = [](Element_t *Caller, uint32_t Key, bool Released) -> bool
     {
+        Shouldmove = !Released;
+
+        // Toggle fullscreen
         static double Lastclick = 0;
         if (!Released)
         {
@@ -30,29 +33,31 @@ Element_t *Components::Createtoolbar()
             {
                 if(glfwGetWindowAttrib(Handle, GLFW_MAXIMIZED)) glfwRestoreWindow(Handle);
                 else glfwMaximizeWindow(Handle);
+                return true;
             }
             Lastclick = glfwGetTime();
         }
 
-        Shouldmove = !Released;
-        if (!Released) glfwGetCursorPos(Handle, &StartX, &StartY);
-
-        return false;
-    };
-    Boundingbox->onFocus = [](Element_t *Caller, bool Released) -> bool
-    {
-        if (!Released && Shouldmove)
+        // Start dragging the window.
+        if (!Released)
         {
-            double X, Y;
-            glfwGetCursorPos(Handle, &X, &Y);
+            glfwGetCursorPos(Handle, &StartX, &StartY);
+            auto Lambda = [&]()
+            {
+                while (Shouldmove)
+                {
+                    double X, Y;
+                    glfwGetCursorPos(Handle, &X, &Y);
 
-            int PosX, PosY;
-            glfwGetWindowPos(Handle, &PosX, &PosY);
+                    int PosX, PosY;
+                    glfwGetWindowPos(Handle, &PosX, &PosY);
 
-            PosX += (X - StartX) * 1.5; PosY += (Y - StartY) * 1.5;
-            glfwSetWindowPos(Handle, PosX, PosY);
+                    PosX += X - StartX; PosY += Y - StartY;
+                    glfwSetWindowPos(Handle, PosX, PosY);
+                }
+            };
+            std::thread(Lambda).detach();
         }
-        else Shouldmove = false;
 
         return false;
     };
