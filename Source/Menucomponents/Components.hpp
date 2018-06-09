@@ -14,4 +14,7 @@ namespace Components
 {
     // Simple developer-console.
     Element_t *Createdevconsole();
+
+    // A fancy toolbar.
+    Element_t *Createtoolbar();
 }

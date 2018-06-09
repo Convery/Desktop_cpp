@@ -33,6 +33,7 @@ namespace Application
         */
         auto Root = (Element_t *)glfwGetWindowUserPointer(Handle);
         Root->Children.push_back(Components::Createdevconsole());
+        Root->Children.push_back(Components::Createtoolbar());
         Root->onModifiedstate();
     }
 }

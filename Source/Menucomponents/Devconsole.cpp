@@ -45,7 +45,7 @@ Element_t *Components::Createdevconsole()
                     if (State->Expanded)
                     {
                         // Use the non-expanded view.
-                        State->Inputarea->Margin = { 0, 1.9, 0, 0 };
+                        State->Inputarea->Margin = { 0.01, 1.78, 0.01, 0.12 };
                         State->Logarea->Margin = { 1, 1, 1, 1 };
                         State->Expanded = false;
                     }
@@ -54,8 +54,8 @@ Element_t *Components::Createdevconsole()
                     else
                     {
                         // Use the expanded view.
-                        State->Inputarea->Margin = { 0, 0.8, 0, 1.1 };
-                        State->Logarea->Margin = { 0, 0.9, 0, 0 };
+                        State->Inputarea->Margin = { 0.01, 0.9, 0.01, 1.0 };
+                        State->Logarea->Margin = { 0.01, 0.99, 0.01, 0.11 };
                         State->Expanded = true;
                     }
                 }
@@ -77,7 +77,7 @@ Element_t *Components::Createdevconsole()
             {
                 // Use the non-expanded view.
                 std::memset(State->Input, 0, 1024);
-                State->Inputarea->Margin = { 0, 1.9, 0, 0 };
+                State->Inputarea->Margin = { 0.01, 1.78, 0.01, 0.12 };
                 State->Logarea->Margin = { 1, 1, 1, 1 };
                 State->Expanded = false;
                 State->Visible = true;
@@ -95,7 +95,7 @@ Element_t *Components::Createdevconsole()
 
     // Input area.
     auto Input = new Element_t("ui.devcon.input");
-    Input->Texture = Graphics::Createtexture({ 0, 1, 0, 0.2f });
+    Input->Texture = Graphics::Createtexture({ 38, 35, 38, 1 });
     Input->Margin = {1, 1, 1, 1};
     Input->Userpointer = State;
     State->Inputarea = Input;
@@ -109,7 +109,7 @@ Element_t *Components::Createdevconsole()
 
     // Log area.
     auto Log = new Element_t("ui.devcon.log");
-    Log->Texture = Graphics::Createtexture({ 0, 0, 1, 0.2f });
+    Log->Texture = Graphics::Createtexture({ 38, 35, 38, 0.8f });
     Log->Margin = { 1, 1, 1, 1};
     Log->Userpointer = State;
     State->Logarea = Log;
