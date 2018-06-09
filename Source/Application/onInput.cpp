@@ -41,5 +41,16 @@ namespace Application
         Lambda((Element_t *)glfwGetWindowUserPointer(Handle));
     }
     void onMousescroll(struct GLFWwindow *Handle, double OffsetX, double OffsetY) {}
-    void onMousemove(struct GLFWwindow *Handle, double PosX, double PosY) {}
+    void onMousemove(struct GLFWwindow *Handle, double PosX, double PosY)
+    {
+        PosY = gHeight - PosY;
+
+        std::function<bool(Element_t *)> Lambda = [&](Element_t *Element) -> bool
+        {
+            for (auto &Item : Element->Children) Lambda(Item);
+            bool Focused = (Element->Dimensions.y0 <= PosY && Element->Dimensions.y1 >= PosY && Element->Dimensions.x0 <= PosX && Element->Dimensions.x1 >= PosX);
+            return Element->onFocus(Element, !Focused);
+        };
+        Lambda((Element_t *)glfwGetWindowUserPointer(Handle));
+    }
 }
