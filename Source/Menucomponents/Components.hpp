@@ -17,4 +17,7 @@ namespace Components
 
     // A fancy toolbar.
     Element_t *Createtoolbar();
+
+    // Borders for resizing.
+    Element_t *Creeateborders();
 }

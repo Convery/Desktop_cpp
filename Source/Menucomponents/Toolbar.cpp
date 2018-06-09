@@ -9,16 +9,18 @@
 #include "../Stdinclude.hpp"
 
 // A fancy toolbar.
-bool Shouldmove;
-GLFWwindow *Handle;
-double StartX, StartY;
-static bool Armed = false;
+static bool Armed{};
+static bool Shouldmove{};
+static GLFWwindow *Handle;
+static double StartX, StartY;
 Element_t *Components::Createtoolbar()
 {
     Handle = (GLFWwindow *)Application::Windowhandle();
 
+    Application::addMouseendersub([&](int Entered) { if (!Entered) Shouldmove = false; });
+
     auto Boundingbox = new Element_t("ui.toolbar");
-    Boundingbox->Texture = Graphics::Createtexture({50, 58, 69, 1 });
+    Boundingbox->Texture = Graphics::Createtexture({ 50, 58, 69, 1 });
     Boundingbox->ZIndex = -0.2f;
     Boundingbox->Margin = { 0.0, 1.9, 0.0, 0.0 };
     Boundingbox->onClick = [](Element_t *Caller, uint32_t Key, bool Released) -> bool
