@@ -13,6 +13,12 @@ namespace Application
     GLFWwindow *Fallbackhandle;
     int gWidth{}, gHeight{};
 
+    // Helpers.
+    void *Windowhandle()
+    {
+        return Fallbackhandle;
+    }
+
     // Pushed events.
     void onError(int Error, const char *Description)
     {

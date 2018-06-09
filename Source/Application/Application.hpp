@@ -17,6 +17,7 @@ namespace Application
     void onMouseclick(struct GLFWwindow *Handle, int Button, int Action, int Modifiers);
     void onMousescroll(struct GLFWwindow *Handle, double OffsetX, double OffsetY);
     void onMousemove(struct GLFWwindow *Handle, double PosX, double PosY);
+    void onMouseenter(struct GLFWwindow *Handle, int Entered);
 
     // Graphics.
     void onResize(struct GLFWwindow *Handle, int Width, int Height);
@@ -25,6 +26,9 @@ namespace Application
     // Pushed events.
     void onError(int Error, const char *Description);
     void onInit(struct GLFWwindow *Handle);
+
+    // Helpers.
+    void *Windowhandle();
 }
 
 // Representation of a virtual element.

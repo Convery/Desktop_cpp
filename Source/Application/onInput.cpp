@@ -33,7 +33,7 @@ namespace Application
             if (Element->Dimensions.y0 <= Y && Element->Dimensions.y1 >= Y && Element->Dimensions.x0 <= X && Element->Dimensions.x1 >= X)
             {
                 for (auto &Item : Element->Children) if (Lambda(Item)) return true;
-                return Element->onClick(Element, Button == GLFW_MOUSE_BUTTON_LEFT, Action == GLFW_PRESS);
+                return Element->onClick(Element, Button == GLFW_MOUSE_BUTTON_LEFT, Action == GLFW_RELEASE);
             }
 
             return false;
@@ -52,5 +52,9 @@ namespace Application
             return Element->onFocus(Element, !Focused);
         };
         Lambda((Element_t *)glfwGetWindowUserPointer(Handle));
+    }
+    void onMouseenter(struct GLFWwindow *Handle, int Entered)
+    {
+        if(!Entered) onMousemove(Handle, -40000, -40000);
     }
 }
