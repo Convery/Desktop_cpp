@@ -26,6 +26,9 @@ Texture_t Graphics::Createtexture(RGBA Color)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+    if (Color.r > 1) Color.r /= 256.0f;
+    if (Color.g > 1) Color.g /= 256.0f;
+    if (Color.b > 1) Color.b /= 256.0f;
     float Pixels[] = { Color.r, Color.g, Color.b, Color.a };
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_FLOAT, Pixels);
 
