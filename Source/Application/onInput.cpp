@@ -51,8 +51,8 @@ namespace Application
             {
                 if (Item->State.Active)
                 {
-                    Item->State.Active = 0;
                     Item->onActive(Item, true);
+                    Item->State.Active = 0;
                 }
             }
         }
@@ -67,7 +67,7 @@ namespace Application
         Globalstate.MouseX = PosX;
         Globalstate.MouseY = PosY;
 
-        for (const auto &Item : Subscriptions::Mouseclicklisteners)
+        for (const auto &Item : Subscriptions::Mousemovelisteners)
         {
             bool Focused = Item->Dimensions.y0 <= PosY && Item->Dimensions.y1 >= PosY && Item->Dimensions.x0 <= PosX && Item->Dimensions.x1 >= PosX;
             Item->onFocus(Item, !Focused);
@@ -82,8 +82,8 @@ namespace Application
             {
                 if (Item->State.Focused)
                 {
-                    Item->State.Focused = 0;
                     Item->onFocus(Item, true);
+                    Item->State.Focused = 0;
                 }
             }
         }
