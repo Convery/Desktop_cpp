@@ -71,7 +71,7 @@ Element_t *Components::Creeateborders()
                     int SizeX, SizeY;
                     glfwGetWindowSize(Handle, &SizeX, &SizeY);
 
-                    SizeY = std::clamp(int(SizeY + Y - StartY), 270, 1440);
+                    SizeY = std::clamp(int(SizeY + Y - StartY), 540, 4320);
                     SizeX = SizeY * 1.78;
                     glfwSetWindowSize(Handle, SizeX, SizeY);
                     StartX = X; StartY = Y;
@@ -124,7 +124,7 @@ Element_t *Components::Creeateborders()
                     int SizeX, SizeY;
                     glfwGetWindowSize(Handle, &SizeX, &SizeY);
 
-                    SizeX = std::clamp(int(SizeX + X - StartX), 480, 3440);
+                    SizeX = std::clamp(int(SizeX + X - StartX), 960, 7680);
                     SizeY = SizeX / 1.78;
                     glfwSetWindowSize(Handle, SizeX, SizeY);
                     StartX = X; StartY = Y;
