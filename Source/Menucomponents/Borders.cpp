@@ -10,60 +10,53 @@
 
 #include "../Stdinclude.hpp"
 
-GLFWcursor *IBeam;
-GLFWcursor *Arrow;
-GLFWcursor *HResize;
-GLFWcursor *VResize;
-static GLFWwindow *Handle;
-static bool Shouldresize{};
-static double StartX, StartY;
-Element_t *Components::Creeateborders()
+Element_t *Components::Createborders()
 {
-    Handle = (GLFWwindow *)Application::Windowhandle();
-    IBeam = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR);
-    Arrow = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
-    HResize = glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR);
-    VResize = glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR);
+    static auto VResize = glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR);
+    static auto HResize = glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR);
+    static auto Arrow = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
+    static auto IBeam = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR);
+    static auto State{ Application::getState() };
+    static double StartX, StartY;
+    static bool Shouldresize{};
 
-    Application::addMouseentersub([&](int Entered) { if (!Entered) Shouldresize = false; });
+    // Stop resizing if the mouse exits the clientarea.
+    Application::Subscriptions::addMouseenter([&](int Entered) { if (!Entered) Shouldresize = false; });
 
     auto Boundingbox = new Element_t("ui.border");
     Boundingbox->Texture = Graphics::Createtexture({});
-    Boundingbox->onClick = [](Element_t *Caller, uint32_t Key, bool Released) -> bool
+    Boundingbox->onActive = [&](Element_t *Caller, bool Released) -> void
     {
         if (Released) Shouldresize = false;
-        return false;
     };
+    Application::Subscriptions::addMouseclick(Boundingbox);
 
     auto Borderbottom = new Element_t("ui.border.bottom");
-    Borderbottom->Texture = Graphics::Createtexture({});
-    Borderbottom->Margin = { 0.0, 0.0, 0.0, 1.985 };
     Borderbottom->ZIndex = -0.15f;
-    Borderbottom->onFocus = [](Element_t *Caller, bool Released) -> bool
+    Borderbottom->Margin = { 0.0, 0.0, 0.0, 1.985 };
+    Borderbottom->Texture = Graphics::Createtexture({});
+    Borderbottom->onFocus = [&](Element_t *Caller, bool Released) -> void
     {
         static bool Active = false;
 
-        if (!Released)
+        if (Released && Active)
         {
-            glfwSetCursor(Handle, VResize);
-            Active = true;
-            return true;
-        }
-
-        if (Active)
-        {
-            glfwSetCursor(Handle, Arrow);
+            glfwSetCursor(State->Handle, Arrow);
             Active = false;
         }
 
-        return false;
+        if (!Released)
+        {
+            glfwSetCursor(State->Handle, VResize);
+            Active = true;
+        }
     };
-    Borderbottom->onClick = [](Element_t *Caller, uint32_t Key, bool Released) -> bool
+    Borderbottom->onActive = [&](Element_t *Caller, bool Released) -> void
     {
         if (Released) Shouldresize = false;
         else
         {
-            glfwGetCursorPos(Handle, &StartX, &StartY);
+            glfwGetCursorPos(State->Handle, &StartX, &StartY);
             Shouldresize = true;
 
             auto Lambda = [&]()
@@ -71,52 +64,50 @@ Element_t *Components::Creeateborders()
                 while (Shouldresize)
                 {
                     double X, Y;
-                    glfwGetCursorPos(Handle, &X, &Y);
+                    glfwGetCursorPos(State->Handle, &X, &Y);
 
                     int SizeX, SizeY;
-                    glfwGetWindowSize(Handle, &SizeX, &SizeY);
+                    glfwGetWindowSize(State->Handle, &SizeX, &SizeY);
 
                     SizeY = std::clamp(int(SizeY + Y - StartY), 540, 4320);
                     SizeX = SizeY * 1.78;
-                    glfwSetWindowSize(Handle, SizeX, SizeY);
+                    glfwSetWindowSize(State->Handle, SizeX, SizeY);
                     StartX = X; StartY = Y;
                 }
             };
             std::thread(Lambda).detach();
         }
-
-        return true;
     };
+    Application::Subscriptions::addMouseclick(Borderbottom);
+    Application::Subscriptions::addMousemove(Borderbottom);
+    Boundingbox->Children.push_back(Borderbottom);
 
     auto Borderright = new Element_t("ui.border.right");
-    Borderright->Texture = Graphics::Createtexture({});
-    Borderright->Margin = { 1.995, 0.0, 0.0, 0.0 };
     Borderright->ZIndex = -0.15f;
-    Borderright->onFocus = [](Element_t *Caller, bool Released) -> bool
+    Borderright->Margin = { 1.995, 0.0, 0.0, 0.0 };
+    Borderright->Texture = Graphics::Createtexture({});
+    Borderright->onFocus = [&](Element_t *Caller, bool Released) -> void
     {
         static bool Active = false;
 
-        if (!Released)
+        if (Released && Active)
         {
-            glfwSetCursor(Handle, HResize);
-            Active = true;
-            return true;
-        }
-
-        if (Active)
-        {
-            glfwSetCursor(Handle, Arrow);
+            glfwSetCursor(State->Handle, Arrow);
             Active = false;
         }
 
-        return false;
+        if (!Released)
+        {
+            glfwSetCursor(State->Handle, HResize);
+            Active = true;
+        }
     };
-    Borderright->onClick = [](Element_t *Caller, uint32_t Key, bool Released) -> bool
+    Borderright->onActive = [&](Element_t *Caller, bool Released) -> void
     {
         if (Released) Shouldresize = false;
         else
         {
-            glfwGetCursorPos(Handle, &StartX, &StartY);
+            glfwGetCursorPos(State->Handle, &StartX, &StartY);
             Shouldresize = true;
 
             auto Lambda = [&]()
@@ -124,24 +115,22 @@ Element_t *Components::Creeateborders()
                 while (Shouldresize)
                 {
                     double X, Y;
-                    glfwGetCursorPos(Handle, &X, &Y);
+                    glfwGetCursorPos(State->Handle, &X, &Y);
 
                     int SizeX, SizeY;
-                    glfwGetWindowSize(Handle, &SizeX, &SizeY);
+                    glfwGetWindowSize(State->Handle, &SizeX, &SizeY);
 
                     SizeX = std::clamp(int(SizeX + X - StartX), 960, 7680);
                     SizeY = SizeX / 1.78;
-                    glfwSetWindowSize(Handle, SizeX, SizeY);
+                    glfwSetWindowSize(State->Handle, SizeX, SizeY);
                     StartX = X; StartY = Y;
                 }
             };
             std::thread(Lambda).detach();
         }
-
-        return true;
     };
-
-    Boundingbox->Children.push_back(Borderbottom);
+    Application::Subscriptions::addMouseclick(Borderright);
+    Application::Subscriptions::addMousemove(Borderright);
     Boundingbox->Children.push_back(Borderright);
 
     return Boundingbox;

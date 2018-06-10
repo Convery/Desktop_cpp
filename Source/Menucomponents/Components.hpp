@@ -19,5 +19,5 @@ namespace Components
     Element_t *Createtoolbar();
 
     // Borders for resizing.
-    Element_t *Creeateborders();
+    Element_t *Createborders();
 }

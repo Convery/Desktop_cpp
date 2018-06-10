@@ -28,7 +28,7 @@ namespace Application
         if (0 == std::strcmp(Scenename.data(), "library"))
         {
             Globalstate.Root->Children.push_back(Components::Createtoolbar());
-
+            Globalstate.Root->Children.push_back(Components::Createborders());
         }
 
         // Notify the root-element about the update.
