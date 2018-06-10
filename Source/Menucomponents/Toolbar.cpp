@@ -1111,10 +1111,10 @@ static const unsigned char Iconbitmap[13110] = {
 
 Element_t *Components::Createtoolbar()
 {
-    static bool Shouldmove{};
-    static double StartX, StartY;
-    static int Width, Height, PosX, PosY;
     static const State_t *State{ Application::getState() };
+    static int Width, Height, PosX, PosY;
+    static double StartX, StartY;
+    static bool Shouldmove{};
 
     auto Boundingbox = new Element_t("ui.toolbar");
     Boundingbox->Texture = Graphics::Createtexture({ 50, 58, 69, 1.0f });
