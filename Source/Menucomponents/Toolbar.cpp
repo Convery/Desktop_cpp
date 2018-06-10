@@ -1109,12 +1109,11 @@ static const unsigned char Iconbitmap[13110] = {
 
 #pragma endregion
 
-// A fancy toolbar.
-static bool Shouldmove{};
-static double StartX, StartY;
-static int Width, Height, PosX, PosY;
 Element_t *Components::Createtoolbar()
 {
+    static bool Shouldmove{};
+    static double StartX, StartY;
+    static int Width, Height, PosX, PosY;
     static const State_t *State{ Application::getState() };
 
     auto Boundingbox = new Element_t("ui.toolbar");
