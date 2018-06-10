@@ -29,6 +29,11 @@ Element_t *Components::Creeateborders()
 
     auto Boundingbox = new Element_t("ui.border");
     Boundingbox->Texture = Graphics::Createtexture({});
+    Boundingbox->onClick = [](Element_t *Caller, uint32_t Key, bool Released) -> bool
+    {
+        if (Released) Shouldresize = false;
+        return false;
+    };
 
     auto Borderbottom = new Element_t("ui.border.bottom");
     Borderbottom->Texture = Graphics::Createtexture({});
