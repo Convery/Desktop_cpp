@@ -10,7 +10,9 @@
 
 namespace Bitmap
 {
-    static unsigned long Size(long width, long height)
+    #define BMP_SIZE(w, h) ((h) * ((w) + ((w) * 3) % 4) * 3 + 14 + 40)
+
+    inline unsigned long Size(long width, long height)
     {
         long pad = ((width % 4) * 3) % 4; /* Overflow-safe */
         if (width < 1 || height < 1) {
@@ -24,7 +26,7 @@ namespace Bitmap
         }
     }
 
-    static void Init(void *buf, long width, long height)
+    inline void Init(void *buf, long width, long height)
     {
         long pad;
         unsigned long size;
@@ -129,7 +131,7 @@ namespace Bitmap
         *p = 0x00;
     }
 
-    static void Set(void *buf, long x, long y, unsigned long color)
+    inline void Set(void *buf, long x, long y, unsigned long color)
     {
         unsigned char *p;
         unsigned char *hdr = (unsigned char *)buf;
@@ -153,7 +155,7 @@ namespace Bitmap
         p[2] = color >> 16;
     }
 
-    static unsigned long Get(const void *buf, long x, long y)
+    inline unsigned long Get(const void *buf, long x, long y)
     {
         const unsigned char *p;
         const unsigned char *hdr = (unsigned char *)buf;
@@ -177,7 +179,7 @@ namespace Bitmap
             (unsigned long)p[2] << 16;
     }
 
-    static unsigned long Encode(float r, float g, float b)
+    inline unsigned long Encode(float r, float g, float b)
     {
         unsigned long ur = r * 255.0f + 0.5f;
         unsigned long ug = g * 255.0f + 0.5f;
@@ -185,7 +187,7 @@ namespace Bitmap
         return ub | ug << 8 | ur << 16;
     }
 
-    static void Decode(unsigned long c, float *r, float *g, float *b)
+    inline void Decode(unsigned long c, float *r, float *g, float *b)
     {
         unsigned long ur = c >> 16 & 0xff;
         unsigned long ug = c >> 8 & 0xff;
@@ -193,5 +195,19 @@ namespace Bitmap
         *r = ur / 255.0f;
         *g = ug / 255.0f;
         *b = ub / 255.0f;
+    }
+
+    inline void *Raw(const void *Data)
+    {
+        unsigned char *p;
+        unsigned char *hdr = (unsigned char *)Data;
+        unsigned long width =
+            (unsigned long)hdr[18] << 0 |
+            (unsigned long)hdr[19] << 8 |
+            (unsigned long)hdr[20] << 16 |
+            (unsigned long)hdr[21] << 24;
+        long pad = (width * 3) % 4;
+
+        return hdr + 14 + 40 + 0 * (width + pad) * 3 + 0 * 3;
     }
 }

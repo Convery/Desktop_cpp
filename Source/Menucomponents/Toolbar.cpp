@@ -21,9 +21,9 @@ Element_t *Components::Createtoolbar()
     Application::addMouseentersub([&](int Entered) { if (!Entered) Shouldmove = false; });
 
     auto Boundingbox = new Element_t("ui.toolbar");
-    Boundingbox->Texture = Graphics::Createtexture({ 50, 58, 69, 1 });
     Boundingbox->ZIndex = -0.2f;
     Boundingbox->Margin = { 0.0, 1.9, 0.0, 0.0 };
+    Boundingbox->Texture = Graphics::Createtexture({ 50, 58, 69, 1 });
     Boundingbox->onClick = [](Element_t *Caller, uint32_t Key, bool Released) -> bool
     {
         Shouldmove = !Released;
@@ -85,9 +85,9 @@ Element_t *Components::Createtoolbar()
     };
 
     auto Closebutton = new Element_t("ui.toolbar.close");
-    Closebutton->Texture = Graphics::Createtexture({ 226, 35, 35, 0.8f });
-    Closebutton->Margin = { 1.94, 0.0, 0.0, 0.0 };
     Closebutton->ZIndex = -0.3f;
+    Closebutton->Margin = { 1.94, 0.0, 0.0, 0.0 };
+    Closebutton->Texture = Graphics::Createtexture({ 226, 35, 35, 0.8f });
     Closebutton->onClick = [](Element_t *Caller, uint32_t Key, bool Released) -> bool
     {
         if (Released && Armed) glfwSetWindowShouldClose((GLFWwindow *)Application::Windowhandle(), 1);
@@ -109,9 +109,9 @@ Element_t *Components::Createtoolbar()
     };
 
     auto Maxbutton = new Element_t("ui.toolbar.max");
-    Maxbutton->Texture = Graphics::Createtexture({ 226, 90, 35, 0.8f });
-    Maxbutton->Margin = { 1.88, 0.0, 0.06, 0.0 };
     Maxbutton->ZIndex = -0.3f;
+    Maxbutton->Margin = { 1.88, 0.0, 0.06, 0.0 };
+    Maxbutton->Texture = Graphics::Createtexture({ 226, 90, 35, 0.8f });
     Maxbutton->onClick = [](Element_t *Caller, uint32_t Key, bool Released) -> bool
     {
         if (!Released) Caller->Texture = Graphics::Createtexture({ 205, 197, 186, 0.8f });
@@ -147,9 +147,9 @@ Element_t *Components::Createtoolbar()
     };
 
     auto Minbutton = new Element_t("ui.toolbar.min");
-    Minbutton->Texture = Graphics::Createtexture({ 226, 226, 35, 0.8f });
-    Minbutton->Margin = { 1.82, 0.0, 0.12, 0.0 };
     Minbutton->ZIndex = -0.3f;
+    Minbutton->Margin = { 1.82, 0.0, 0.12, 0.0 };
+    Minbutton->Texture = Graphics::Createtexture({ 226, 226, 35, 0.8f });
     Minbutton->onClick = [](Element_t *Caller, uint32_t Key, bool Released) -> bool
     {
         if (!Released) Caller->Texture = Graphics::Createtexture({ 205, 197, 186, 0.8f });
