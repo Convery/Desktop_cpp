@@ -42,7 +42,7 @@ struct Element_t
 
     // Inlined modifiers.
     void Restore() { onModifiedstate(); }
-    void Hide() { Rect Temp = Margin;  Margin = {}; onModifiedstate(); Margin = Temp; }
+    void Hide() { Rect Temp = Margin;  Margin = {1, 1, 1, 1}; onModifiedstate(); Margin = Temp; }
 
     // Elements require some sort of identifier.
     Element_t(std::string Identifier);

@@ -29,6 +29,7 @@ namespace Application
         {
             Globalstate.Root->Children.push_back(Components::Createtoolbar());
             Globalstate.Root->Children.push_back(Components::Createborders());
+            Globalstate.Root->Children.push_back(Components::Createdevconsole());
         }
 
         // Notify the root-element about the update.
