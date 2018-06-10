@@ -10,59 +10,87 @@
 
 namespace Application
 {
-    extern int gWidth, gHeight;
-    std::vector<std::function<void(int Entered)>> Subscribers{};
+    extern State_t Globalstate;
+
+    // Subscriptions to eventtypes.
+    namespace Subscriptions
+    {
+        std::vector<Element_t *> Keyclicklisteners;
+        std::vector<Element_t *> Mousemovelisteners;
+        std::vector<Element_t *> Mouseclicklisteners;
+        std::vector<Element_t *> Mousescrolllisteners;
+        std::vector<std::function<void(int Entered)>> Mouseenterlisteners;
+
+        void addKeyclick(Element_t *Element) { Keyclicklisteners.push_back(Element); }
+        void addMousemove(Element_t *Element) { Mousemovelisteners.push_back(Element); }
+        void addMouseclick(Element_t *Element) { Mouseclicklisteners.push_back(Element); }
+        void addMousescroll(Element_t *Element) { Mousescrolllisteners.push_back(Element); }
+        void addMouseenter(std::function<void(int Entered)> Callback) { Mouseenterlisteners.push_back(Callback); }
+    }
 
     // User-input.
     void onKeyclick(struct GLFWwindow *Handle, int Key, int Scancode, int Action, int Modifier)
     {
-        std::function<bool(Element_t *)> Lambda = [&](Element_t *Element) -> bool
-        {
-            for (auto &Item : Element->Children) if (Lambda(Item)) return true;
-            return Element->onKeyboard(Element, Key, Modifier, Action == GLFW_RELEASE);
-        };
-        Lambda((Element_t *)glfwGetWindowUserPointer(Handle));
+        for (const auto &Item : Subscriptions::Keyclicklisteners) Item->onKey(Item, Key, Modifier, Action == GLFW_RELEASE);
     }
     void onMouseclick(struct GLFWwindow *Handle, int Button, int Action, int Modifiers)
     {
         double X, Y;
+        static const State_t *State{ Application::getState() };
         glfwGetCursorPos(Handle, &X, &Y);
-        Y = gHeight - Y;
+        Y = State->Height - Y;
 
-        std::function<bool(Element_t *)> Lambda = [&](Element_t *Element) -> bool
+        for (const auto &Item : Subscriptions::Mouseclicklisteners)
         {
-            if (Element->Dimensions.y0 <= Y && Element->Dimensions.y1 >= Y && Element->Dimensions.x0 <= X && Element->Dimensions.x1 >= X)
+            if (Item->Dimensions.y0 <= Y && Item->Dimensions.y1 >= Y && Item->Dimensions.x0 <= X && Item->Dimensions.x1 >= X)
             {
-                for (auto &Item : Element->Children) if (Lambda(Item)) return true;
-                return Element->onClick(Element, Button == GLFW_MOUSE_BUTTON_LEFT, Action == GLFW_RELEASE);
+                Item->onActive(Item, Action == GLFW_RELEASE);
+                Item->State.Active = Action != GLFW_RELEASE;
             }
-
-            return false;
-        };
-        Lambda((Element_t *)glfwGetWindowUserPointer(Handle));
+            else
+            {
+                if (Item->State.Active)
+                {
+                    Item->State.Active = 0;
+                    Item->onActive(Item, true);
+                }
+            }
+        }
     }
-    void onMousescroll(struct GLFWwindow *Handle, double OffsetX, double OffsetY) {}
+    void onMousescroll(struct GLFWwindow *Handle, double OffsetX, double OffsetY)
+    {
+    }
     void onMousemove(struct GLFWwindow *Handle, double PosX, double PosY)
     {
-        PosY = gHeight - PosY;
+        // Flip the Y coordinate.
+        PosY = Globalstate.Height - PosY;
+        Globalstate.MouseX = PosX;
+        Globalstate.MouseY = PosY;
 
-        std::function<bool(Element_t *)> Lambda = [&](Element_t *Element) -> bool
+        for (const auto &Item : Subscriptions::Mouseclicklisteners)
         {
-            for (auto &Item : Element->Children) Lambda(Item);
-            bool Focused = (Element->Dimensions.y0 <= PosY && Element->Dimensions.y1 >= PosY && Element->Dimensions.x0 <= PosX && Element->Dimensions.x1 >= PosX);
-            return Element->onFocus(Element, !Focused);
-        };
-        Lambda((Element_t *)glfwGetWindowUserPointer(Handle));
+            bool Focused = Item->Dimensions.y0 <= PosY && Item->Dimensions.y1 >= PosY && Item->Dimensions.x0 <= PosX && Item->Dimensions.x1 >= PosX;
+            Item->onFocus(Item, !Focused);
+            Item->State.Focused = Focused;
+
+            if (Item->Dimensions.y0 <= PosY && Item->Dimensions.y1 >= PosY && Item->Dimensions.x0 <= PosX && Item->Dimensions.x1 >= PosX)
+            {
+                Item->onFocus(Item, false);
+                Item->State.Focused = 1;
+            }
+            else
+            {
+                if (Item->State.Focused)
+                {
+                    Item->State.Focused = 0;
+                    Item->onFocus(Item, true);
+                }
+            }
+        }
     }
     void onMouseenter(struct GLFWwindow *Handle, int Entered)
     {
         if(!Entered) onMousemove(Handle, -40000, -40000);
-        for (const auto &Item : Subscribers) Item(Entered);
-    }
-
-    // Subscribe to the events.
-    void addMouseentersub(std::function<void(int Entered)> Callback)
-    {
-        Subscribers.push_back(Callback);
+        for (const auto &Item : Subscriptions::Mouseenterlisteners) Item(Entered);
     }
 }

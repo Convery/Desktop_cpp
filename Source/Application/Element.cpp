@@ -8,9 +8,13 @@
 
 #include "../Stdinclude.hpp"
 
-// Manage the state.
+// Do work on the element.
 void Element_t::onModifiedstate()
 {
+    // For fixed positions we invert the vertices.
+    auto Localmargin{ Margin };
+    if (State.Fixedpos) Localmargin = {2, 2, 2, 2};
+
     double Vertices[] =
     {
          1 - Margin.x1,  1 - Margin.y1,  ZIndex, 1.0, 1.0,
@@ -49,26 +53,34 @@ void Element_t::onModifiedstate()
     glVertexAttribPointer(1, 2, GL_DOUBLE, GL_FALSE, 5 * sizeof(double), (void *)(3 * sizeof(double)));
     glEnableVertexAttribArray(1);
 
-    // Calculate the dimensions.
-    double Width = std::abs(Boundingbox.x1 - Boundingbox.x0) / 2;
-    Dimensions.x0 = std::round(Boundingbox.x0 + Width * Margin.x0);
-    Dimensions.x1 = std::round(Boundingbox.x1 - Width * Margin.x1);
-    double Height = std::abs(Boundingbox.y1 - Boundingbox.y0) / 2;
-    Dimensions.y0 = std::round(Boundingbox.y0 + Height * Margin.y0);
-    Dimensions.y1 = std::round(Boundingbox.y1 - Height * Margin.y1);
-
-    // Swap the values if needed.
-    if (Dimensions.x0 > Dimensions.x1)
+    // If we have a fixed position, the box is our dimensions.
+    if (State.Fixedpos)
     {
-        double Temp{ Dimensions.x0 };
-        Dimensions.x0 = Dimensions.x0;
-        Dimensions.x1 = Temp;
+        Dimensions = Boundingbox;
     }
-    if (Dimensions.y0 > Dimensions.y1)
+    else
     {
-        double Temp{ Dimensions.y0 };
-        Dimensions.y0 = Dimensions.y0;
-        Dimensions.y1 = Temp;
+        // Calculate the dimensions.
+        double Width = std::abs(Boundingbox.x1 - Boundingbox.x0) / 2;
+        Dimensions.x0 = std::round(Boundingbox.x0 + Width * Margin.x0);
+        Dimensions.x1 = std::round(Boundingbox.x1 - Width * Margin.x1);
+        double Height = std::abs(Boundingbox.y1 - Boundingbox.y0) / 2;
+        Dimensions.y0 = std::round(Boundingbox.y0 + Height * Margin.y0);
+        Dimensions.y1 = std::round(Boundingbox.y1 - Height * Margin.y1);
+
+        // Swap the values if needed.
+        if (Dimensions.x0 > Dimensions.x1)
+        {
+            double Temp{ Dimensions.x0 };
+            Dimensions.x0 = Dimensions.x0;
+            Dimensions.x1 = Temp;
+        }
+        if (Dimensions.y0 > Dimensions.y1)
+        {
+            double Temp{ Dimensions.y0 };
+            Dimensions.y0 = Dimensions.y0;
+            Dimensions.y1 = Temp;
+        }
     }
 
     // Update all children.
@@ -94,7 +106,7 @@ void Element_t::onRender()
 }
 
 // Always require an identity.
-Element_t::Element_t(std::string Identity) : Identifier(Identity)
+Element_t::Element_t(std::string Identifier) : Identifier(Identifier)
 {
     static const char *Vertexsource =
     R"(
@@ -120,8 +132,4 @@ Element_t::Element_t(std::string Identity) : Identifier(Identity)
         }
     )";
     Shader = Graphics::Createshader(Vertexsource, Fragmentsource);
-
-    onKeyboard = [](Element_t *Caller, uint32_t Key, uint32_t Modifier, bool Released) { (void)Caller; (void)Key; (void)Released; (void)Modifier; return false; };
-    onClick = [](Element_t *Caller, uint32_t Key, bool Released) { (void)Caller; (void)Key; (void)Released; return false; };
-    onFocus = [](Element_t *Caller, bool Released) { (void)Caller; (void)Released; return false; };
 }

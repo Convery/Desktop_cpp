@@ -10,37 +10,40 @@
 
 namespace Application
 {
-    GLFWwindow *Fallbackhandle;
-    int gWidth{}, gHeight{};
+    State_t Globalstate{};
 
-    // Helpers.
-    void *Windowhandle()
+    // Take a pointer to the global state.
+    const State_t *getState()
     {
-        return Fallbackhandle;
+        return &Globalstate;
     }
 
-    // Pushed events.
+    // Rare events.
     void onError(int Error, const char *Description)
     {
         printf("Error: %s\n", Description);
     }
+    void onSceneswitch(std::string_view Scenename)
+    {
+        if (0 == std::strcmp(Scenename.data(), "login"))
+        {
+            /*
+                TODO(Convery):
+                Build the scene here.
+            */
+        }
+
+        // Notify the root-element about the update.
+        Globalstate.Root->onModifiedstate();
+    }
     void onInit(struct GLFWwindow *Handle)
     {
+        // Save the handle and element for easy access.
+        Globalstate.Root = (Element_t *)glfwGetWindowUserPointer(Handle);
+        Globalstate.Handle = Handle;        
+
         // Initialize the global viewport.
-        glfwGetFramebufferSize(Handle, &gWidth, &gHeight);
-        glViewport(0, 0, gWidth, gHeight);
-
-        // Set a fallback handle to the window.
-        Fallbackhandle = Handle;
-
-        /*
-            TODO(Convery):
-            Build the scene here.
-        */
-        auto Root = (Element_t *)glfwGetWindowUserPointer(Handle);
-        Root->Children.push_back(Components::Createdevconsole());
-        Root->Children.push_back(Components::Creeateborders());
-        Root->Children.push_back(Components::Createtoolbar());
-        Root->onModifiedstate();
+        glfwGetFramebufferSize(Handle, &Globalstate.Width, &Globalstate.Height);
+        glViewport(0, 0, Globalstate.Width, Globalstate.Height);
     }
 }
