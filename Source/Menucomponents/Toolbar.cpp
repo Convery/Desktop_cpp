@@ -13,6 +13,7 @@ static bool Armed{};
 static bool Shouldmove{};
 static GLFWwindow *Handle;
 static double StartX, StartY;
+static int Width, Height, PosX, PosY;
 Element_t *Components::Createtoolbar()
 {
     Handle = (GLFWwindow *)Application::Windowhandle();
@@ -33,8 +34,27 @@ Element_t *Components::Createtoolbar()
         {
             if (glfwGetTime() - Lastclick < 0.5)
             {
-                if(glfwGetWindowAttrib(Handle, GLFW_MAXIMIZED)) glfwRestoreWindow(Handle);
-                else glfwMaximizeWindow(Handle);
+                int SizeX, SizeY;
+                glfwGetWindowSize(Handle, &SizeX, &SizeY);
+                const GLFWvidmode *Mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+
+                // Restore.
+                if (SizeX == Mode->width && SizeY == Mode->height)
+                {
+                    glfwSetWindowSize(Handle, Width, Height);
+                    glfwSetWindowPos(Handle, PosX, PosY);
+                }
+
+                // Fullscreen.
+                else
+                {
+                    Width = SizeX; Height = SizeY;
+
+                    glfwSetWindowSize(Handle, Mode->width, Mode->height);
+                    glfwGetWindowPos(Handle, &PosX, &PosY);
+                    glfwSetWindowPos(Handle, 0, 0);
+                }
+
                 return true;
             }
             Lastclick = glfwGetTime();
@@ -97,8 +117,26 @@ Element_t *Components::Createtoolbar()
         if (!Released) Caller->Texture = Graphics::Createtexture({ 205, 197, 186, 0.8f });
         else
         {
-            if(glfwGetWindowAttrib(Handle, GLFW_MAXIMIZED)) glfwRestoreWindow(Handle);
-            else glfwMaximizeWindow(Handle);
+            int SizeX, SizeY;
+            glfwGetWindowSize(Handle, &SizeX, &SizeY);
+            const GLFWvidmode *Mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+
+            // Restore.
+            if (SizeX == Mode->width && SizeY == Mode->height)
+            {
+                glfwSetWindowSize(Handle, Width, Height);
+                glfwSetWindowPos(Handle, PosX, PosY);
+            }
+
+            // Fullscreen.
+            else
+            {
+                Width = SizeX; Height = SizeY;
+
+                glfwSetWindowSize(Handle, Mode->width, Mode->height);
+                glfwGetWindowPos(Handle, &PosX, &PosY);
+                glfwSetWindowPos(Handle, 0, 0);
+            }
         }
         return true;
     };
