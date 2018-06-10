@@ -4556,9 +4556,9 @@ Element_t *Components::Createtoolbar()
 	{
 		if(Released)
 		{
+			Caller->Texture = Graphics::Createtexture({});
 			if(Currentmenu != Menu_t::LIBRARY)
 			{
-				Caller->Texture = Graphics::Createtexture({});
 				for(auto &Item : Caller->Children) Item->Texture = Graphics::Createtexture({});
 			}
 		}
@@ -4588,9 +4588,9 @@ Element_t *Components::Createtoolbar()
 	{
 		if(Released)
 		{
+			Caller->Texture = Graphics::Createtexture({});
 			if(Currentmenu != Menu_t::PLUGINS)
 			{
-				Caller->Texture = Graphics::Createtexture({});
 				for(auto &Item : Caller->Children) Item->Texture = Graphics::Createtexture({});
 			}
 		}
