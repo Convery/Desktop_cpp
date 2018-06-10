@@ -39,7 +39,7 @@ Texture_t Graphics::Createtexture(uint32_t Width, uint32_t Height, const void *D
     static std::unordered_map<uint64_t, Texture_t> Cache;
 
     // Check the cache for pre-created textures.
-    uint64_t Hash = Hash::FNV1a_64(Databuffer, Width * Height * 3);
+    uint64_t Hash = Hash::FNV1a_64(Databuffer, Width * Height * Alpha ? 4 : 3);
     auto Entry = &Cache[Hash];
     if (*Entry) return *Entry;
 
@@ -54,6 +54,29 @@ Texture_t Graphics::Createtexture(uint32_t Width, uint32_t Height, const void *D
 
     if (!Alpha) glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, Width, Height, 0, GL_RGB, GL_UNSIGNED_BYTE, Databuffer);
     else glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Width, Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, Databuffer);
+
+    return *Entry;
+}
+Texture_t Graphics::CreatetextureBGR(uint32_t Width, uint32_t Height, const void *Databuffer, bool Alpha)
+{
+    static std::unordered_map<uint64_t, Texture_t> Cache;
+
+    // Check the cache for pre-created textures.
+    uint64_t Hash = Hash::FNV1a_64(Databuffer, Width * Height * Alpha ? 4 : 3);
+    auto Entry = &Cache[Hash];
+    if (*Entry) return *Entry;
+
+    glGenTextures(1, Entry);
+    glBindTexture(GL_TEXTURE_2D, *Entry);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    if (!Alpha) glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, Width, Height, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, Databuffer);
+    else glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Width, Height, 0, GL_BGRA_EXT, GL_UNSIGNED_BYTE, Databuffer);
 
     return *Entry;
 }

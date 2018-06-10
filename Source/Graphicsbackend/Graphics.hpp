@@ -39,4 +39,5 @@ namespace Graphics
     // If Color <= 1.0 it's a percentage; else /= 256.
     Texture_t Createtexture(RGBA Color);
     Texture_t Createtexture(uint32_t Width, uint32_t Height, const void *Databuffer, bool Alpha);
+    Texture_t CreatetextureBGR(uint32_t Width, uint32_t Height, const void *Databuffer, bool Alpha);
 }
