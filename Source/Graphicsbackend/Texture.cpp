@@ -39,7 +39,7 @@ Texture_t Graphics::Createtexture(uint32_t Width, uint32_t Height, const void *D
     static std::unordered_map<uint64_t, Texture_t> Cache;
 
     // Check the cache for pre-created textures.
-    uint64_t Hash = Hash::FNV1a_64(&Databuffer, Width * Height);
+    uint64_t Hash = Hash::FNV1a_64(Databuffer, Width * Height * 3);
     auto Entry = &Cache[Hash];
     if (*Entry) return *Entry;
 
