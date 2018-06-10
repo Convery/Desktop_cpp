@@ -199,15 +199,6 @@ namespace Bitmap
 
     inline void *Raw(const void *Data)
     {
-        unsigned char *p;
-        unsigned char *hdr = (unsigned char *)Data;
-        unsigned long width =
-            (unsigned long)hdr[18] << 0 |
-            (unsigned long)hdr[19] << 8 |
-            (unsigned long)hdr[20] << 16 |
-            (unsigned long)hdr[21] << 24;
-        long pad = (width * 3) % 4;
-
-        return hdr + 14 + 40 + 0 * (width + pad) * 3 + 0 * 3;
+        return (char *)Data + 14 + 40;
     }
 }
