@@ -20,7 +20,7 @@ namespace Application
     void onMouseenter(struct GLFWwindow *Handle, int Entered);
 
     // Subscribe to the events.
-    void addMouseendersub(std::function<void(int Entered)> Callback);
+    void addMouseentersub(std::function<void(int Entered)> Callback);
 
     // Graphics.
     void onResize(struct GLFWwindow *Handle, int Width, int Height);

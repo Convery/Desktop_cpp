@@ -25,7 +25,7 @@ Element_t *Components::Creeateborders()
     HResize = glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR);
     VResize = glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR);
 
-    Application::addMouseendersub([&](int Entered) { if (!Entered) Shouldresize = false; });
+    Application::addMouseentersub([&](int Entered) { if (!Entered) Shouldresize = false; });
 
     auto Boundingbox = new Element_t("ui.border");
     Boundingbox->Texture = Graphics::Createtexture({});

@@ -61,7 +61,7 @@ namespace Application
     }
 
     // Subscribe to the events.
-    void addMouseendersub(std::function<void(int Entered)> Callback)
+    void addMouseentersub(std::function<void(int Entered)> Callback)
     {
         Subscribers.push_back(Callback);
     }

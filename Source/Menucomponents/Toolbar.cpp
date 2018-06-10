@@ -18,7 +18,7 @@ Element_t *Components::Createtoolbar()
 {
     Handle = (GLFWwindow *)Application::Windowhandle();
 
-    Application::addMouseendersub([&](int Entered) { if (!Entered) Shouldmove = false; });
+    Application::addMouseentersub([&](int Entered) { if (!Entered) Shouldmove = false; });
 
     auto Boundingbox = new Element_t("ui.toolbar");
     Boundingbox->Texture = Graphics::Createtexture({ 50, 58, 69, 1 });
