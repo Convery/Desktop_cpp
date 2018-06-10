@@ -81,6 +81,7 @@ int main(int argc, char **argv)
     // Initialize glfw.
     glfwInit();
     glfwWindowHint(GLFW_DECORATED, GL_FALSE);
+    glfwWindowHint(GLFW_DOUBLEBUFFER, GL_FALSE);
 
     // Create the main window.
     auto Handle = glfwCreateWindow(1280, 720, "Main", nullptr, nullptr);

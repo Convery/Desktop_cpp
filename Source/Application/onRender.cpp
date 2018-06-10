@@ -31,7 +31,7 @@ namespace Application
         // Render the main element from the global viewport.
         ((Element_t *)glfwGetWindowUserPointer(Handle))->onRender();
 
-        // Swap the buffers.
-        glfwSwapBuffers(Handle);
+        // Present the buffer.
+        glFlush();
     }
 }
