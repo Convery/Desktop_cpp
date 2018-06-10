@@ -45,7 +45,7 @@ Element_t *Components::Createdevconsole()
                     if (State->Expanded)
                     {
                         // Use the non-expanded view.
-                        State->Inputarea->Margin = { 0.01, 1.79, 0.01, 0.11 };
+                        State->Inputarea->Margin = { 0.01, 1.73, 0.01, 0.17 };
                         State->Logarea->Margin = { 1, 1, 1, 1 };
                         State->Expanded = false;
                     }
@@ -54,8 +54,8 @@ Element_t *Components::Createdevconsole()
                     else
                     {
                         // Use the expanded view.
-                        State->Inputarea->Margin = { 0.01, 0.9, 0.01, 1 };
-                        State->Logarea->Margin = { 0.01, 1.0, 0.01, 0.11 };
+                        State->Inputarea->Margin = { 0.01, 0.9, 0.01, 1.0 };
+                        State->Logarea->Margin = { 0.01, 1.0, 0.01, 0.17 };
                         State->Expanded = true;
                     }
                 }
@@ -77,7 +77,7 @@ Element_t *Components::Createdevconsole()
             {
                 // Use the non-expanded view.
                 std::memset(State->Input, 0, 1024);
-                State->Inputarea->Margin = { 0.01, 1.79, 0.01, 0.11 };
+                State->Inputarea->Margin = { 0.01, 1.73, 0.01, 0.17 };
                 State->Logarea->Margin = { 1, 1, 1, 1 };
                 State->Expanded = false;
                 State->Visible = true;

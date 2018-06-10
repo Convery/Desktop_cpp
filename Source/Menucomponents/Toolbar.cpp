@@ -4372,6 +4372,13 @@ static const unsigned char Iconbitmap[52278] = {
 
 #pragma endregion
 
+enum class Menu_t
+{
+	LIBRARY = 0,
+	PLUGINS = 1,
+};
+static Menu_t Currentmenu { Menu_t::LIBRARY };
+
 // A fancy toolbar.
 static bool Armed{};
 static bool Shouldmove{};
@@ -4386,8 +4393,8 @@ Element_t *Components::Createtoolbar()
 
     auto Boundingbox = new Element_t("ui.toolbar");
     Boundingbox->ZIndex = -0.2f;
-    Boundingbox->Margin = { 0.0, 1.9, 0.0, 0.0 };
-    Boundingbox->Texture = Graphics::Createtexture({ 50, 58, 69, 1 });
+    Boundingbox->Margin = { 0.0, 1.85, 0.0, 0.0 };
+    Boundingbox->Texture = Graphics::Createtexture({ 50, 58, 69, 1.0f });
     Boundingbox->onClick = [](Element_t *Caller, uint32_t Key, bool Released) -> bool
     {
         Shouldmove = !Released;
@@ -4450,7 +4457,7 @@ Element_t *Components::Createtoolbar()
 
     auto Closebutton = new Element_t("ui.toolbar.close");
     Closebutton->ZIndex = -0.3f;
-    Closebutton->Margin = { 1.94, 0.0, 0.0, 0.0 };
+    Closebutton->Margin = { 1.95, 1.5, 0.0, 0.0 };
     Closebutton->Texture = Graphics::Createtexture({ 226, 35, 35, 0.8f });
     Closebutton->onClick = [](Element_t *Caller, uint32_t Key, bool Released) -> bool
     {
@@ -4474,7 +4481,7 @@ Element_t *Components::Createtoolbar()
 
     auto Maxbutton = new Element_t("ui.toolbar.max");
     Maxbutton->ZIndex = -0.3f;
-    Maxbutton->Margin = { 1.88, 0.0, 0.06, 0.0 };
+    Maxbutton->Margin = { 1.9, 1.5, 0.05, 0.0 };
     Maxbutton->Texture = Graphics::Createtexture({ 226, 90, 35, 0.8f });
     Maxbutton->onClick = [](Element_t *Caller, uint32_t Key, bool Released) -> bool
     {
@@ -4512,7 +4519,7 @@ Element_t *Components::Createtoolbar()
 
     auto Minbutton = new Element_t("ui.toolbar.min");
     Minbutton->ZIndex = -0.3f;
-    Minbutton->Margin = { 1.82, 0.0, 0.12, 0.0 };
+    Minbutton->Margin = { 1.85, 1.5, 0.10, 0.0 };
     Minbutton->Texture = Graphics::Createtexture({ 226, 226, 35, 0.8f });
     Minbutton->onClick = [](Element_t *Caller, uint32_t Key, bool Released) -> bool
     {
@@ -4530,12 +4537,88 @@ Element_t *Components::Createtoolbar()
         return false;
     };
 
+	auto Userbutton = new Element_t("ui.toolbar.user");
+    Userbutton->ZIndex = -0.3f;
+    Userbutton->Margin = { 1.8, 0.0, 0.0, 0.8 };
+    Userbutton->Texture = Graphics::Createtexture({ 50, 226, 35, 0.2f });
+
+	auto Buttontrim = new Element_t("ui.toolbar.nav.buttontrim");
+	Buttontrim->ZIndex = -0.31f;
+    Buttontrim->Margin = { 0.0, 0.05, 0.0, 1.85 };
+    Buttontrim->Texture = Graphics::Createtexture({});
+
+	auto Librarynavbutton = new Element_t("ui.toolbar.nav.library");
+    Librarynavbutton->ZIndex = -0.3f;
+    Librarynavbutton->Margin = { 0.2, 0.0, 1.5, 0.0 };
+    Librarynavbutton->Texture = Graphics::Createtexture({});
+	Librarynavbutton->Children.push_back(new Element_t(*Buttontrim));
+	Librarynavbutton->onFocus = [](Element_t *Caller, bool Released) -> bool
+	{
+		if(Released)
+		{
+			if(Currentmenu != Menu_t::LIBRARY)
+			{
+				Caller->Texture = Graphics::Createtexture({});
+				for(auto &Item : Caller->Children) Item->Texture = Graphics::Createtexture({});
+			}
+		}
+		else Caller->Texture = Graphics::Createtexture({ 60, 68, 79, 0.3f });
+		return false;
+	};
+	Librarynavbutton->onClick = [](Element_t *Caller, uint32_t Key, bool Released) -> bool
+	{
+		if(Released)
+		{
+			for(auto &Item : Caller->Children) Item->Texture = Graphics::Createtexture({29, 165, 220, 1.0f});
+			Currentmenu = Menu_t::LIBRARY;
+			
+			double X, Y; glfwGetCursorPos(Handle, &X, &Y);
+			Application::onMousemove(Handle, X, Y);
+		}
+		return true;
+	};
+	Librarynavbutton->onClick(Librarynavbutton, 0, true);
+	
+	auto Pluginsnavbutton = new Element_t("ui.toolbar.nav.plugins");
+    Pluginsnavbutton->ZIndex = -0.3f;
+    Pluginsnavbutton->Margin = { 0.5, 0.0, 1.2, 0.0 };
+    Pluginsnavbutton->Texture = Graphics::Createtexture({});
+	Pluginsnavbutton->Children.push_back(new Element_t(*Buttontrim));
+	Pluginsnavbutton->onFocus = [](Element_t *Caller, bool Released) -> bool
+	{
+		if(Released)
+		{
+			if(Currentmenu != Menu_t::PLUGINS)
+			{
+				Caller->Texture = Graphics::Createtexture({});
+				for(auto &Item : Caller->Children) Item->Texture = Graphics::Createtexture({});
+			}
+		}
+		else Caller->Texture = Graphics::Createtexture({ 60, 68, 79, 0.3f });
+		return false;
+	};
+	Pluginsnavbutton->onClick = [](Element_t *Caller, uint32_t Key, bool Released) -> bool
+	{
+		if(Released)
+		{
+            for (auto &Item : Caller->Children) Item->Texture = Graphics::Createtexture({ 29, 165, 220, 1.0f });
+			Currentmenu = Menu_t::PLUGINS;
+			
+			double X, Y; glfwGetCursorPos(Handle, &X, &Y);
+			Application::onMousemove(Handle, X, Y);
+		}
+		return true;
+	};
+
     auto Icon = new Element_t("ui.toolbar.icon");
     Icon->ZIndex = -0.3f;
-    Icon->Margin = { 0.0, 0.0, 1.94, 0.0 };
+    Icon->Margin = { 0.0, 0.1, 1.9, 0.1 };
     Icon->Texture = Graphics::CreatetextureBGR(135, 128, Bitmap::Raw(Iconbitmap), false);
 
+	Boundingbox->Children.push_back(Librarynavbutton);
+	Boundingbox->Children.push_back(Pluginsnavbutton);
     Boundingbox->Children.push_back(Closebutton);
+	Boundingbox->Children.push_back(Userbutton);
     Boundingbox->Children.push_back(Maxbutton);
     Boundingbox->Children.push_back(Minbutton);
     Boundingbox->Children.push_back(Icon);
