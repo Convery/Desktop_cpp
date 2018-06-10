@@ -1,3 +1,13 @@
+/*
+    Initial author: Convery (tcn@ayria.se)
+    Started: 10-06-2018
+    License: MIT
+
+    We only implement the bottom and right borders.
+    This is because expanding in the other directions
+    is a pain in the current system. Maybe in the future.
+*/
+
 #include "../Stdinclude.hpp"
 
 GLFWcursor *IBeam;
