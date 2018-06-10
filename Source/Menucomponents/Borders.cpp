@@ -71,8 +71,9 @@ Element_t *Components::Creeateborders()
                     int SizeX, SizeY;
                     glfwGetWindowSize(Handle, &SizeX, &SizeY);
 
-                    SizeY += Y - StartY;
-                    glfwSetWindowSize(Handle, SizeX, std::clamp(SizeY, 270, 1440));
+                    SizeY = std::clamp(int(SizeY + Y - StartY), 270, 1440);
+                    SizeX = SizeY * 1.78;
+                    glfwSetWindowSize(Handle, SizeX, SizeY);
                     StartX = X; StartY = Y;
                 }
             };
@@ -123,8 +124,9 @@ Element_t *Components::Creeateborders()
                     int SizeX, SizeY;
                     glfwGetWindowSize(Handle, &SizeX, &SizeY);
 
-                    SizeX += X - StartX;
-                    glfwSetWindowSize(Handle, std::clamp(SizeX, 480, 3440), SizeY);
+                    SizeX = std::clamp(int(SizeX + X - StartX), 480, 3440);
+                    SizeY = SizeX / 1.78;
+                    glfwSetWindowSize(Handle, SizeX, SizeY);
                     StartX = X; StartY = Y;
                 }
             };
