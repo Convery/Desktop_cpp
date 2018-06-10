@@ -121,6 +121,7 @@ int main(int argc, char **argv)
 
     // Trigger the initialization event.
     Application::onInit(Handle);
+    Application::onSceneswitch("library");
 
        // Loop until we crash.
     while (!glfwWindowShouldClose(Handle))

@@ -25,12 +25,10 @@ namespace Application
     }
     void onSceneswitch(std::string_view Scenename)
     {
-        if (0 == std::strcmp(Scenename.data(), "login"))
+        if (0 == std::strcmp(Scenename.data(), "library"))
         {
-            /*
-                TODO(Convery):
-                Build the scene here.
-            */
+            Globalstate.Root->Children.push_back(Components::Createtoolbar());
+
         }
 
         // Notify the root-element about the update.
@@ -40,7 +38,7 @@ namespace Application
     {
         // Save the handle and element for easy access.
         Globalstate.Root = (Element_t *)glfwGetWindowUserPointer(Handle);
-        Globalstate.Handle = Handle;        
+        Globalstate.Handle = Handle;
 
         // Initialize the global viewport.
         glfwGetFramebufferSize(Handle, &Globalstate.Width, &Globalstate.Height);

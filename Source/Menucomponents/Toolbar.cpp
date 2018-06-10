@@ -4380,40 +4380,42 @@ enum class Menu_t
 static Menu_t Currentmenu { Menu_t::LIBRARY };
 
 // A fancy toolbar.
-static bool Armed{};
 static bool Shouldmove{};
-static GLFWwindow *Handle;
 static double StartX, StartY;
 static int Width, Height, PosX, PosY;
 Element_t *Components::Createtoolbar()
 {
-    Handle = (GLFWwindow *)Application::Windowhandle();
-
-    Application::addMouseentersub([&](int Entered) { if (!Entered) Shouldmove = false; });
+    static const State_t *State{ Application::getState() };
 
     auto Boundingbox = new Element_t("ui.toolbar");
-    Boundingbox->ZIndex = -0.2f;
-    Boundingbox->Margin = { 0.0, 1.85, 0.0, 0.0 };
     Boundingbox->Texture = Graphics::Createtexture({ 50, 58, 69, 1.0f });
-    Boundingbox->onClick = [](Element_t *Caller, uint32_t Key, bool Released) -> bool
+    Boundingbox->Margin = { 0.0, 1.9, 0.0, 0.0 };
+    Boundingbox->ZIndex = -0.2f;
+
+    auto Dragablearea = new Element_t("ui.toolbar.dragable");
+    Dragablearea->Texture = Graphics::Createtexture({ 50, 58, 69, 1.0f });
+    Dragablearea->Margin = { 0.0, 0.0, 0.15, 0.0 };
+    Dragablearea->ZIndex = -0.21f;
+    Dragablearea->onActive = [&](Element_t *Caller, bool Released) -> void
     {
+        // Stop moving the window if needed.
         Shouldmove = !Released;
 
-        // Toggle fullscreen
-        static double Lastclick = 0;
+        // Toggle fullscreen on double-click.
         if (!Released)
         {
+            static double Lastclick = 0;
             if (glfwGetTime() - Lastclick < 0.5)
             {
                 int SizeX, SizeY;
-                glfwGetWindowSize(Handle, &SizeX, &SizeY);
+                glfwGetWindowSize(State->Handle, &SizeX, &SizeY);
                 const GLFWvidmode *Mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 
                 // Restore.
                 if (SizeX == Mode->width && SizeY == Mode->height)
                 {
-                    glfwSetWindowSize(Handle, Width, Height);
-                    glfwSetWindowPos(Handle, PosX, PosY);
+                    glfwSetWindowSize(State->Handle, Width, Height);
+                    glfwSetWindowPos(State->Handle, PosX, PosY);
                 }
 
                 // Fullscreen.
@@ -4421,82 +4423,84 @@ Element_t *Components::Createtoolbar()
                 {
                     Width = SizeX; Height = SizeY;
 
-                    glfwSetWindowSize(Handle, Mode->width, Mode->height);
-                    glfwGetWindowPos(Handle, &PosX, &PosY);
-                    glfwSetWindowPos(Handle, 0, 0);
+                    glfwSetWindowSize(State->Handle, Mode->width, Mode->height);
+                    glfwGetWindowPos(State->Handle, &PosX, &PosY);
+                    glfwSetWindowPos(State->Handle, 0, 0);
                 }
 
-                return true;
+                // Hackery.
+                Released = true;
             }
+
             Lastclick = glfwGetTime();
         }
 
-        // Start dragging the window.
+        // Start dragging the window if needed.
         if (!Released)
         {
-            glfwGetCursorPos(Handle, &StartX, &StartY);
+            glfwGetCursorPos(State->Handle, &StartX, &StartY);
             auto Lambda = [&]()
             {
                 while (Shouldmove)
                 {
                     double X, Y;
-                    glfwGetCursorPos(Handle, &X, &Y);
+                    glfwGetCursorPos(State->Handle, &X, &Y);
 
                     int PosX, PosY;
-                    glfwGetWindowPos(Handle, &PosX, &PosY);
+                    glfwGetWindowPos(State->Handle, &PosX, &PosY);
 
                     PosX += X - StartX; PosY += Y - StartY;
-                    glfwSetWindowPos(Handle, PosX, PosY);
+                    glfwSetWindowPos(State->Handle, PosX, PosY);
                 }
             };
             std::thread(Lambda).detach();
         }
-
-        return false;
     };
+    Application::Subscriptions::addMouseclick(Dragablearea);
+    Boundingbox->Children.push_back(Dragablearea);
 
-    auto Closebutton = new Element_t("ui.toolbar.close");
-    Closebutton->ZIndex = -0.3f;
-    Closebutton->Margin = { 1.95, 1.5, 0.0, 0.0 };
+    auto Closebutton = new Element_t("ui.toolbar.closebutton");
     Closebutton->Texture = Graphics::Createtexture({ 226, 35, 35, 0.8f });
-    Closebutton->onClick = [](Element_t *Caller, uint32_t Key, bool Released) -> bool
+    Closebutton->Margin = { 1.95, 1.0, 0.0, 0.0 };
+    Closebutton->ZIndex = -0.3f;
+    Closebutton->Userpointer = new bool();
+    Closebutton->onActive = [&](Element_t *Caller, bool Released) -> void
     {
-        if (Released && Armed) glfwSetWindowShouldClose((GLFWwindow *)Application::Windowhandle(), 1);
-        if (!Released)
-        {
-            Armed = true;
-            Caller->Texture = Graphics::Createtexture({ 205, 197, 186, 0.8f });
-        }
-        return true;
+        if (Released && *(bool *)Caller->Userpointer) glfwSetWindowShouldClose(State->Handle, 1);
+        if (!Released) *(bool *)Caller->Userpointer = true;
     };
-    Closebutton->onFocus = [](Element_t *Caller, bool Released) -> bool
+    Closebutton->onFocus = [&](Element_t *Caller, bool Released) -> void
     {
-        if (Released && Armed)
-        {
-            Armed = false;
-            Caller->Texture = Graphics::Createtexture({ 226, 35, 35, 0.8f });
-        }
-        return false;
-    };
-
-    auto Maxbutton = new Element_t("ui.toolbar.max");
-    Maxbutton->ZIndex = -0.3f;
-    Maxbutton->Margin = { 1.9, 1.5, 0.05, 0.0 };
-    Maxbutton->Texture = Graphics::Createtexture({ 226, 90, 35, 0.8f });
-    Maxbutton->onClick = [](Element_t *Caller, uint32_t Key, bool Released) -> bool
-    {
-        if (!Released) Caller->Texture = Graphics::Createtexture({ 205, 197, 186, 0.8f });
+        if(!Released) Caller->Texture = Graphics::Createtexture({ 205, 197, 186, 0.8f });
         else
         {
+            Caller->Texture = Graphics::Createtexture({ 226, 35, 35, 0.8f });
+            *(bool *)Caller->Userpointer = false;
+        }
+    };
+    Application::Subscriptions::addMouseclick(Closebutton);
+    Application::Subscriptions::addMousemove(Closebutton);
+    Boundingbox->Children.push_back(Closebutton);
+
+    auto Maxbutton = new Element_t("ui.toolbar.maxbutton");
+    Maxbutton->Texture = Graphics::Createtexture({ 226, 90, 35, 0.8f });
+    Maxbutton->Margin = { 1.9, 1.0, 0.05, 0.0 };
+    Maxbutton->ZIndex = -0.3f;
+    Maxbutton->Userpointer = new bool();
+    Maxbutton->onActive = [&](Element_t *Caller, bool Released) -> void
+    {
+        if (!Released) *(bool *)Caller->Userpointer = true;
+        if (Released && *(bool *)Caller->Userpointer)
+        {
             int SizeX, SizeY;
-            glfwGetWindowSize(Handle, &SizeX, &SizeY);
+            glfwGetWindowSize(State->Handle, &SizeX, &SizeY);
             const GLFWvidmode *Mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 
             // Restore.
             if (SizeX == Mode->width && SizeY == Mode->height)
             {
-                glfwSetWindowSize(Handle, Width, Height);
-                glfwSetWindowPos(Handle, PosX, PosY);
+                glfwSetWindowSize(State->Handle, Width, Height);
+                glfwSetWindowPos(State->Handle, PosX, PosY);
             }
 
             // Fullscreen.
@@ -4504,124 +4508,57 @@ Element_t *Components::Createtoolbar()
             {
                 Width = SizeX; Height = SizeY;
 
-                glfwSetWindowSize(Handle, Mode->width, Mode->height);
-                glfwGetWindowPos(Handle, &PosX, &PosY);
-                glfwSetWindowPos(Handle, 0, 0);
+                glfwSetWindowSize(State->Handle, Mode->width, Mode->height);
+                glfwGetWindowPos(State->Handle, &PosX, &PosY);
+                glfwSetWindowPos(State->Handle, 0, 0);
             }
         }
-        return true;
     };
-    Maxbutton->onFocus = [](Element_t *Caller, bool Released) -> bool
+    Maxbutton->onFocus = [&](Element_t *Caller, bool Released) -> void
     {
         if (Released) Caller->Texture = Graphics::Createtexture({ 226, 90, 35, 0.8f });
-        return false;
-    };
-
-    auto Minbutton = new Element_t("ui.toolbar.min");
-    Minbutton->ZIndex = -0.3f;
-    Minbutton->Margin = { 1.85, 1.5, 0.10, 0.0 };
-    Minbutton->Texture = Graphics::Createtexture({ 226, 226, 35, 0.8f });
-    Minbutton->onClick = [](Element_t *Caller, uint32_t Key, bool Released) -> bool
-    {
-        if (!Released) Caller->Texture = Graphics::Createtexture({ 205, 197, 186, 0.8f });
         else
         {
-            if(glfwGetWindowAttrib(Handle, GLFW_ICONIFIED)) glfwRestoreWindow(Handle);
-            else glfwIconifyWindow(Handle);
+            if (!Released) *(bool *)Caller->Userpointer = false;
+            Caller->Texture = Graphics::Createtexture({ 205, 197, 186, 0.8f });
         }
-        return true;
     };
-    Minbutton->onFocus = [](Element_t *Caller, bool Released) -> bool
+    Application::Subscriptions::addMouseclick(Maxbutton);
+    Application::Subscriptions::addMousemove(Maxbutton);
+    Boundingbox->Children.push_back(Maxbutton);
+
+    auto Minbutton = new Element_t("ui.toolbar.minbutton");
+    Minbutton->Texture = Graphics::Createtexture({ 226, 226, 35, 0.8f });
+    Minbutton->Margin = { 1.85, 1.0, 0.1, 0.0 };
+    Minbutton->ZIndex = -0.3f;
+    Minbutton->Userpointer = new bool();
+    Minbutton->onActive = [&](Element_t *Caller, bool Released) -> void
+    {
+        if (!Released) *(bool *)Caller->Userpointer = true;
+        if (Released && *(bool *)Caller->Userpointer)
+        {
+            if(glfwGetWindowAttrib(State->Handle, GLFW_ICONIFIED)) glfwRestoreWindow(State->Handle);
+            else glfwIconifyWindow(State->Handle);
+        }
+    };
+    Minbutton->onFocus = [&](Element_t *Caller, bool Released) -> void
     {
         if (Released) Caller->Texture = Graphics::Createtexture({ 226, 226, 35, 0.8f });
-        return false;
+        else
+        {
+            if (!Released) *(bool *)Caller->Userpointer = false;
+            Caller->Texture = Graphics::Createtexture({ 205, 197, 186, 0.8f });
+        }
     };
-
-	auto Userbutton = new Element_t("ui.toolbar.user");
-    Userbutton->ZIndex = -0.3f;
-    Userbutton->Margin = { 1.8, 0.0, 0.0, 0.8 };
-    Userbutton->Texture = Graphics::Createtexture({ 50, 226, 35, 0.2f });
-
-	auto Buttontrim = new Element_t("ui.toolbar.nav.buttontrim");
-	Buttontrim->ZIndex = -0.31f;
-    Buttontrim->Margin = { 0.0, 0.05, 0.0, 1.85 };
-    Buttontrim->Texture = Graphics::Createtexture({});
-
-	auto Librarynavbutton = new Element_t("ui.toolbar.nav.library");
-    Librarynavbutton->ZIndex = -0.3f;
-    Librarynavbutton->Margin = { 0.2, 0.0, 1.5, 0.0 };
-    Librarynavbutton->Texture = Graphics::Createtexture({});
-	Librarynavbutton->Children.push_back(new Element_t(*Buttontrim));
-	Librarynavbutton->onFocus = [](Element_t *Caller, bool Released) -> bool
-	{
-		if(Released)
-		{
-			Caller->Texture = Graphics::Createtexture({});
-			if(Currentmenu != Menu_t::LIBRARY)
-			{
-				for(auto &Item : Caller->Children) Item->Texture = Graphics::Createtexture({});
-			}
-		}
-		else Caller->Texture = Graphics::Createtexture({ 60, 68, 79, 0.3f });
-		return false;
-	};
-	Librarynavbutton->onClick = [](Element_t *Caller, uint32_t Key, bool Released) -> bool
-	{
-		if(Released)
-		{
-			for(auto &Item : Caller->Children) Item->Texture = Graphics::Createtexture({29, 165, 220, 1.0f});
-			Currentmenu = Menu_t::LIBRARY;
-			
-			double X, Y; glfwGetCursorPos(Handle, &X, &Y);
-			Application::onMousemove(Handle, X, Y);
-		}
-		return true;
-	};
-	Librarynavbutton->onClick(Librarynavbutton, 0, true);
-	
-	auto Pluginsnavbutton = new Element_t("ui.toolbar.nav.plugins");
-    Pluginsnavbutton->ZIndex = -0.3f;
-    Pluginsnavbutton->Margin = { 0.5, 0.0, 1.2, 0.0 };
-    Pluginsnavbutton->Texture = Graphics::Createtexture({});
-	Pluginsnavbutton->Children.push_back(new Element_t(*Buttontrim));
-	Pluginsnavbutton->onFocus = [](Element_t *Caller, bool Released) -> bool
-	{
-		if(Released)
-		{
-			Caller->Texture = Graphics::Createtexture({});
-			if(Currentmenu != Menu_t::PLUGINS)
-			{
-				for(auto &Item : Caller->Children) Item->Texture = Graphics::Createtexture({});
-			}
-		}
-		else Caller->Texture = Graphics::Createtexture({ 60, 68, 79, 0.3f });
-		return false;
-	};
-	Pluginsnavbutton->onClick = [](Element_t *Caller, uint32_t Key, bool Released) -> bool
-	{
-		if(Released)
-		{
-            for (auto &Item : Caller->Children) Item->Texture = Graphics::Createtexture({ 29, 165, 220, 1.0f });
-			Currentmenu = Menu_t::PLUGINS;
-			
-			double X, Y; glfwGetCursorPos(Handle, &X, &Y);
-			Application::onMousemove(Handle, X, Y);
-		}
-		return true;
-	};
-
-    auto Icon = new Element_t("ui.toolbar.icon");
-    Icon->ZIndex = -0.3f;
-    Icon->Margin = { 0.0, 0.1, 1.9, 0.1 };
-    Icon->Texture = Graphics::CreatetextureBGR(135, 128, Bitmap::Raw(Iconbitmap), false);
-
-	Boundingbox->Children.push_back(Librarynavbutton);
-	Boundingbox->Children.push_back(Pluginsnavbutton);
-    Boundingbox->Children.push_back(Closebutton);
-	Boundingbox->Children.push_back(Userbutton);
-    Boundingbox->Children.push_back(Maxbutton);
+    Application::Subscriptions::addMouseclick(Minbutton);
+    Application::Subscriptions::addMousemove(Minbutton);
     Boundingbox->Children.push_back(Minbutton);
-    Boundingbox->Children.push_back(Icon);
+
+    auto Windowicon = new Element_t("ui.toolbar.windowicon");
+    Windowicon->Texture = Graphics::CreatetextureBGR(135, 128, Bitmap::Raw(Iconbitmap), false);
+    Windowicon->Margin = { 0.0, 0.0, 1.925, 0.0 };
+    Windowicon->ZIndex = -0.3f;
+    Boundingbox->Children.push_back(Windowicon);
 
     return Boundingbox;
 };
