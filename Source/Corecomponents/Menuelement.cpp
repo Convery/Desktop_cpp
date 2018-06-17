@@ -29,19 +29,21 @@ namespace Rendering
         }
         void Switch(std::string Name)
         {
+            auto Root{ getRootelement() };
+
+            if (!Menumap) Menumap = new std::unordered_map<std::string, std::function<void()>>();
             if (auto Entry = Menumap->find(Name); Entry != Menumap->end())
             {
-                auto Root = getRootelement();
                 Root->Children.clear();
 
                 // Add the default elements.
 
                 // Build the rest of the menu.
                 Entry->second();
-
-                // Reinitialize the root.
-                Root->onModifiedstate(Root);
             }
+
+            // Reinitialize the root.
+            Root->onModifiedstate(Root);
         }
     }
 }
