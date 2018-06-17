@@ -8,7 +8,7 @@
 
 #include "../Stdinclude.hpp"
 
-extern double gWidth{}, gHeight{}, gPosX{}, gPosY{};
+extern double gWidth, gHeight, gPosX, gPosY;
 
 #if defined(_WIN32)
 
