@@ -55,85 +55,85 @@ int __stdcall WinMain(HINSTANCE hCurrentInst, HINSTANCE hPreviousInst, LPSTR lps
     Rendering::Menu::Switch("homescreen");
     Rendering::onRender();
 
-    // Loop until we crash.
-    uint32_t Keymodifiers{};
-    PAINTSTRUCT State{};
-    while (true)
+    // Render in a separate thread.
+    std::thread([&]() -> void
     {
-        // Handle the messages.
-        while (PeekMessageA(&Message, NULL, 0, 0, PM_REMOVE) > 0)
+        while (true)
         {
-            // Render the next frame.
-            if (Message.message == WM_PAINT)
-            {
-                auto Devicecontext = BeginPaint(Handle, &State);
-                Rendering::onPresent(Devicecontext);
-                EndPaint(Handle, &State);
-                continue;
-            }
+            Rendering::onRender();
+            InvalidateRect(Handle, NULL, FALSE);
 
-            // Mouse input.
-            if (Message.message == WM_MOUSEMOVE)
-            {
-                Input::onMousemove(GET_X_LPARAM(Message.lParam), GET_Y_LPARAM(Message.lParam));
-                continue;
-            }
-            if (Message.message == WM_LBUTTONDOWN || Message.message == WM_LBUTTONUP)
-            {
-                Input::onMouseclick(GET_X_LPARAM(Message.lParam), GET_Y_LPARAM(Message.lParam), 0, Message.message == WM_LBUTTONUP);
-                continue;
-            }
-            if (Message.message == WM_RBUTTONDOWN || Message.message == WM_RBUTTONUP)
-            {
-                Input::onMouseclick(GET_X_LPARAM(Message.lParam), GET_Y_LPARAM(Message.lParam), 1, Message.message == WM_RBUTTONUP);
-                continue;
-            }
-            if (Message.message == WM_MOUSEWHEEL)
-            {
-                Input::onMousescroll(GET_WHEEL_DELTA_WPARAM(Message.wParam) < 0);
-                continue;
-            }
-
-            // Keyboard input.
-            if (Message.message == WM_KEYDOWN || Message.message == WM_KEYUP)
-            {
-                switch (Message.wParam)
-                {
-                    case VK_LSHIFT:
-                    case VK_RSHIFT:
-                    case VK_SHIFT:
-                        Keymodifiers |= 0x01;
-                        break;
-
-                    default:
-                        Input::onKeyclick(Message.wParam, Keymodifiers, Message.message == WM_KEYUP);
-                }
-                continue;
-            }
-
-            // If we should quit, let Windows clean it up.
-            if (Message.message == WM_QUIT || Message.message == WM_DESTROY)
-            {
-                // Save a timestamp for tracing.
-                Infoprint("Session terminated..");
-                std::terminate();
-            }
-
-            // Let windows handle the message if we haven't.
-            DispatchMessageA(&Message);
+            static auto Lastframe{ std::chrono::high_resolution_clock::now() };
+            constexpr std::chrono::microseconds Framedelay{ 1000000 / 60 };
+            std::this_thread::sleep_until(Lastframe + Framedelay);
+            Lastframe += Framedelay;
         }
+    }).detach();
+
+    // Loop until we crash.
+    while (GetMessageA(&Message, NULL, 0, 0) > 0)
+    {
+        static uint32_t Keymodifiers{};
+        static PAINTSTRUCT State{};
 
         // Render the next frame.
-        Rendering::onRender();
+        if (Message.message == WM_PAINT)
+        {
+            auto Devicecontext = BeginPaint(Handle, &State);
+            Rendering::onPresent(Devicecontext);
+            EndPaint(Handle, &State);
+            continue;
+        }
 
-        // Sleep for a bit.
-        static auto Lastframe{ std::chrono::high_resolution_clock::now() };
-        constexpr std::chrono::microseconds Framedelay{ 1000000 / 30 };
-        std::this_thread::sleep_until(Lastframe + Framedelay);
-        Lastframe = std::chrono::high_resolution_clock::now();
+        // Mouse input.
+        if (Message.message == WM_MOUSEMOVE)
+        {
+            Input::onMousemove(GET_X_LPARAM(Message.lParam), GET_Y_LPARAM(Message.lParam));
+            continue;
+        }
+        if (Message.message == WM_LBUTTONDOWN || Message.message == WM_LBUTTONUP)
+        {
+            Input::onMouseclick(GET_X_LPARAM(Message.lParam), GET_Y_LPARAM(Message.lParam), 0, Message.message == WM_LBUTTONUP);
+            continue;
+        }
+        if (Message.message == WM_RBUTTONDOWN || Message.message == WM_RBUTTONUP)
+        {
+            Input::onMouseclick(GET_X_LPARAM(Message.lParam), GET_Y_LPARAM(Message.lParam), 1, Message.message == WM_RBUTTONUP);
+            continue;
+        }
+        if (Message.message == WM_MOUSEWHEEL)
+        {
+            Input::onMousescroll(GET_WHEEL_DELTA_WPARAM(Message.wParam) < 0);
+            continue;
+        }
 
-        // Trigger a redraw.
-        InvalidateRect(Handle, NULL, FALSE);
+        // Keyboard input.
+        if (Message.message == WM_KEYDOWN || Message.message == WM_KEYUP)
+        {
+            switch (Message.wParam)
+            {
+                case VK_LSHIFT:
+                case VK_RSHIFT:
+                case VK_SHIFT:
+                    Keymodifiers |= 0x01;
+                    break;
+
+                default:
+                    Input::onKeyclick(Message.wParam, Keymodifiers, Message.message == WM_KEYUP);
+            }
+            continue;
+        }
+
+        // If we should quit, let Windows clean it up.
+        if (Message.message == WM_QUIT || Message.message == WM_DESTROY)
+        {
+            // Save a timestamp for tracing.
+            Infoprint("Session terminated..");
+            std::terminate();
+        }
+
+        // Let windows handle the message if we haven't.
+        DispatchMessageA(&Message);
     }
 
     return 0;

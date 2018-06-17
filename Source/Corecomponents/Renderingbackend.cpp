@@ -17,14 +17,19 @@ namespace Rendering
     static HDC Surfacecontext{};
     static HBITMAP Surface{};
     static uint8_t *Pixels{};
+    static bool Shown{ true };
 
     // System-code interaction, assumes single-threaded sync.
     void onPresent(const void *Handle)
     {
         BitBlt((HDC)Handle, 0, 0, gWidth, gHeight, Surfacecontext, 0, 0, SRCCOPY);
+        Shown = true;
     }
     void onRender()
     {
+        while (!Shown) std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        Shown = false;
+
         static double lWidth{ gWidth }, lHeight{ gHeight };
         if (!Pixels || lWidth != gWidth || lHeight != gHeight)
         {
