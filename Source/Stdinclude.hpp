@@ -1,6 +1,6 @@
 /*
     Initial author: Convery (tcn@ayria.se)
-    Started: 08-06-2018
+    Started: 17-06-2018
     License: MIT
 
     Provides a single include-file for all modules.
@@ -34,6 +34,8 @@
     #include <Windows.h>
     #include <direct.h>
     #include <intrin.h>
+    #include <ObjIdl.h>
+    #include <gdiplus.h>
     #undef min
     #undef max
 #else
@@ -50,13 +52,3 @@
 #include "Utility/FNV1Hash.hpp"
 #include "Utility/Logfile.hpp"
 #include "Utility/Base64.hpp"
-#include "Utility/Bitmap.hpp"
-
-// Third-party libraries.
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-
-// Our components.
-#include "Menucomponents/Components.hpp"
-#include "Graphicsbackend/Graphics.hpp"
-#include "Application/Application.hpp"

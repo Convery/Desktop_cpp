@@ -17,7 +17,7 @@ set(CMAKE_DEBUG_POSTFIX "d")
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" OR ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
 	set(CORE_LIBS ${CORE_LIBS} dl pthread)
 else()
-	set(CORE_LIBS ${CORE_LIBS} ws2_32 DbgHelp Iphlpapi)
+	set(CORE_LIBS ${CORE_LIBS} Gdiplus)
 endif()
 
 # Extra flags for compiling and linking.
@@ -31,7 +31,7 @@ if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" OR ${CMAKE_CXX_COMPILER_ID} STREQUAL
     endif()
 else()
 	set(EXTRA_CMPFLAGS ${EXTRA_CMPFLAGS} "/permissive-")
-	set(EXTRA_LNKFLAGS ${EXTRA_LNKFLAGS} "")
+	set(EXTRA_LNKFLAGS ${EXTRA_LNKFLAGS} "/subsystem:windows")
 endif()
 
 # Set warningflags per compiler.
@@ -60,13 +60,8 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 endif()
 
 # Third-party libraries, prefer find_library() and find_path().
-find_path(JSON_INC nlohmann/json.hpp)
-find_package(glfw3)
-find_package(OpenGL)
-find_library(GLEW_LIB glew32)
-find_path(GLEW_INC GL/glew.h)
-set(MODULE_INCS ${MODULE_INCS} ${JSON_INC} ${OPENGL_INCLUDE_DIR} ${GLEW_INC})
-set(MODULE_LIBS ${MODULE_LIBS} glfw ${OPENGL_gl_LIBRARY} ${GLEW_LIB})
+set(MODULE_INCS ${MODULE_INCS})
+set(MODULE_LIBS ${MODULE_LIBS})
 include_directories(${MODULE_INCS})
 
 # Just pull all the files from /Source
