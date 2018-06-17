@@ -111,12 +111,11 @@ namespace Rendering
 
         void Quad(rgba_t Color, rect_t Box)
         {
-            uint32_t Localcolor = toBGR(Normalize(Color));
             for (uint32_t Y = std::max(Box.y0, 0.0); Y < std::min(Box.y1, gHeight); ++Y)
             {
                 for (uint32_t X = std::max(Box.x0, 0.0); X < std::min(Box.x1, gWidth); ++X)
                 {
-                    Setpixel(X, Y, Localcolor);
+                    Setpixel(X, Y, Color);
                 }
             }
         }
@@ -148,6 +147,78 @@ namespace Rendering
             Line(Color, { Box.x0, Box.y0, Box.x0, Box.y1 });
             Line(Color, { Box.x1, Box.y0, Box.x1, Box.y1 });
         }
+
+        void Quadgradient(std::vector<rgba_t> Colors, rect_t Box)
+        {
+            auto Colorsize{ Colors.size() };
+            size_t Colorindex{};
+
+            for (uint32_t Y = std::max(Box.y0, 0.0); Y < std::min(Box.y1, gHeight); ++Y)
+            {
+                for (uint32_t X = std::max(Box.x0, 0.0); X < std::min(Box.x1, gWidth); ++X)
+                {
+                    Setpixel(X, Y, Colors[Colorindex++ % Colorsize]);
+                }
+            }
+        }
+        void Linegradient(std::vector<rgba_t> Colors, rect_t Box)
+        {
+            double DeltaX{ Box.x1 - Box.x0 };
+            double DeltaY{ Box.y1 - Box.y0 };
+            auto Colorsize{ Colors.size() };
+            size_t Colorindex{};
+
+            if (std::abs(DeltaX) > std::abs(DeltaY))
+            {
+                for (uint32_t x = std::max(std::min(Box.x0, Box.x1), 0.0); x <= std::min(std::max(Box.x0, Box.x1), gWidth); ++x)
+                {
+                    Setpixel(x, (Box.y0 + ((x - Box.x0) * (DeltaY / DeltaX))), Colors[Colorindex++ % Colorsize]);
+                }
+            }
+            else
+            {
+                for (uint32_t y = std::max(std::min(Box.y0, Box.y1), 0.0); y <= std::min(std::max(Box.y0, Box.y1), gHeight); ++y)
+                {
+                    Setpixel((Box.x0 + ((y - Box.y0) * (DeltaX / DeltaY))), y,  Colors[Colorindex++ % Colorsize]);
+                }
+            }
+        }
+        void Bordergradient(std::vector<rgba_t> Colors, rect_t Box)
+        {
+            Linegradient(Colors, { Box.x0, Box.y0, Box.x1, Box.y0 });
+            Linegradient(Colors, { Box.x0, Box.y1, Box.x1, Box.y1 });
+
+            Linegradient(Colors, { Box.x0, Box.y0, Box.x0, Box.y1 });
+            Linegradient(Colors, { Box.x1, Box.y0, Box.x1, Box.y1 });
+        }
+    }
+
+    std::vector<rgba_t> Creategradient(size_t Steps, rgba_t Color1, rgba_t Color2)
+    {
+        std::vector<rgba_t> Colors;
+
+        for (double i = 0; i < 1; i += (1.0 / (Steps / 2)))
+        {
+            rgba_t Blended;
+            Blended.r = (Color1.r / 255 * i) + (Color2.r / 255 * (1 - i));
+            Blended.g = (Color1.g / 255 * i) + (Color2.g / 255 * (1 - i));
+            Blended.b = (Color1.b / 255 * i) + (Color2.b / 255 * (1 - i));
+            Blended.a = 1;
+
+            Colors.push_back(Blended);
+        }
+        for (double i = 0; i < 1; i += (1.0 / (Steps / 2)))
+        {
+            rgba_t Blended;
+            Blended.r = (Color2.r / 255 * i) + (Color1.r / 255 * (1 - i));
+            Blended.g = (Color2.g / 255 * i) + (Color1.g / 255 * (1 - i));
+            Blended.b = (Color2.b / 255 * i) + (Color1.b / 255 * (1 - i));
+            Blended.a = 1;
+
+            Colors.push_back(Blended);
+        }
+
+        return Colors;
     }
 }
 

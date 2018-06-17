@@ -65,7 +65,14 @@ namespace Rendering
         void Quad(rgba_t Color, rect_t Box);
         void Line(rgba_t Color, rect_t Box);
         void Border(rgba_t Color, rect_t Box);
+
+        void Quadgradient(std::vector<rgba_t> Colors, rect_t Box);
+        void Linegradient(std::vector<rgba_t> Colors, rect_t Box);
+        void Bordergradient(std::vector<rgba_t> Colors, rect_t Box);
     }
+    std::vector<rgba_t> Creategradient(size_t Steps, rgba_t Color1, rgba_t Color2);
+
+    // Scene-management.
     namespace Menu
     {
         void Register(std::string Name, std::function<void()> onChange);
