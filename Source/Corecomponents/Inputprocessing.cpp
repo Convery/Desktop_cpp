@@ -65,7 +65,7 @@ namespace Input
             return false;
         };
 
-        Lambda(Rendering::Getroot(), false);
+        Lambda(Rendering::getRootelement(), false);
     }
     void onKeyclick(uint32_t Key, uint32_t Modifier, bool Released) {}
     void onMousescroll(double PosX, double PosY) {}
@@ -110,7 +110,7 @@ namespace Input
             return false;
         };
 
-        Lambda(Rendering::Getroot(), false);
+        Lambda(Rendering::getRootelement(), false);
     }
 
     // Caller-agnostic interactions.
