@@ -62,9 +62,9 @@ namespace Rendering
     // User-code interaction.
     namespace Draw
     {
-        void Quad(rgba_t Color, rect_t Box, rect_t Margin = {});
-        void Line(rgba_t Color, rect_t Box, rect_t Margin = {});
-        void Border(rgba_t Color, rect_t Box, rect_t Margin = {});
+        void Quad(rgba_t Color, rect_t Box);
+        void Line(rgba_t Color, rect_t Box);
+        void Border(rgba_t Color, rect_t Box);
     }
     namespace Menu
     {
