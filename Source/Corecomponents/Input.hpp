@@ -15,8 +15,8 @@ using vec2_t = struct { double x, y; };
 namespace Input
 {
     // System-code interaction, assumes single-threaded sync.
+    void onMouseclick(double PosX, double PosY, uint32_t Key, bool Released);
     void onKeyclick(uint32_t Key, uint32_t Modifier, bool Released);
-    void onMouseclick(uint32_t Key, bool Released);
     void onMousescroll(double PosX, double PosY);
     void onMousemove(double PosX, double PosY);
 

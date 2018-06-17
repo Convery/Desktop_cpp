@@ -13,6 +13,9 @@
 #include "Configuration/Definitions.hpp"
 #include "Configuration/Macros.hpp"
 
+// Ignore warnings from third-party code.
+#pragma warning(push, 0)
+
 // Standard-library includes.
 #include <unordered_map>
 #include <string_view>
@@ -46,6 +49,9 @@
     #include <dirent.h>
     #include <dlfcn.h>
 #endif
+
+// Restore warnings.
+#pragma warning(pop)
 
 // Utility includes.
 #include "Utility/Variadicstring.hpp"

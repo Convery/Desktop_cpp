@@ -44,12 +44,13 @@ int __stdcall WinMain(HINSTANCE hCurrentInst, HINSTANCE hPreviousInst, LPSTR lps
     // Create the window.
     auto Handle = CreateWindowExA(WS_EX_APPWINDOW, "Desktop_cpp", "", WS_POPUP,
         (Displaysize.right - 1200) / 2, (Displaysize.bottom - 600) / 2, 1200, 600, NULL, NULL, Windowclass.hInstance, NULL);
-    //Engine::Window::onResize(1200, 600);
-    //Engine::Window::onCreation(Handle);
+    Rendering::onInit(1200, 600);
+    Input::getWindowposition();
+    Input::getWindowsize();
 
-    // Trigger the paint-callback.
-    //Engine::Rendering::onRedraw();
+    // Render the first frame and present.
     ShowWindow(Handle, nCmdShow);
+    Rendering::onRender();
 
     // Loop until we crash.
     PAINTSTRUCT State;
@@ -62,7 +63,7 @@ int __stdcall WinMain(HINSTANCE hCurrentInst, HINSTANCE hPreviousInst, LPSTR lps
             if (Message.message == WM_PAINT)
             {
                 auto Devicecontext = BeginPaint(Handle, &State);
-                //Engine::Rendering::onPresent(Devicecontext);
+                Rendering::onPresent(Devicecontext);
                 EndPaint(Handle, &State);
                 continue;
             }
@@ -90,7 +91,7 @@ int __stdcall WinMain(HINSTANCE hCurrentInst, HINSTANCE hPreviousInst, LPSTR lps
         }
 
         // Render the next frame.
-        //Engine::Rendering::onRedraw();
+        Rendering::onRender();
 
         // Sleep for a bit.
         static auto Lastframe{ std::chrono::high_resolution_clock::now() };
