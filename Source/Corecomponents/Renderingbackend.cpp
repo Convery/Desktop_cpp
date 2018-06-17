@@ -73,9 +73,9 @@ namespace Rendering
         {
             return uint32_t
             {
-                uint32_t(Color.b) << 16 |
+                uint32_t(Color.r) << 16 |
                 uint32_t(Color.g) << 8 |
-                uint32_t(Color.r)
+                uint32_t(Color.b)
             };
         }
         ainline rgba_t Normalize(rgba_t Input)
@@ -104,7 +104,7 @@ namespace Rendering
             if (X >= gWidth || Y >= gHeight) return;
             if (1.0 == RGBA.a) return Setpixel(X, Y, toBGR(Normalize(RGBA)));
 
-            uint32_t Base{ *(uint32_t *)Pixels + Y * uint32_t(gWidth) + X * 3 };
+            uint32_t Base{ *(uint32_t *)Pixels + Y * uint32_t(gWidth) * 3 + X * 3 };
             return Setpixel(X, Y, BlendBGR(Base, toBGR(Normalize(RGBA)), RGBA.a));
         }
 
