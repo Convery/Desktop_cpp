@@ -50,7 +50,7 @@ int __stdcall WinMain(HINSTANCE hCurrentInst, HINSTANCE hPreviousInst, LPSTR lps
     Input::getWindowsize();
 
     // Create the initial scene and render the first frame.
-    Rendering::getRootelement()->Backgroundcolor = { 0x11, 0x11, 0x11, 1 };
+    Rendering::getRootelement()->Backgroundcolor = { 38, 39, 43, 1 };
     Rendering::getRootelement()->Boundingbox = { 0, 0, 1200, 600 };
     Rendering::Menu::Switch("homescreen");
     Rendering::onRender();
