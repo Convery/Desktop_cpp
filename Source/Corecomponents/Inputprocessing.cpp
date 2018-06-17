@@ -8,7 +8,7 @@
 
 #include "../Stdinclude.hpp"
 
-static double gWidth{}, gHeight{}, gPosX{}, gPosY{};
+double gWidth{}, gHeight{}, gPosX{}, gPosY{};
 
 #if defined(_WIN32)
 
@@ -129,7 +129,7 @@ namespace Input
     vec2_t getWindowposition()
     {
         RECT Window{};
-        GetWindowRect(NULL, &Window);
+        GetWindowRect(GetActiveWindow(), &Window);
         gPosX = Window.left;
         gPosY = Window.top;
         return { double(Window.left), double(Window.top) };
@@ -149,7 +149,7 @@ namespace Input
     vec2_t getWindowsize()
     {
         RECT Window{};
-        GetWindowRect(NULL, &Window);
+        GetWindowRect(GetActiveWindow(), &Window);
         gWidth = Window.right - Window.left;
         gHeight = Window.bottom - Window.top;
         return { double(Window.right - Window.left), double(Window.bottom - Window.top) };
