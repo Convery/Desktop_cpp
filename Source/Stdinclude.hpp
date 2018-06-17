@@ -34,6 +34,7 @@
 
 // Platform-specific libraries.
 #if defined(_WIN32)
+    #include <Windowsx.h>
     #include <Windows.h>
     #include <direct.h>
     #include <intrin.h>

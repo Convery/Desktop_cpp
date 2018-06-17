@@ -72,6 +72,28 @@ int __stdcall WinMain(HINSTANCE hCurrentInst, HINSTANCE hPreviousInst, LPSTR lps
                 continue;
             }
 
+            // Mouse input.
+            if (Message.message == WM_MOUSEMOVE)
+            {
+                Input::onMousemove(GET_X_LPARAM(Message.lParam), GET_Y_LPARAM(Message.lParam));
+                continue;
+            }
+            if (Message.message == WM_LBUTTONDOWN || Message.message == WM_LBUTTONUP)
+            {
+                Input::onMouseclick(GET_X_LPARAM(Message.lParam), GET_Y_LPARAM(Message.lParam), 0, Message.message == WM_LBUTTONUP);
+                continue;
+            }
+            if (Message.message == WM_RBUTTONDOWN || Message.message == WM_RBUTTONUP)
+            {
+                Input::onMouseclick(GET_X_LPARAM(Message.lParam), GET_Y_LPARAM(Message.lParam), 1, Message.message == WM_RBUTTONUP);
+                continue;
+            }
+            if (Message.message == WM_MOUSEWHEEL)
+            {
+                Input::onMousescroll(GET_WHEEL_DELTA_WPARAM(Message.wParam) < 0);
+                continue;
+            }
+
             // Keyboard input.
             if (Message.message == WM_KEYDOWN || Message.message == WM_KEYUP)
             {
@@ -89,27 +111,12 @@ int __stdcall WinMain(HINSTANCE hCurrentInst, HINSTANCE hPreviousInst, LPSTR lps
                 continue;
             }
 
-            // Mouse input.
-            if (Message.message == WM_MOUSEMOVE)
-            {
-                Input::onMousemove(LOWORD(Message.lParam), HIWORD(Message.lParam));
-                continue;
-            }
-
             // If we should quit, let Windows clean it up.
             if (Message.message == WM_QUIT || Message.message == WM_DESTROY)
             {
                 // Save a timestamp for tracing.
                 Infoprint("Session terminated..");
                 std::terminate();
-            }
-
-            // Mouse-scrolling.
-            if (Message.message == WM_VSCROLL)
-            {
-                if (LOWORD(Message.wParam) == SB_LINEDOWN) Input::onMousescroll(true);
-                if (LOWORD(Message.wParam) == SB_LINEUP) Input::onMousescroll(false);
-                continue;
             }
 
             // Let windows handle the message if we haven't.
