@@ -1,6 +1,6 @@
 /*
     Initial author: Convery (tcn@ayria.se)
-    Started: 08-06-2018
+    Started: 17-06-2018
     License: MIT
 
     Provides an entrypoint for the application.
@@ -8,133 +8,108 @@
 
 #include "Stdinclude.hpp"
 
-// Stolen from https://github.com/glfw/glfw/issues/310
-void glfwSetWindowCenter(GLFWwindow* window) {
-    // Get window position and size
-    int window_x, window_y;
-    glfwGetWindowPos(window, &window_x, &window_y);
+#if defined(_WIN32)
 
-    int window_width, window_height;
-    glfwGetWindowSize(window, &window_width, &window_height);
+int __stdcall WinMain(HINSTANCE hCurrentInst, HINSTANCE hPreviousInst, LPSTR lpszCmdLine, int nCmdShow)
+{
+    Gdiplus::GdiplusStartupInput GDIInput{};
+    ULONG_PTR GDIToken{};
+    RECT Displaysize{};
+    MSG Message{};
 
-    // Halve the window size and use it to adjust the window position to the center of the window
-    window_width *= 0.5;
-    window_height *= 0.5;
+    // Clear the old log so we only have this session.
+    Clearlog(); Infoprint("Initializing session..");
 
-    window_x += window_width;
-    window_y += window_height;
+    // Get the monitor dimensions.
+    SystemParametersInfoA(SPI_GETWORKAREA, 0, &Displaysize, 0);
 
-    // Get the list of monitors
-    int monitors_length;
-    GLFWmonitor **monitors = glfwGetMonitors(&monitors_length);
+    // Register the window.
+    WNDCLASSEXA Windowclass{};
+    Windowclass.cbSize = sizeof(WNDCLASSEXA);
+    Windowclass.lpszClassName = "Desktop_cpp";
+    Windowclass.hInstance = GetModuleHandleA(NULL);
+    Windowclass.hCursor = LoadCursor(NULL, IDC_ARROW);
+    Windowclass.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+    Windowclass.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
+    Windowclass.lpfnWndProc = [](HWND Handle, UINT Message, WPARAM wParam, LPARAM lParam)
+    {
+        if (Message == WM_PAINT) return LRESULT(1);
+        return DefWindowProcA(Handle, Message, wParam, lParam);
+    };
+    RegisterClassExA(&Windowclass);
 
-    if(monitors == NULL) {
-        // Got no monitors back
-        return;
-    }
+    // Initialize GDI.
+    GdiplusStartup(&GDIToken, &GDIInput, NULL);
 
-    // Figure out which monitor the window is in
-    GLFWmonitor *owner = NULL;
-    int owner_x, owner_y, owner_width, owner_height;
+    // Create the window.
+    auto Handle = CreateWindowExA(WS_EX_APPWINDOW, "Desktop_cpp", "", WS_POPUP,
+        (Displaysize.right - 1200) / 2, (Displaysize.bottom - 600) / 2, 1200, 600, NULL, NULL, Windowclass.hInstance, NULL);
+    //Engine::Window::onResize(1200, 600);
+    //Engine::Window::onCreation(Handle);
 
-    for(int i = 0; i < monitors_length; i++) {
-        // Get the monitor position
-        int monitor_x, monitor_y;
-        glfwGetMonitorPos(monitors[i], &monitor_x, &monitor_y);
+    // Trigger the paint-callback.
+    //Engine::Rendering::onRedraw();
+    ShowWindow(Handle, nCmdShow);
 
-        // Get the monitor size from its video mode
-        int monitor_width, monitor_height;
-        GLFWvidmode *monitor_vidmode = (GLFWvidmode*) glfwGetVideoMode(monitors[i]);
+    // Loop until we crash.
+    PAINTSTRUCT State;
+    while (true)
+    {
+        // Handle the messages.
+        while (PeekMessageA(&Message, NULL, 0, 0, PM_REMOVE) > 0)
+        {
+            // Render the next frame.
+            if (Message.message == WM_PAINT)
+            {
+                auto Devicecontext = BeginPaint(Handle, &State);
+                //Engine::Rendering::onPresent(Devicecontext);
+                EndPaint(Handle, &State);
+                continue;
+            }
 
-        if(monitor_vidmode == NULL) {
-            // Video mode is required for width and height, so skip this monitor
-            continue;
+            // Keyboard input.
+            if (Message.message == WM_KEYDOWN)
+            {
+                switch (Message.wParam)
+                {
+                    case VK_ESCAPE: PostQuitMessage(0); break;
+                }
+                continue;
+            }
 
-        } else {
-            monitor_width = monitor_vidmode->width;
-            monitor_height = monitor_vidmode->height;
+            // If we should quit, let Windows clean it up.
+            if (Message.message == WM_QUIT || Message.message == WM_DESTROY)
+            {
+                // Save a timestamp for tracing.
+                Infoprint("Session terminated..");
+                std::terminate();
+            }
+
+            // Let windows handle the message if we haven't.
+            DispatchMessageA(&Message);
         }
 
-        // Set the owner to this monitor if the center of the window is within its bounding box
-        if((window_x > monitor_x && window_x < (monitor_x + monitor_width)) && (window_y > monitor_y && window_y < (monitor_y + monitor_height))) {
-            owner = monitors[i];
+        // Render the next frame.
+        //Engine::Rendering::onRedraw();
 
-            owner_x = monitor_x;
-            owner_y = monitor_y;
+        // Sleep for a bit.
+        static auto Lastframe{ std::chrono::high_resolution_clock::now() };
+        constexpr std::chrono::microseconds Framedelay{ 1000000 / 30 };
+        std::this_thread::sleep_until(Lastframe + Framedelay);
+        Lastframe = std::chrono::high_resolution_clock::now();
 
-            owner_width = monitor_width;
-            owner_height = monitor_height;
-        }
+        // Trigger a redraw.
+        InvalidateRect(Handle, NULL, FALSE);
     }
 
-    if(owner != NULL) {
-        // Set the window position to the center of the owner monitor
-        glfwSetWindowPos(window, owner_x + (owner_width * 0.5) - window_width, owner_y + (owner_height * 0.5) - window_height);
-    }
+    return 0;
 }
+
+#else
 
 int main(int argc, char **argv)
 {
-    // Clear the previous log.
-    Clearlog();
-
-    // Initialize glfw.
-    glfwInit();
-    glfwWindowHint(GLFW_DECORATED, GL_FALSE);
-    glfwWindowHint(GLFW_DOUBLEBUFFER, GL_FALSE);
-
-    // Create the main window.
-    auto Handle = glfwCreateWindow(1280, 720, "Main", nullptr, nullptr);
-    if (Handle == NULL) return 3;
-    glfwSetWindowCenter(Handle);
-
-    // Initialize GLEW.
-    glfwMakeContextCurrent(Handle);
-    glewInit();
-
-    // Rendering options.
-    glEnable(GL_BLEND);
-    glfwSwapInterval(1);
-    glDepthFunc(GL_LESS);
-    glEnable(GL_DEPTH_TEST);
-    glewExperimental = GL_TRUE;
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
-
-    // Set the callbacks for the application.
-    glfwSetErrorCallback(Application::onError);
-    glfwSetKeyCallback(Handle, Application::onKeyclick);
-    glfwSetWindowSizeCallback(Handle, Application::onResize);
-    glfwSetWindowRefreshCallback(Handle, Application::onDraw);
-    glfwSetScrollCallback(Handle, Application::onMousescroll);
-    glfwSetCursorPosCallback(Handle, Application::onMousemove);
-    glfwSetMouseButtonCallback(Handle, Application::onMouseclick);
-    glfwSetCursorEnterCallback(Handle, Application::onMouseenter);
-
-    // Create a default element and bind.
-    Element_t Mainwindow("ui");
-    Mainwindow.Texture = Graphics::Createtexture({});
-    glfwSetWindowUserPointer(Handle, &Mainwindow);
-    Mainwindow.Boundingbox = { 0, 0, 1280, 720 };
-    Mainwindow.onModifiedstate();
-
-    // Trigger the initialization event.
-    Application::onInit(Handle);
-    Application::onSceneswitch("library");
-
-       // Loop until we crash.
-    while (!glfwWindowShouldClose(Handle))
-    {
-        // Process any new events.
-        glfwPollEvents();
-
-        // Draw the next frame.
-        Application::onDraw(Handle);
-    }
-
-    // Cleanup.
-    glfwTerminate();
     return 0;
 }
+
+#endif
