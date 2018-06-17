@@ -112,9 +112,9 @@ namespace Rendering
         void Quad(rgba_t Color, rect_t Box)
         {
             uint32_t Localcolor = toBGR(Normalize(Color));
-            for (uint32_t Y = Box.y0; Y < Box.y1; ++Y)
+            for (uint32_t Y = std::max(Box.y0, 0.0); Y < std::min(Box.y1, gHeight); ++Y)
             {
-                for (uint32_t X = Box.x0; X < Box.x1; ++X)
+                for (uint32_t X = std::max(Box.x0, 0.0); X < std::min(Box.x1, gWidth); ++X)
                 {
                     Setpixel(X, Y, Localcolor);
                 }
@@ -127,14 +127,14 @@ namespace Rendering
 
             if (std::abs(DeltaX) > std::abs(DeltaY))
             {
-                for (uint32_t x = std::min(Box.x0, Box.x1); x <= std::max(Box.x0, Box.x1); ++x)
+                for (uint32_t x = std::max(std::min(Box.x0, Box.x1), 0.0); x <= std::min(std::max(Box.x0, Box.x1), gWidth); ++x)
                 {
                     Setpixel(x, (Box.y0 + ((x - Box.x0) * (DeltaY / DeltaX))), Color);
                 }
             }
             else
             {
-                for (uint32_t y = std::min(Box.y0, Box.y1); y <= std::max(Box.y0, Box.y1); ++y)
+                for (uint32_t y = std::max(std::min(Box.y0, Box.y1), 0.0); y <= std::min(std::max(Box.y0, Box.y1), gHeight); ++y)
                 {
                     Setpixel((Box.x0 + ((y - Box.y0) * (DeltaX / DeltaY))), y, Color);
                 }
