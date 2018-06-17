@@ -89,6 +89,13 @@ int __stdcall WinMain(HINSTANCE hCurrentInst, HINSTANCE hPreviousInst, LPSTR lps
                 continue;
             }
 
+            // Mouse input.
+            if (Message.message == WM_MOUSEMOVE)
+            {
+                Input::onMousemove(LOWORD(Message.lParam), HIWORD(Message.lParam));
+                continue;
+            }
+
             // If we should quit, let Windows clean it up.
             if (Message.message == WM_QUIT || Message.message == WM_DESTROY)
             {

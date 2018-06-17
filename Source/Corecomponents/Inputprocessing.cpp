@@ -17,8 +17,6 @@ namespace Input
     // System-code interaction, assumes single-threaded sync.
     void onMouseclick(double PosX, double PosY, uint32_t Key, bool Released)
     {
-        PosY += gPosY; PosX += gPosX;
-
         std::function<bool(Element_t *, bool)> Lambda = [&](Element_t *Parent, bool Miss) -> bool
         {
             // Don't check for hits.
@@ -70,8 +68,6 @@ namespace Input
     void onKeyclick(uint32_t Key, uint32_t Modifier, bool Released) {}
     void onMousemove(double PosX, double PosY)
     {
-        PosY += gPosY; PosX += gPosX;
-
         std::function<bool(Element_t *, bool)> Lambda = [&](Element_t *Parent, bool Miss) -> bool
         {
             // Don't check for hits.
