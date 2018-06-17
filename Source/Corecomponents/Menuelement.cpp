@@ -29,18 +29,15 @@ namespace Rendering
         }
         void Switch(std::string Name)
         {
+            if (!Menumap) Menumap = new std::unordered_map<std::string, std::function<void()>>();
             auto Root{ getRootelement() };
 
-            if (!Menumap) Menumap = new std::unordered_map<std::string, std::function<void()>>();
-            if (auto Entry = Menumap->find(Name); Entry != Menumap->end())
-            {
-                Root->Children.clear();
+            // Add the default elements.
+            Root->Children.clear();
+            Menumap->find("toolbar")->second();
 
-                // Add the default elements.
-
-                // Build the rest of the menu.
-                Entry->second();
-            }
+            // Build the rest of the menu.
+            if (auto Entry = Menumap->find(Name); Entry != Menumap->end()) Entry->second();
 
             // Reinitialize the root.
             Root->onModifiedstate(Root);
@@ -81,7 +78,7 @@ void Recalculateboxes(Element_t *Caller)
     for (const auto &Item : Caller->Children)
     {
         Item->Boundingbox = Dimensions;
-        Recalculateboxes(Item);
+        Item->onModifiedstate(Item);
     }
 }
 void Renderelement(Element_t *Caller)
