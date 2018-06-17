@@ -56,7 +56,8 @@ int __stdcall WinMain(HINSTANCE hCurrentInst, HINSTANCE hPreviousInst, LPSTR lps
     Rendering::onRender();
 
     // Loop until we crash.
-    PAINTSTRUCT State;
+    uint32_t Keymodifiers{};
+    PAINTSTRUCT State{};
     while (true)
     {
         // Handle the messages.
@@ -72,11 +73,18 @@ int __stdcall WinMain(HINSTANCE hCurrentInst, HINSTANCE hPreviousInst, LPSTR lps
             }
 
             // Keyboard input.
-            if (Message.message == WM_KEYDOWN)
+            if (Message.message == WM_KEYDOWN || Message.message == WM_KEYUP)
             {
                 switch (Message.wParam)
                 {
-                    case VK_ESCAPE: PostQuitMessage(0); break;
+                    case VK_LSHIFT:
+                    case VK_RSHIFT:
+                    case VK_SHIFT:
+                        Keymodifiers |= 0x01;
+                        break;
+
+                    default:
+                        Input::onKeyclick(Message.wParam, Keymodifiers, Message.message == WM_KEYUP);
                 }
                 continue;
             }
@@ -87,6 +95,14 @@ int __stdcall WinMain(HINSTANCE hCurrentInst, HINSTANCE hPreviousInst, LPSTR lps
                 // Save a timestamp for tracing.
                 Infoprint("Session terminated..");
                 std::terminate();
+            }
+
+            // Mouse-scrolling.
+            if (Message.message == WM_VSCROLL)
+            {
+                if (LOWORD(Message.wParam) == SB_LINEDOWN) Input::onMousescroll(true);
+                if (LOWORD(Message.wParam) == SB_LINEUP) Input::onMousescroll(false);
+                continue;
             }
 
             // Let windows handle the message if we haven't.

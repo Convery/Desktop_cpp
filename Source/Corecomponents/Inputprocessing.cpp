@@ -68,7 +68,6 @@ namespace Input
         Lambda(Rendering::getRootelement(), false);
     }
     void onKeyclick(uint32_t Key, uint32_t Modifier, bool Released) {}
-    void onMousescroll(double PosX, double PosY) {}
     void onMousemove(double PosX, double PosY)
     {
         PosY += gPosY; PosX += gPosX;
@@ -112,6 +111,7 @@ namespace Input
 
         Lambda(Rendering::getRootelement(), false);
     }
+    void onMousescroll(bool Down) {}
 
     // Caller-agnostic interactions.
     void onWindowresize(double Width, double Height)
@@ -163,9 +163,8 @@ namespace Input
     // System-code interaction, assumes single-threaded sync.
     void onKeyclick(uint32_t Key, uint32_t Modifier, bool Released) {}
     void onMouseclick(uint32_t Key, bool Released) {}
-    void onMousescroll(double PosX, double PosY) {}
     void onMousemove(double PosX, double PosY) {}
-    void onInit(double PosX, double PosY) {}
+    void onMousescroll(bool Down) {}
 
     // Caller-agnostic interactions.
     void onWindowresize(double Width, double Height) {}
