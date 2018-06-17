@@ -149,8 +149,8 @@ namespace Rendering
             Line(Color, { Box.x0, Box.y0, Box.x1, Box.y0 });
             Line(Color, { Box.x0, Box.y1, Box.x1, Box.y1 });
 
-            Line(Color, { Box.x0, Box.y0, Box.x0, Box.y1 });
-            Line(Color, { Box.x1, Box.y0, Box.x1, Box.y1 });
+            Line(Color, { Box.x0, Box.y0 + 1, Box.x0, Box.y1 - 1 });
+            Line(Color, { Box.x1, Box.y0 + 1, Box.x1, Box.y1 - 1 });
         }
 
         void Quadgradient(std::vector<rgba_t> Colors, rect_t Box)
@@ -193,8 +193,8 @@ namespace Rendering
             Linegradient(Colors, { Box.x0, Box.y0, Box.x1, Box.y0 });
             Linegradient(Colors, { Box.x0, Box.y1, Box.x1, Box.y1 });
 
-            Linegradient(Colors, { Box.x0, Box.y0, Box.x0, Box.y1 });
-            Linegradient(Colors, { Box.x1, Box.y0, Box.x1, Box.y1 });
+            Linegradient(Colors, { Box.x0, Box.y0 + 1, Box.x0, Box.y1 - 1 });
+            Linegradient(Colors, { Box.x1, Box.y0 + 1, Box.x1, Box.y1 - 1 });
         }
     }
 
