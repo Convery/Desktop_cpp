@@ -196,6 +196,8 @@ namespace Rendering
     std::vector<rgba_t> Creategradient(size_t Steps, rgba_t Color1, rgba_t Color2)
     {
         std::vector<rgba_t> Colors;
+        Color1 = Draw::Normalize(Color1);
+        Color2 = Draw::Normalize(Color2);
 
         for (double i = 0; i < 1; i += (1.0 / (Steps / 2)))
         {
