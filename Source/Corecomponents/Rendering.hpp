@@ -18,6 +18,7 @@ using rgba_t = struct { double r, g, b, a; };
 using rect_t = struct { double x0, y0, x1, y1; };
 
 // A virtual element that's the core of all menus.
+// The state is largely for the system, not user-code.
 struct Element_t
 {
     rect_t Margin{};
@@ -54,9 +55,8 @@ struct Element_t
 namespace Rendering
 {
     // System-code interaction, assumes single-threaded sync.
-    void onInit(double Width, double Height);
     void onPresent(const void *Handle);
-    Element_t *Getroot();
+    Element_t *getRootelement();
     void onRender();
 
     // User-code interaction.
