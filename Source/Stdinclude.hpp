@@ -52,3 +52,7 @@
 #include "Utility/FNV1Hash.hpp"
 #include "Utility/Logfile.hpp"
 #include "Utility/Base64.hpp"
+
+// Our components.
+#include "Corecomponents/Rendering.hpp"
+#include "Corecomponents/Input.hpp"
