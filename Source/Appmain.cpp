@@ -30,7 +30,6 @@ int __stdcall WinMain(HINSTANCE hCurrentInst, HINSTANCE hPreviousInst, LPSTR lps
     Windowclass.hInstance = GetModuleHandleA(NULL);
     Windowclass.hCursor = LoadCursor(NULL, IDC_ARROW);
     Windowclass.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-    Windowclass.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
     Windowclass.lpfnWndProc = [](HWND Handle, UINT Message, WPARAM wParam, LPARAM lParam)
     {
         if (Message == WM_PAINT) return LRESULT(1);
@@ -46,11 +45,14 @@ int __stdcall WinMain(HINSTANCE hCurrentInst, HINSTANCE hPreviousInst, LPSTR lps
         (Displaysize.right - 1200) / 2, (Displaysize.bottom - 600) / 2, 1200, 600, NULL, NULL, Windowclass.hInstance, NULL);
 
     // Cache window properties.
+    ShowWindow(Handle, nCmdShow);
     Input::getWindowposition();
     Input::getWindowsize();
 
-    // Render the first frame and present.
-    ShowWindow(Handle, nCmdShow);
+    // Create the initial scene and render the first frame.
+    Rendering::getRootelement()->Backgroundcolor = { 0x11, 0x11, 0x11, 1 };
+    Rendering::getRootelement()->Boundingbox = { 0, 0, 1200, 600 };
+    Rendering::Menu::Switch("homescreen");
     Rendering::onRender();
 
     // Loop until we crash.
