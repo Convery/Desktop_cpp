@@ -101,10 +101,11 @@ namespace Rendering
         }
         ainline void Setpixel(uint32_t X, uint32_t Y, rgba_t RGBA)
         {
+            if (0.0 == RGBA.a) return;
             if (X >= gWidth || Y >= gHeight) return;
             if (1.0 == RGBA.a) return Setpixel(X, Y, toBGR(Normalize(RGBA)));
 
-            uint32_t Base{ *(uint32_t *)Pixels + Y * uint32_t(gWidth) * 3 + X * 3 };
+            uint32_t Base{ *(uint32_t *)(Pixels + Y * uint32_t(gWidth) * 3 + X * 3) };
             return Setpixel(X, Y, BlendBGR(Base, toBGR(Normalize(RGBA)), RGBA.a));
         }
 
