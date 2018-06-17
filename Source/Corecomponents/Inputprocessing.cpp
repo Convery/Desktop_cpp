@@ -133,7 +133,7 @@ namespace Input
     vec2_t getMouseposition()
     {
         POINT Mouse{}; RECT Window{};
-        GetWindowRect(NULL, &Window);
+        GetWindowRect(GetActiveWindow(), &Window);
         GetCursorPos(&Mouse);
 
         return
