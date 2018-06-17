@@ -46,6 +46,16 @@ void Createtoolbar()
     auto Minbutton = new Element_t("ui.toolbar.min");
     Minbutton->Margin = { 1.83, 0.0, 0.12, 0.9f };
     Minbutton->onRender = Renderbutton;
+    Minbutton->onClicked = [](Element_t *Caller, bool Released) -> bool
+    {
+        static bool Armed; Armed = !Released;
+        if (Armed && Caller->State.Hoover)
+        {
+            Input::Minimize();
+            return true;
+        }
+        return Armed;
+    };
     Toolbar->Children.push_back(Minbutton);
 
     Rootelement->Children.push_back(Toolbar);

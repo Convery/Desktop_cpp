@@ -147,6 +147,10 @@ namespace Input
         gHeight = Window.bottom - Window.top;
         return { double(Window.right - Window.left), double(Window.bottom - Window.top) };
     }
+    void Minimize()
+    {
+        ShowWindow(GetActiveWindow(), SW_MINIMIZE);
+    }
 }
 
 #else
@@ -167,6 +171,7 @@ namespace Input
     vec2_t getWindowposition() { return {}; }
     vec2_t getMouseposition() { return {}; }
     vec2_t getWindowsize() { return {}; }
+    void Minimize() {}
 }
 
 #endif
