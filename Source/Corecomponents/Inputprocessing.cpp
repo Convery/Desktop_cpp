@@ -40,16 +40,11 @@ namespace Input
             bool HitX = (PosX >= Parent->Dimensions.x0 && PosX <= Parent->Dimensions.x1);
             bool HitY = (PosY >= Parent->Dimensions.y0 && PosY <= Parent->Dimensions.y1);
 
-            // See if any children wants to intercept the event.
-            for (const auto &Child : Parent->Children) if (Lambda(Child, !(HitX && HitY))) return true;
-
             // Missed.
-            if (!(HitX && HitY))
-            {
-                Parent->State.Clicked = false;
-                if (Parent->State.Noinput) return false;
-                return Parent->onClicked(Parent, Parent->State.Clicked);
-            }
+            if (!(HitX && HitY)) return Lambda(Parent, true);
+
+            // See if any children wants to intercept the event.
+            for (const auto &Child : Parent->Children) if (Lambda(Child, false)) return true;
 
             // Did the state change?
             if (!!Parent->State.Clicked != !Released)
@@ -58,7 +53,6 @@ namespace Input
                 if (Parent->State.Noinput) return false;
                 return Parent->onClicked(Parent, Parent->State.Clicked);
             }
-
 
             return false;
         };
@@ -90,6 +84,9 @@ namespace Input
             // See if the mouse if inside the dimensions.
             bool HitX = (PosX >= Parent->Dimensions.x0 && PosX <= Parent->Dimensions.x1);
             bool HitY = (PosY >= Parent->Dimensions.y0 && PosY <= Parent->Dimensions.y1);
+
+            // Missed.
+            if (!(HitX && HitY)) return Lambda(Parent, true);
 
             // See if any children wants to intercept the event.
             for (const auto &Child : Parent->Children) if (Lambda(Child, !(HitX && HitY))) return true;
