@@ -29,7 +29,7 @@ namespace Input
                 if (Parent->State.Clicked)
                 {
                     Parent->State.Clicked = false;
-                    if (!Parent->State.Noinput) return false;
+                    if (Parent->State.Noinput) return false;
                     return Parent->onClicked(Parent, Parent->State.Clicked);
                 }
 
@@ -74,7 +74,7 @@ namespace Input
                 if (Parent->State.Hoover)
                 {
                     Parent->State.Hoover = false;
-                    if (!Parent->State.Noinput) return false;
+                    if (Parent->State.Noinput) return false;
                     return Parent->onHoover(Parent, Parent->State.Hoover);
                 }
 
