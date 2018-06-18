@@ -66,15 +66,17 @@ namespace Rendering
     // User-code interaction.
     namespace Draw
     {
-        void Quad(rgba_t Color, rect_t Box);
-        void Line(rgba_t Color, rect_t Box);
-        void Border(rgba_t Color, rect_t Box);
+        // Basic drawing.
+        void Quad(const rgba_t Color, const rect_t Box);
+        void Line(const rgba_t Color, const rect_t Box);
+        void Border(const rgba_t Color, const rect_t Box);
 
-        void Quadgradient(std::vector<rgba_t> Colors, rect_t Box);
-        void Linegradient(std::vector<rgba_t> Colors, rect_t Box);
-        void Bordergradient(std::vector<rgba_t> Colors, rect_t Box);
+        // Gradient drawing.
+        void Quadgradient(const std::vector<rgba_t> Colors, const rect_t Box);
+        void Linegradient(const std::vector<rgba_t> Colors, const rect_t Box);
+        void Bordergradient(const std::vector<rgba_t> Colors, const rect_t Box);
     }
-    std::vector<rgba_t> Creategradient(size_t Steps, rgba_t Color1, rgba_t Color2);
+    std::vector<rgba_t> Creategradient(const size_t Steps, const rgba_t Color1, const rgba_t Color2);
 
     // Scene-management.
     namespace Menu

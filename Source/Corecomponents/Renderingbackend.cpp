@@ -15,10 +15,19 @@ static double lWidth{}, lHeight{};
 
 namespace Rendering
 {
-    static vec2_t Resolution{ 1280, 720 };
+    #pragma pack(1)
+    struct Pixel_t
+    {
+        uint8_t R;
+        uint8_t G;
+        uint8_t B;
+    };
+    #pragma pack()
+
+    constexpr vec2_t Resolution{ 1280, 720 };
     static HDC Surfacecontext{};
     static HBITMAP Surface{};
-    static uint8_t *Pixels{};
+    static Pixel_t *Pixels{};
 
     // System-code interaction, assumes single-threaded sync.
     void onPresent(const void *Handle)
@@ -80,78 +89,113 @@ namespace Rendering
     // User-code interaction.
     namespace Draw
     {
-        // Windows wants to use BGR.
-        ainline uint32_t toBGR(rgba_t Color)
+        // Windows wants to use RGB.
+        ainline Pixel_t fromRGBA(const rgba_t Color)
         {
-            return uint32_t
+            return
             {
-                uint32_t(Color.r) << 16 |
-                uint32_t(Color.g) << 8 |
-                uint32_t(Color.b)
+                uint8_t(Color.r <= 1 ? Color.r * 255 : Color.r),
+                uint8_t(Color.g <= 1 ? Color.g * 255 : Color.g),
+                uint8_t(Color.b <= 1 ? Color.b * 255 : Color.b)
             };
         }
-        ainline rgba_t Normalize(rgba_t Input)
+        ainline Pixel_t Blend(const Pixel_t Base, const Pixel_t Overlay, const double Alpha)
         {
-            if (Input.r <= 1) Input.r *= 255;
-            if (Input.g <= 1) Input.g *= 255;
-            if (Input.b <= 1) Input.b *= 255;
-            Input.a = std::clamp(Input.a, 0.0, 1.0);
-            return Input;
-        }
-        ainline uint32_t BlendBGR(uint32_t Base, uint32_t Input, double Alpha)
-        {
-            uint32_t Blended{};
-            ((uint8_t *)&Blended)[0] = (((uint8_t *)&Base)[0] * (1.0f - Alpha)) + ((uint8_t *)&Input)[0] * Alpha;
-            ((uint8_t *)&Blended)[1] = (((uint8_t *)&Base)[1] * (1.0f - Alpha)) + ((uint8_t *)&Input)[1] * Alpha;
-            ((uint8_t *)&Blended)[2] = (((uint8_t *)&Base)[2] * (1.0f - Alpha)) + ((uint8_t *)&Input)[2] * Alpha;
-            return Blended;
-        }
-        ainline void Setpixel(uint32_t X, uint32_t Y, uint32_t BGR)
-        {
-            if (X >= Resolution.x || Y >= Resolution.y) return;
-            std::memcpy(Pixels + Y * uint32_t(Resolution.x) * 3 + X * 3, &BGR, 3);
-        }
-        ainline void Setpixel(uint32_t X, uint32_t Y, rgba_t RGBA)
-        {
-            if (0.0 == RGBA.a) return;
-            if (X >= Resolution.x || Y >= Resolution.y) return;
-            if (1.0 == RGBA.a) return Setpixel(X, Y, toBGR(Normalize(RGBA)));
-
-            uint32_t Base{ *(uint32_t *)(Pixels + Y * uint32_t(Resolution.x) * 3 + X * 3) };
-            return Setpixel(X, Y, BlendBGR(Base, toBGR(Normalize(RGBA)), RGBA.a));
-        }
-
-        void Quad(rgba_t Color, rect_t Box)
-        {
-            for (uint32_t Y = std::max(Box.y0, 0.0); Y < std::min(Box.y1, Resolution.y); ++Y)
+            return
             {
-                for (uint32_t X = std::max(Box.x0, 0.0); X < std::min(Box.x1, Resolution.x); ++X)
+                uint8_t(Base.B * (1.0 - Alpha) + Overlay.B * Alpha),
+                uint8_t(Base.G * (1.0 - Alpha) + Overlay.G * Alpha),
+                uint8_t(Base.R * (1.0 - Alpha) + Overlay.R * Alpha)
+            };
+        }
+        ainline void Setpixel(const Pixel_t Input, const size_t X, const size_t Y, const double Alpha)
+        {
+            Pixels[Y * size_t(Resolution.x) + X] = Blend(Pixels[Y * size_t(Resolution.x - 1) + X], Input, Alpha);
+        }
+        ainline void Blendedfill(const Pixel_t Input, const rect_t Box, const double Alpha)
+        {
+            for (size_t Y = std::clamp(Box.y0, -1.0, Resolution.y - 1); Y <= std::clamp(Box.y1, -1.0, Resolution.y - 1); ++Y)
+            {
+                for (size_t X = std::clamp(Box.x0, -1.0, Resolution.x - 1); X <= std::clamp(Box.x1, -1.0, Resolution.x - 1); ++X)
                 {
-                    Setpixel(X, Y, Color);
+                    if (X > 0 && Y > 0) Pixels[Y * size_t(Resolution.x) + X] = Blend(Pixels[Y * size_t(Resolution.x) + X], Input, Alpha);
                 }
             }
         }
-        void Line(rgba_t Color, rect_t Box)
+        ainline void Setpixel(const Pixel_t Input, const size_t X, const size_t Y)
         {
-            double DeltaX{ Box.x1 - Box.x0 };
-            double DeltaY{ Box.y1 - Box.y0 };
-
-            if (std::abs(DeltaX) > std::abs(DeltaY))
+            Pixels[Y * size_t(Resolution.x) + X] = Input;
+        }
+        ainline void Solidfill(const Pixel_t Input, const rect_t Box)
+        {
+            for (size_t Y = std::clamp(Box.y0, -1.0, Resolution.y - 1); Y <= std::clamp(Box.y1, -1.0, Resolution.y - 1); ++Y)
             {
-                for (uint32_t x = std::max(std::min(Box.x0, Box.x1), 0.0); x <= std::min(std::max(Box.x0, Box.x1), Resolution.x); ++x)
+                for (size_t X = std::clamp(Box.x0, -1.0, Resolution.x - 1); X <= std::clamp(Box.x1, -1.0, Resolution.x - 1); ++X)
                 {
-                    Setpixel(x, (Box.y0 + ((x - Box.x0) * (DeltaY / DeltaX))), Color);
+                    if (X > 0 && Y > 0) Pixels[Y * size_t(Resolution.x) + X] = Input;
+                }
+            }
+        }
+
+        // Basic drawing.
+        void Quad(const rgba_t Color, const rect_t Box)
+        {
+            if (Color.a == 0.0) return;
+            if (Color.a == 1.0) Solidfill(fromRGBA(Color), Box);
+            else return Blendedfill(fromRGBA(Color), Box, Color.a);
+        }
+        void Line(const rgba_t Color, const rect_t Box)
+        {
+            if (Color.a == 0.0) return;
+
+            const auto DeltaX{ Box.x1 - Box.x0 };
+            const auto DeltaY{ Box.y1 - Box.y0 };
+            const auto Pixel{ fromRGBA(Color) };
+
+            // Straight line.
+            if (DeltaX == 0.0 || DeltaY == 0.0) return Solidfill(fromRGBA(Color), Box);
+
+            // Slope down.
+            if (DeltaX > DeltaY)
+            {
+                const auto K{ DeltaY / DeltaX };
+
+                if (Color.a == 1.0)
+                {
+                    for (size_t X = std::clamp(Box.x0, -1.0, Resolution.x - 1); X <= std::clamp(Box.x1, -1.0, Resolution.x - 1); ++X)
+                    {
+                        if (X > 0 && Box.y0 + (X - Box.x0) * K > 0) Setpixel(Pixel, X, Box.y0 + (X - Box.x0) * K);
+                    }
+                }
+                else
+                {
+                    for (size_t X = std::clamp(Box.x0, -1.0, Resolution.x - 1); X <= std::clamp(Box.x1, -1.0, Resolution.x - 1); ++X)
+                    {
+                        if (X > 0 && Box.y0 + (X - Box.x0) * K > 0) Setpixel(Pixel, X, Box.y0 + (X - Box.x0) * K, Color.a);
+                    }
                 }
             }
             else
             {
-                for (uint32_t y = std::max(std::min(Box.y0, Box.y1), 0.0); y <= std::min(std::max(Box.y0, Box.y1), Resolution.y); ++y)
+                const auto K{ DeltaX / DeltaY };
+
+                if (Color.a == 1.0)
                 {
-                    Setpixel((Box.x0 + ((y - Box.y0) * (DeltaX / DeltaY))), y, Color);
+                    for (size_t Y = std::clamp(Box.y0, -1.0, Resolution.y - 1); Y <= std::clamp(Box.y1, -1.0, Resolution.y - 1); ++Y)
+                    {
+                        if (Box.x0 + (Y - Box.x0) * K > 0 && Y > 0) Setpixel(Pixel, Box.x0 + (Y - Box.x0) * K, Y);
+                    }
+                }
+                else
+                {
+                    for (size_t Y = std::clamp(Box.y0, -1.0, Resolution.y - 1); Y <= std::clamp(Box.y1, -1.0, Resolution.y - 1); ++Y)
+                    {
+                        if (Box.x0 + (Y - Box.x0) * K > 0 && Y > 0) Setpixel(Pixel, Box.x0 + (Y - Box.x0) * K, Y, Color.a);
+                    }
                 }
             }
         }
-        void Border(rgba_t Color, rect_t Box)
+        void Border(const rgba_t Color, const rect_t Box)
         {
             Line(Color, { Box.x0, Box.y0, Box.x1, Box.y0 });
             Line(Color, { Box.x0, Box.y1, Box.x1, Box.y1 });
@@ -160,42 +204,62 @@ namespace Rendering
             Line(Color, { Box.x1, Box.y0 + 1, Box.x1, Box.y1 - 1 });
         }
 
-        void Quadgradient(std::vector<rgba_t> Colors, rect_t Box)
+        // Gradient drawing.
+        void Quadgradient(const std::vector<rgba_t> Colors, const rect_t Box)
         {
-            auto Colorsize{ Colors.size() };
+            size_t Colorcount{ Colors.size() };
+            std::vector<Pixel_t> Pixel;
+            Pixel.reserve(Colorcount);
             size_t Colorindex{};
 
-            for (uint32_t Y = std::max(Box.y0, 0.0); Y < std::min(Box.y1, Resolution.y); ++Y)
+            // Use the Windows format of the pixels.
+            for (const auto &Item : Colors) Pixel.push_back(fromRGBA(Item));
+
+            for (size_t Y = std::clamp(Box.y0, -1.0, Resolution.y - 1); Y <= std::clamp(Box.y1, -1.0, Resolution.y - 1); ++Y)
             {
-                for (uint32_t X = std::max(Box.x0, 0.0); X < std::min(Box.x1, Resolution.x); ++X)
+                for (size_t X = std::clamp(Box.x0, -1.0, Resolution.x - 1); X <= std::clamp(Box.x1, -1.0, Resolution.x - 1); ++X)
                 {
-                    Setpixel(X, Y, Colors[Colorindex++ % Colorsize]);
+                    if (X > 0 && Y > 0) Setpixel(Pixel[Colorindex++ % Colorcount], X, Y);
                 }
             }
         }
-        void Linegradient(std::vector<rgba_t> Colors, rect_t Box)
+        void Linegradient(const std::vector<rgba_t> Colors, const rect_t Box)
         {
-            double DeltaX{ Box.x1 - Box.x0 };
-            double DeltaY{ Box.y1 - Box.y0 };
-            auto Colorsize{ Colors.size() };
+            const auto DeltaX{ Box.x1 - Box.x0 };
+            const auto DeltaY{ Box.y1 - Box.y0 };
+
+            // Straight line.
+            if (DeltaX == 0.0 || DeltaY == 0.0) return Quadgradient(Colors, Box);
+
+            size_t Colorcount{ Colors.size() };
+            std::vector<Pixel_t> Pixel;
+            Pixel.reserve(Colorcount);
             size_t Colorindex{};
 
-            if (std::abs(DeltaX) > std::abs(DeltaY))
+            // Use the Windows format of the pixels.
+            for (const auto &Item : Colors) Pixel.push_back(fromRGBA(Item));
+
+            // Slope down.
+            if (DeltaX > DeltaY)
             {
-                for (uint32_t x = std::max(std::min(Box.x0, Box.x1), 0.0); x <= std::min(std::max(Box.x0, Box.x1), Resolution.x); ++x)
+                const auto K{ DeltaY / DeltaX };
+
+                for (size_t X = std::clamp(Box.x0, -1.0, Resolution.x - 1); X <= std::clamp(Box.x1, -1.0, Resolution.x - 1); ++X)
                 {
-                    Setpixel(x, (Box.y0 + ((x - Box.x0) * (DeltaY / DeltaX))), Colors[Colorindex++ % Colorsize]);
+                    if (X > 0 && Box.y0 + (X - Box.x0) * K > 0) Setpixel(Pixel[Colorindex++ % Colorcount], X, Box.y0 + (X - Box.x0) * K);
                 }
             }
             else
             {
-                for (uint32_t y = std::max(std::min(Box.y0, Box.y1), 0.0); y <= std::min(std::max(Box.y0, Box.y1), Resolution.y); ++y)
+                const auto K{ DeltaX / DeltaY };
+
+                for (size_t Y = std::clamp(Box.y0, -1.0, Resolution.y - 1); Y <= std::clamp(Box.y1, -1.0, Resolution.y - 1); ++Y)
                 {
-                    Setpixel((Box.x0 + ((y - Box.y0) * (DeltaX / DeltaY))), y,  Colors[Colorindex++ % Colorsize]);
+                    if (Box.x0 + (Y - Box.x0) * K > 0 && Y > 0) Setpixel(Pixel[Colorindex++ % Colorcount], Box.x0 + (Y - Box.x0) * K, Y);
                 }
             }
         }
-        void Bordergradient(std::vector<rgba_t> Colors, rect_t Box)
+        void Bordergradient(const std::vector<rgba_t> Colors, const rect_t Box)
         {
             Linegradient(Colors, { Box.x0, Box.y0, Box.x1, Box.y0 });
             Linegradient(Colors, { Box.x0, Box.y1, Box.x1, Box.y1 });
@@ -205,18 +269,22 @@ namespace Rendering
         }
     }
 
-    std::vector<rgba_t> Creategradient(size_t Steps, rgba_t Color1, rgba_t Color2)
+    std::vector<rgba_t> Creategradient(const size_t Steps, const rgba_t Color1, const rgba_t Color2)
     {
         std::vector<rgba_t> Colors;
-        Color1 = Draw::Normalize(Color1);
-        Color2 = Draw::Normalize(Color2);
+        Colors.reserve(Steps);
 
+        // Normalize the colors.
+        const rgba_t ColorA{ Color1.b <= 1 ? Color1.b * 255 : Color1.b, Color1.g <= 1 ? Color1.g * 255 : Color1.g, Color1.r <= 1 ? Color1.r * 255 : Color1.r };
+        const rgba_t ColorB{ Color2.b <= 1 ? Color2.b * 255 : Color2.b, Color2.g <= 1 ? Color2.g * 255 : Color2.g, Color2.r <= 1 ? Color2.r * 255 : Color2.r };
+
+        // Generate half the steps from each direction.
         for (double i = 0; i < 1; i += (1.0 / (Steps / 2)))
         {
             rgba_t Blended;
-            Blended.r = (Color1.r / 255 * i) + (Color2.r / 255 * (1 - i));
-            Blended.g = (Color1.g / 255 * i) + (Color2.g / 255 * (1 - i));
-            Blended.b = (Color1.b / 255 * i) + (Color2.b / 255 * (1 - i));
+            Blended.r = (ColorA.r / 255 * i) + (ColorB.r / 255 * (1 - i));
+            Blended.g = (ColorA.g / 255 * i) + (ColorB.g / 255 * (1 - i));
+            Blended.b = (ColorA.b / 255 * i) + (ColorB.b / 255 * (1 - i));
             Blended.a = 1;
 
             Colors.push_back(Blended);
@@ -224,9 +292,9 @@ namespace Rendering
         for (double i = 0; i < 1; i += (1.0 / (Steps / 2)))
         {
             rgba_t Blended;
-            Blended.r = (Color2.r / 255 * i) + (Color1.r / 255 * (1 - i));
-            Blended.g = (Color2.g / 255 * i) + (Color1.g / 255 * (1 - i));
-            Blended.b = (Color2.b / 255 * i) + (Color1.b / 255 * (1 - i));
+            Blended.r = (ColorB.r / 255 * i) + (ColorA.r / 255 * (1 - i));
+            Blended.g = (ColorB.g / 255 * i) + (ColorA.g / 255 * (1 - i));
+            Blended.b = (ColorB.b / 255 * i) + (ColorA.b / 255 * (1 - i));
             Blended.a = 1;
 
             Colors.push_back(Blended);
