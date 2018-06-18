@@ -114,9 +114,9 @@ namespace Rendering
         }
         ainline void Blendedfill(const Pixel_t Input, const rect_t Box, const double Alpha)
         {
-            for (size_t Y = std::clamp(Box.y0, -1.0, Resolution.y - 1); Y <= std::clamp(Box.y1, -1.0, Resolution.y - 1); ++Y)
+            for (int64_t Y = std::clamp(Box.y0, -1.0, Resolution.y - 1); Y <= std::clamp(Box.y1, -1.0, Resolution.y - 1); ++Y)
             {
-                for (size_t X = std::clamp(Box.x0, -1.0, Resolution.x - 1); X <= std::clamp(Box.x1, -1.0, Resolution.x - 1); ++X)
+                for (int64_t X = std::clamp(Box.x0, -1.0, Resolution.x - 1); X <= std::clamp(Box.x1, -1.0, Resolution.x - 1); ++X)
                 {
                     if (X >= 0 && Y >= 0) Pixels[Y * size_t(Resolution.x) + X] = Blend(Pixels[Y * size_t(Resolution.x) + X], Input, Alpha);
                 }
@@ -128,9 +128,9 @@ namespace Rendering
         }
         ainline void Solidfill(const Pixel_t Input, const rect_t Box)
         {
-            for (size_t Y = std::clamp(Box.y0, -1.0, Resolution.y - 1); Y <= std::clamp(Box.y1, -1.0, Resolution.y - 1); ++Y)
+            for (int64_t Y = std::clamp(Box.y0, -1.0, Resolution.y - 1); Y <= std::clamp(Box.y1, -1.0, Resolution.y - 1); ++Y)
             {
-                for (size_t X = std::clamp(Box.x0, -1.0, Resolution.x - 1); X <= std::clamp(Box.x1, -1.0, Resolution.x - 1); ++X)
+                for (int64_t X = std::clamp(Box.x0, -1.0, Resolution.x - 1); X <= std::clamp(Box.x1, -1.0, Resolution.x - 1); ++X)
                 {
                     if (X >= 0 && Y >= 0) Pixels[Y * size_t(Resolution.x) + X] = Input;
                 }
@@ -162,14 +162,14 @@ namespace Rendering
 
                 if (Color.a == 1.0)
                 {
-                    for (size_t X = std::clamp(Box.x0, -1.0, Resolution.x - 1); X <= std::clamp(Box.x1, -1.0, Resolution.x - 1); ++X)
+                    for (int64_t X = std::clamp(Box.x0, -1.0, Resolution.x - 1); X <= std::clamp(Box.x1, -1.0, Resolution.x - 1); ++X)
                     {
                         if (X >= 0 && Box.y0 + (X - Box.x0) * K > 0) Setpixel(Pixel, X, Box.y0 + (X - Box.x0) * K);
                     }
                 }
                 else
                 {
-                    for (size_t X = std::clamp(Box.x0, -1.0, Resolution.x - 1); X <= std::clamp(Box.x1, -1.0, Resolution.x - 1); ++X)
+                    for (int64_t X = std::clamp(Box.x0, -1.0, Resolution.x - 1); X <= std::clamp(Box.x1, -1.0, Resolution.x - 1); ++X)
                     {
                         if (X >= 0 && Box.y0 + (X - Box.x0) * K > 0) Setpixel(Pixel, X, Box.y0 + (X - Box.x0) * K, Color.a);
                     }
@@ -181,14 +181,14 @@ namespace Rendering
 
                 if (Color.a == 1.0)
                 {
-                    for (size_t Y = std::clamp(Box.y0, -1.0, Resolution.y - 1); Y <= std::clamp(Box.y1, -1.0, Resolution.y - 1); ++Y)
+                    for (int64_t Y = std::clamp(Box.y0, -1.0, Resolution.y - 1); Y <= std::clamp(Box.y1, -1.0, Resolution.y - 1); ++Y)
                     {
                         if (Box.x0 + (Y - Box.x0) * K > 0 && Y >= 0) Setpixel(Pixel, Box.x0 + (Y - Box.x0) * K, Y);
                     }
                 }
                 else
                 {
-                    for (size_t Y = std::clamp(Box.y0, -1.0, Resolution.y - 1); Y <= std::clamp(Box.y1, -1.0, Resolution.y - 1); ++Y)
+                    for (int64_t Y = std::clamp(Box.y0, -1.0, Resolution.y - 1); Y <= std::clamp(Box.y1, -1.0, Resolution.y - 1); ++Y)
                     {
                         if (Box.x0 + (Y - Box.x0) * K > 0 && Y >= 0) Setpixel(Pixel, Box.x0 + (Y - Box.x0) * K, Y, Color.a);
                     }
@@ -215,9 +215,9 @@ namespace Rendering
             // Use the Windows format of the pixels.
             for (const auto &Item : Colors) Pixel.push_back(fromRGBA(Item));
 
-            for (size_t Y = std::clamp(Box.y0, -1.0, Resolution.y - 1); Y <= std::clamp(Box.y1, -1.0, Resolution.y - 1); ++Y)
+            for (int64_t Y = std::clamp(Box.y0, -1.0, Resolution.y - 1); Y <= std::clamp(Box.y1, -1.0, Resolution.y - 1); ++Y)
             {
-                for (size_t X = std::clamp(Box.x0, -1.0, Resolution.x - 1); X <= std::clamp(Box.x1, -1.0, Resolution.x - 1); ++X)
+                for (int64_t X = std::clamp(Box.x0, -1.0, Resolution.x - 1); X <= std::clamp(Box.x1, -1.0, Resolution.x - 1); ++X)
                 {
                     if (X >= 0 && Y >= 0) Setpixel(Pixel[Colorindex++ % Colorcount], X, Y);
                 }
@@ -244,7 +244,7 @@ namespace Rendering
             {
                 const auto K{ DeltaY / DeltaX };
 
-                for (size_t X = std::clamp(Box.x0, -1.0, Resolution.x - 1); X <= std::clamp(Box.x1, -1.0, Resolution.x - 1); ++X)
+                for (int64_t X = std::clamp(Box.x0, -1.0, Resolution.x - 1); X <= std::clamp(Box.x1, -1.0, Resolution.x - 1); ++X)
                 {
                     if (X >= 0 && Box.y0 + (X - Box.x0) * K > 0) Setpixel(Pixel[Colorindex++ % Colorcount], X, Box.y0 + (X - Box.x0) * K);
                 }
@@ -253,7 +253,7 @@ namespace Rendering
             {
                 const auto K{ DeltaX / DeltaY };
 
-                for (size_t Y = std::clamp(Box.y0, -1.0, Resolution.y - 1); Y <= std::clamp(Box.y1, -1.0, Resolution.y - 1); ++Y)
+                for (int64_t Y = std::clamp(Box.y0, -1.0, Resolution.y - 1); Y <= std::clamp(Box.y1, -1.0, Resolution.y - 1); ++Y)
                 {
                     if (Box.x0 + (Y - Box.x0) * K > 0 && Y >= 0) Setpixel(Pixel[Colorindex++ % Colorcount], Box.x0 + (Y - Box.x0) * K, Y);
                 }
