@@ -172,7 +172,7 @@ void Createtoolbar()
     Toolbar->Children.push_back(Maxbutton);
 
     auto Minbutton = new Element_t("ui.toolbar.min");
-    Minbutton->Margin = { 1.837, 0.0, 0.1125, 0.6 };
+    Minbutton->Margin = { 1.837, 0.0, 0.114, 0.6 };
     Minbutton->onRender = Renderbutton;
     Minbutton->onClicked = [](Element_t *Caller, bool Released) -> bool
     {

@@ -43,6 +43,13 @@ int __stdcall WinMain(HINSTANCE hCurrentInst, HINSTANCE hPreviousInst, LPSTR lps
     // Create the window.
     auto Handle = CreateWindowExA(WS_EX_APPWINDOW, "Desktop_cpp", "", WS_POPUP,
         (Displaysize.right - 1280) / 2, (Displaysize.bottom - 720) / 2, 1280, 720, NULL, NULL, Windowclass.hInstance, NULL);
+
+    // Set up the input-handling.
+    TRACKMOUSEEVENT Track{};
+    Track.cbSize = sizeof(TRACKMOUSEEVENT);
+    Track.dwFlags = TME_LEAVE;
+    Track.hwndTrack = Handle;
+    TrackMouseEvent(&Track);
     Input::onInit(Handle);
 
     // Cache window properties.
@@ -90,6 +97,7 @@ int __stdcall WinMain(HINSTANCE hCurrentInst, HINSTANCE hPreviousInst, LPSTR lps
         if (Message.message == WM_MOUSEMOVE)
         {
             Input::onMousemove(GET_X_LPARAM(Message.lParam), GET_Y_LPARAM(Message.lParam));
+            TrackMouseEvent(&Track);
             continue;
         }
         if (Message.message == WM_LBUTTONDOWN || Message.message == WM_LBUTTONUP)
@@ -105,6 +113,12 @@ int __stdcall WinMain(HINSTANCE hCurrentInst, HINSTANCE hPreviousInst, LPSTR lps
         if (Message.message == WM_MOUSEWHEEL)
         {
             Input::onMousescroll(GET_WHEEL_DELTA_WPARAM(Message.wParam) < 0);
+            continue;
+        }
+        if (Message.message == WM_MOUSELEAVE)
+        {
+            Input::onMouseclick(90000, 90000, 0, true);
+            Input::onMousemove(90000, 90000);
             continue;
         }
 
