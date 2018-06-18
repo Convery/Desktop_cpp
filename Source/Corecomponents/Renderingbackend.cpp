@@ -18,9 +18,9 @@ namespace Rendering
     #pragma pack(1)
     struct Pixel_t
     {
-        uint8_t R;
-        uint8_t G;
         uint8_t B;
+        uint8_t G;
+        uint8_t R;
     };
     #pragma pack()
 
@@ -89,14 +89,14 @@ namespace Rendering
     // User-code interaction.
     namespace Draw
     {
-        // Windows wants to use RGB.
+        // Windows wants to use BGR.
         ainline Pixel_t fromRGBA(const rgba_t Color)
         {
             return
             {
-                uint8_t(Color.r <= 1 ? Color.r * 255 : Color.r),
+                uint8_t(Color.b <= 1 ? Color.b * 255 : Color.b),
                 uint8_t(Color.g <= 1 ? Color.g * 255 : Color.g),
-                uint8_t(Color.b <= 1 ? Color.b * 255 : Color.b)
+                uint8_t(Color.r <= 1 ? Color.r * 255 : Color.r)
             };
         }
         ainline Pixel_t Blend(const Pixel_t Base, const Pixel_t Overlay, const double Alpha)
@@ -275,8 +275,8 @@ namespace Rendering
         Colors.reserve(Steps);
 
         // Normalize the colors.
-        const rgba_t ColorA{ Color1.b <= 1 ? Color1.b * 255 : Color1.b, Color1.g <= 1 ? Color1.g * 255 : Color1.g, Color1.r <= 1 ? Color1.r * 255 : Color1.r };
-        const rgba_t ColorB{ Color2.b <= 1 ? Color2.b * 255 : Color2.b, Color2.g <= 1 ? Color2.g * 255 : Color2.g, Color2.r <= 1 ? Color2.r * 255 : Color2.r };
+        const rgba_t ColorA{ Color1.r <= 1 ? Color1.r * 255 : Color1.r, Color1.g <= 1 ? Color1.g * 255 : Color1.g, Color1.b <= 1 ? Color1.b * 255 : Color1.b };
+        const rgba_t ColorB{ Color2.r <= 1 ? Color2.r * 255 : Color2.r, Color2.g <= 1 ? Color2.g * 255 : Color2.g, Color2.b <= 1 ? Color2.b * 255 : Color2.b };
 
         // Generate half the steps from each direction.
         for (double i = 0; i < 1; i += (1.0 / (Steps / 2)))
