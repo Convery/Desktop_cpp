@@ -189,7 +189,7 @@ void Createtoolbar()
 
     // The icons drawn over the buttons.
     auto Closeicon = new Element_t("ui.toolbar.close.icon");
-    Closeicon->Backgroundcolor = { 0.4, 0.4, 0.4, 0.5 };
+    Closeicon->Backgroundcolor = { 0.4, 0.4, 0.4, 1.0 };
     Closeicon->Margin = { 0.4, 0.4, 0.4, 0.4 };
     Closeicon->onRender = Rendercross;
     Closebutton->Children.push_back(Closeicon);
