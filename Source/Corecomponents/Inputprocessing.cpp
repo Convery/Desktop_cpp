@@ -14,6 +14,8 @@ double gWidth{}, gHeight{}, gPosX{}, gPosY{};
 
 namespace Input
 {
+    HWND Windowhandle{};
+
     // System-code interaction, assumes single-threaded sync.
     void onMouseclick(double PosX, double PosY, uint32_t Key, bool Released)
     {
@@ -30,7 +32,7 @@ namespace Input
                 {
                     Parent->State.Clicked = false;
                     if (Parent->State.Noinput) return false;
-                    return Parent->onClicked(Parent, Parent->State.Clicked);
+                    return Parent->onClicked(Parent, true);
                 }
 
                 return false;
@@ -51,7 +53,7 @@ namespace Input
             {
                 Parent->State.Clicked = !Released;
                 if (Parent->State.Noinput) return false;
-                return Parent->onClicked(Parent, Parent->State.Clicked);
+                return Parent->onClicked(Parent, Released);
             }
 
             return false;
@@ -75,7 +77,7 @@ namespace Input
                 {
                     Parent->State.Hoover = false;
                     if (Parent->State.Noinput) return false;
-                    return Parent->onHoover(Parent, Parent->State.Hoover);
+                    return Parent->onHoover(Parent, !Parent->State.Hoover);
                 }
 
                 return false;
@@ -96,7 +98,7 @@ namespace Input
             {
                 Parent->State.Hoover = HitX && HitY;
                 if (Parent->State.Noinput) return false;
-                return Parent->onHoover(Parent, Parent->State.Hoover);
+                return Parent->onHoover(Parent, !Parent->State.Hoover);
             }
 
             return false;
@@ -110,46 +112,55 @@ namespace Input
     void onWindowresize(double Width, double Height)
     {
         gWidth = Width; gHeight = Height;
-        SetWindowPos(NULL, NULL, gPosX, gPosY, gWidth, gHeight, SWP_NOSENDCHANGING | SWP_NOMOVE);
+        SetWindowPos(Windowhandle, NULL, gPosX, gPosY, gWidth, gHeight, SWP_NOSENDCHANGING | SWP_NOMOVE);
     }
     void onWindowmove(double PosX, double PosY)
     {
         gPosX = PosX; gPosY = PosY;
-        SetWindowPos(NULL, NULL, gPosX, gPosY, gWidth, gHeight, SWP_NOSENDCHANGING | SWP_NOSIZE);
+        SetWindowPos(Windowhandle, NULL, gPosX, gPosY, gWidth, gHeight, SWP_NOSENDCHANGING | SWP_NOSIZE);
+    }
+    void onInit(const void *Handle)
+    {
+        Windowhandle = (HWND)Handle;
     }
 
     // User-code interaction.
     vec2_t getWindowposition()
     {
         RECT Window{};
-        GetWindowRect(GetActiveWindow(), &Window);
-        gPosX = Window.left;
-        gPosY = Window.top;
-        return { double(Window.left), double(Window.top) };
+        if (TRUE == GetWindowRect(Windowhandle, &Window))
+        {
+            gPosX = Window.left;
+            gPosY = Window.top;
+        }
+
+        return { gPosX, gPosY };
     }
     vec2_t getMouseposition()
     {
-        POINT Mouse{}; RECT Window{};
-        GetWindowRect(GetActiveWindow(), &Window);
+        POINT Mouse{};
         GetCursorPos(&Mouse);
 
         return
         {
-            double(std::clamp(Mouse.x + Window.left, 0L, Window.right - Window.left)),
-            double(std::clamp(Mouse.y + Window.top, 0L, Window.bottom - Window.top))
+            double(std::clamp(Mouse.x - gPosX, 0.0, gWidth)),
+            double(std::clamp(Mouse.y - gPosY, 0.0, gHeight))
         };
     }
     vec2_t getWindowsize()
     {
         RECT Window{};
-        GetWindowRect(GetActiveWindow(), &Window);
-        gWidth = Window.right - Window.left;
-        gHeight = Window.bottom - Window.top;
-        return { double(Window.right - Window.left), double(Window.bottom - Window.top) };
+        if (TRUE == GetWindowRect(Windowhandle, &Window))
+        {
+            gWidth = Window.right - Window.left;
+            gHeight = Window.bottom - Window.top;
+        }
+
+        return { gWidth, gHeight };
     }
     void Minimize()
     {
-        ShowWindow(GetActiveWindow(), SW_MINIMIZE);
+        ShowWindow(Windowhandle, SW_MINIMIZE);
     }
 }
 
@@ -166,6 +177,7 @@ namespace Input
     // Caller-agnostic interactions.
     void onWindowresize(double Width, double Height) {}
     void onWindowmove(double PosX, double PosY) {}
+    void onInit(const void *Handle) {}
 
     // User-code interaction.
     vec2_t getWindowposition() { return {}; }

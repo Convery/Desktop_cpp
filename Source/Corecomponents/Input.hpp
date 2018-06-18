@@ -23,6 +23,7 @@ namespace Input
     // Caller-agnostic interactions.
     void onWindowresize(double Width, double Height);
     void onWindowmove(double PosX, double PosY);
+    void onInit(const void *Handle);
 
     // User-code interaction.
     vec2_t getWindowposition();
