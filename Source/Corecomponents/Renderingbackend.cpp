@@ -15,7 +15,7 @@ static double lWidth{}, lHeight{};
 
 namespace Rendering
 {
-    static vec2_t Resolution{ 1200, 600 };
+    static vec2_t Resolution{ 1280, 720 };
     static HDC Surfacecontext{};
     static HBITMAP Surface{};
     static uint8_t *Pixels{};

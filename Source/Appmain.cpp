@@ -42,7 +42,7 @@ int __stdcall WinMain(HINSTANCE hCurrentInst, HINSTANCE hPreviousInst, LPSTR lps
 
     // Create the window.
     auto Handle = CreateWindowExA(WS_EX_APPWINDOW, "Desktop_cpp", "", WS_POPUP,
-        (Displaysize.right - 1200) / 2, (Displaysize.bottom - 600) / 2, 1200, 600, NULL, NULL, Windowclass.hInstance, NULL);
+        (Displaysize.right - 1280) / 2, (Displaysize.bottom - 720) / 2, 1280, 720, NULL, NULL, Windowclass.hInstance, NULL);
     Input::onInit(Handle);
 
     // Cache window properties.

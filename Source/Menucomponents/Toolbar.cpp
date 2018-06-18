@@ -35,12 +35,13 @@ static void Rendercross(Element_t *Caller)
 
 void Createtoolbar()
 {
-    static bool Shouldmove{ false };
+    static double lWidth{}, lHeight{}, lPosX{}, lPosY{};
     auto Rootelement{ Rendering::getRootelement() };
+    static bool Shouldmove{ false };
 
     // Bounding box.
     auto Toolbar = new Element_t("ui.toolbar");
-    Toolbar->Margin = { 0, 0, 0, 1.9 };
+    Toolbar->Margin = { 0, 0, 0, 1.95 };
     Toolbar->onRender = [](Element_t *Caller) -> void
     {
         auto Box{ Caller->Renderdimensions }; Box.y0 = Box.y1;
@@ -57,7 +58,6 @@ void Createtoolbar()
             static auto Lastclick{ std::chrono::high_resolution_clock::time_point() };
             if (std::chrono::high_resolution_clock::now() - Lastclick < std::chrono::milliseconds(500))
             {
-                static double lWidth{}, lHeight{}, lPosX{}, lPosY{};
                 static auto Monitorsize{ Input::getMonitorsize() };
                 auto Windowposition = Input::getWindowposition();
                 auto Windowsize = Input::getWindowsize();
@@ -76,7 +76,15 @@ void Createtoolbar()
                     lWidth = Windowsize.x; lHeight = Windowsize.y;
 
                     Input::onWindowresize(Monitorsize.x, Monitorsize.y);
-                    Input::onWindowmove(0, 0);
+
+                    /*
+                    TODO(Convery):
+                    Refactor the work-area into a portable version.
+                */
+
+                    RECT Displaysize{};
+                    SystemParametersInfoA(SPI_GETWORKAREA, 0, &Displaysize, 0);
+                    Input::onWindowmove(Displaysize.left, Displaysize.top);
                 }
 
                 // Hackery.
@@ -110,7 +118,7 @@ void Createtoolbar()
 
     // Top-right buttons.
     auto Closebutton = new Element_t("ui.toolbar.close");
-    Closebutton->Margin = { 1.945, 0.0, 0.005, 0.9 };
+    Closebutton->Margin = { 1.945, 0.0, 0.005, 0.6 };
     Closebutton->onRender = Renderbutton;
     Closebutton->onClicked = [](Element_t *Caller, bool Released) -> bool
     {
@@ -122,14 +130,13 @@ void Createtoolbar()
     Toolbar->Children.push_back(Closebutton);
 
     auto Maxbutton = new Element_t("ui.toolbar.max");
-    Maxbutton->Margin = { 1.891, 0.0, 0.059, 0.9 };
+    Maxbutton->Margin = { 1.891, 0.0, 0.059, 0.6 };
     Maxbutton->onRender = Renderbutton;
     Maxbutton->onClicked = [](Element_t *Caller, bool Released) -> bool
     {
         static bool Armed{ false };
         if (Armed && Caller->State.Hoover)
         {
-            static double lWidth{}, lHeight{}, lPosX{}, lPosY{};
             static auto Monitorsize{ Input::getMonitorsize() };
             auto Windowposition = Input::getWindowposition();
             auto Windowsize = Input::getWindowsize();
@@ -148,7 +155,15 @@ void Createtoolbar()
                 lWidth = Windowsize.x; lHeight = Windowsize.y;
 
                 Input::onWindowresize(Monitorsize.x, Monitorsize.y);
-                Input::onWindowmove(0, 0);
+
+                /*
+                    TODO(Convery):
+                    Refactor the work-area into a portable version.
+                */
+
+                RECT Displaysize{};
+                SystemParametersInfoA(SPI_GETWORKAREA, 0, &Displaysize, 0);
+                Input::onWindowmove(Displaysize.left, Displaysize.top);
             }
         }
         Armed = !Released;
@@ -157,7 +172,7 @@ void Createtoolbar()
     Toolbar->Children.push_back(Maxbutton);
 
     auto Minbutton = new Element_t("ui.toolbar.min");
-    Minbutton->Margin = { 1.837, 0.0, 0.1125, 0.9 };
+    Minbutton->Margin = { 1.837, 0.0, 0.1125, 0.6 };
     Minbutton->onRender = Renderbutton;
     Minbutton->onClicked = [](Element_t *Caller, bool Released) -> bool
     {
