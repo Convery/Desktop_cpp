@@ -7,6 +7,7 @@
 */
 
 #pragma once
+#include "Input.hpp"
 #include <functional>
 #include <cstdint>
 #include <string>
@@ -22,8 +23,10 @@ using rect_t = struct { double x0, y0, x1, y1; };
 struct Element_t
 {
     rect_t Margin{};
-    rect_t Dimensions{};
+    rect_t Renderbox{};
     rect_t Boundingbox{};
+    rect_t Worlddimensions{};
+    rect_t Renderdimensions{};
     std::string Identifier;
     struct
     {
@@ -57,6 +60,7 @@ namespace Rendering
     // System-code interaction, assumes single-threaded sync.
     void onPresent(const void *Handle);
     Element_t *getRootelement();
+    vec2_t getResolution();
     void onRender();
 
     // User-code interaction.

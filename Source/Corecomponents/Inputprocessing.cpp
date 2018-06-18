@@ -39,8 +39,8 @@ namespace Input
             }
 
             // See if the mouse if inside the dimensions.
-            bool HitX = (PosX >= Parent->Dimensions.x0 && PosX <= Parent->Dimensions.x1);
-            bool HitY = (PosY >= Parent->Dimensions.y0 && PosY <= Parent->Dimensions.y1);
+            bool HitX = (PosX >= Parent->Worlddimensions.x0 && PosX <= Parent->Worlddimensions.x1);
+            bool HitY = (PosY >= Parent->Worlddimensions.y0 && PosY <= Parent->Worlddimensions.y1);
 
             // Missed.
             if (!(HitX && HitY)) return Lambda(Parent, true);
@@ -84,8 +84,8 @@ namespace Input
             }
 
             // See if the mouse if inside the dimensions.
-            bool HitX = (PosX >= Parent->Dimensions.x0 && PosX <= Parent->Dimensions.x1);
-            bool HitY = (PosY >= Parent->Dimensions.y0 && PosY <= Parent->Dimensions.y1);
+            bool HitX = (PosX >= Parent->Worlddimensions.x0 && PosX <= Parent->Worlddimensions.x1);
+            bool HitY = (PosY >= Parent->Worlddimensions.y0 && PosY <= Parent->Worlddimensions.y1);
 
             // Missed.
             if (!(HitX && HitY)) return Lambda(Parent, true);
@@ -147,6 +147,12 @@ namespace Input
             double(std::clamp(Mouse.y - gPosY, 0.0, gHeight))
         };
     }
+    vec2_t getMonitorsize()
+    {
+        RECT Displaysize{};
+        SystemParametersInfoA(SPI_GETWORKAREA, 0, &Displaysize, 0);
+        return { double(Displaysize.right - Displaysize.left), double(Displaysize.bottom - Displaysize.top) };
+    }
     vec2_t getWindowsize()
     {
         RECT Window{};
@@ -182,6 +188,7 @@ namespace Input
     // User-code interaction.
     vec2_t getWindowposition() { return {}; }
     vec2_t getMouseposition() { return {}; }
+    vec2_t getMonitorsize() { return {}; }
     vec2_t getWindowsize() { return {}; }
     void Minimize() {}
 }

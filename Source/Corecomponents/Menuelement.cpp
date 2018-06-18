@@ -46,11 +46,9 @@ namespace Rendering
 }
 
 // Default callbacks for the elements.
-void Recalculateboxes(Element_t *Caller)
+rect_t Createbox(rect_t Boundingbox, rect_t Margin)
 {
-    const auto &Boundingbox = Caller->Boundingbox;
-    auto &Dimensions = Caller->Dimensions;
-    const auto &Margin = Caller->Margin;
+    rect_t Dimensions;
 
     // Calculate the dimensions.
     double Width = std::abs(Boundingbox.x1 - Boundingbox.x0) / 2;
@@ -60,30 +58,25 @@ void Recalculateboxes(Element_t *Caller)
     Dimensions.y0 = std::round(Boundingbox.y0 + Height * Margin.y0);
     Dimensions.y1 = std::round(Boundingbox.y1 - Height * Margin.y1);
 
-    // Swap the values if needed.
-    if (Dimensions.x0 > Dimensions.x1)
-    {
-        double Temp{ Dimensions.x0 };
-        Dimensions.x0 = Dimensions.x0;
-        Dimensions.x1 = Temp;
-    }
-    if (Dimensions.y0 > Dimensions.y1)
-    {
-        double Temp{ Dimensions.y0 };
-        Dimensions.y0 = Dimensions.y0;
-        Dimensions.y1 = Temp;
-    }
+    return Dimensions;
+}
+void Recalculateboxes(Element_t *Caller)
+{
+    static auto Resolution{ Rendering::getResolution() };
+    Caller->Renderdimensions = Createbox(Caller->Renderbox, Caller->Margin);
+    Caller->Worlddimensions = Createbox(Caller->Boundingbox, Caller->Margin);
 
     // Recalculate all children as well.
     for (const auto &Item : Caller->Children)
     {
-        Item->Boundingbox = Dimensions;
+        Item->Boundingbox = Caller->Worlddimensions;
+        Item->Renderbox = Caller->Renderdimensions;
         Item->onModifiedstate(Item);
     }
 }
 void Renderelement(Element_t *Caller)
 {
-    if(!Caller->State.Hidden) Rendering::Draw::Quad(Caller->Backgroundcolor, Caller->Dimensions);
+    if(!Caller->State.Hidden) Rendering::Draw::Quad(Caller->Backgroundcolor, Caller->Renderdimensions);
 }
 
 // Elements require some sort of identifier.

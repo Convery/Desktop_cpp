@@ -13,18 +13,18 @@
 static auto Goldgradient{ Rendering::Creategradient(512, { 255, 255, 168, 1.0f }, { 246, 201, 76, 1.0f }) };
 static void Renderbutton(Element_t *Caller)
 {
-    auto Box{ Caller->Dimensions }; Box.y0 -= 1;
-    if(Caller->State.Hoover) Rendering::Draw::Quadgradient(Goldgradient, Caller->Dimensions);
+    auto Box{ Caller->Renderdimensions }; Box.y0 -= 1;
+    if(Caller->State.Hoover) Rendering::Draw::Quadgradient(Goldgradient, Caller->Renderdimensions);
     Rendering::Draw::Bordergradient(Goldgradient, Box);
 }
 static void Renderbox(Element_t *Caller)
 {
-    auto Box{ Caller->Dimensions }; Box.y0 -= 1;
+    auto Box{ Caller->Renderdimensions }; Box.y0 -= 1;
     Rendering::Draw::Border(Caller->Backgroundcolor, Box);
 }
 static void Rendercross(Element_t *Caller)
 {
-    auto Box{ Caller->Dimensions };
+    auto Box{ Caller->Renderdimensions };
 
     Rendering::Draw::Line(Caller->Backgroundcolor, Box);
     Box.x0 += 1; Box.x1 += 1;
@@ -35,7 +35,6 @@ static void Rendercross(Element_t *Caller)
 
 void Createtoolbar()
 {
-
     static bool Shouldmove{ false };
     auto Rootelement{ Rendering::getRootelement() };
 
@@ -44,13 +43,48 @@ void Createtoolbar()
     Toolbar->Margin = { 0, 0, 0, 1.9 };
     Toolbar->onRender = [](Element_t *Caller) -> void
     {
-        auto Box{ Caller->Dimensions }; Box.y0 = Box.y1;
+        auto Box{ Caller->Renderdimensions }; Box.y0 = Box.y1;
         Rendering::Draw::Linegradient(Goldgradient, Box);
     };
     Toolbar->onClicked = [&](Element_t *Caller, bool Released) -> bool
     {
-        static auto Lastclick{ std::chrono::high_resolution_clock::now() };
+        // Stop moving the window if needed.
         Shouldmove = !Released;
+
+        // Toggle fullscreen on double-click.
+        if (!Released)
+        {
+            static auto Lastclick{ std::chrono::high_resolution_clock::time_point() };
+            if (std::chrono::high_resolution_clock::now() - Lastclick < std::chrono::milliseconds(500))
+            {
+                static double lWidth{}, lHeight{}, lPosX{}, lPosY{};
+                static auto Monitorsize{ Input::getMonitorsize() };
+                auto Windowposition = Input::getWindowposition();
+                auto Windowsize = Input::getWindowsize();
+
+                // Restore the window.
+                if (Windowsize.x == Monitorsize.x && Windowsize.y == Monitorsize.y)
+                {
+                    Input::onWindowresize(lWidth, lHeight);
+                    Input::onWindowmove(lPosX, lPosY);
+                }
+
+                // Fullscreen the window.
+                else
+                {
+                    lPosX = Windowposition.x; lPosY = Windowposition.y;
+                    lWidth = Windowsize.x; lHeight = Windowsize.y;
+
+                    Input::onWindowresize(Monitorsize.x, Monitorsize.y);
+                    Input::onWindowmove(0, 0);
+                }
+
+                // Hackery.
+                Shouldmove = false;
+            }
+
+            Lastclick = std::chrono::high_resolution_clock::now();
+        }
 
         if (Shouldmove)
         {
@@ -90,6 +124,36 @@ void Createtoolbar()
     auto Maxbutton = new Element_t("ui.toolbar.max");
     Maxbutton->Margin = { 1.891, 0.0, 0.059, 0.9 };
     Maxbutton->onRender = Renderbutton;
+    Maxbutton->onClicked = [](Element_t *Caller, bool Released) -> bool
+    {
+        static bool Armed{ false };
+        if (Armed && Caller->State.Hoover)
+        {
+            static double lWidth{}, lHeight{}, lPosX{}, lPosY{};
+            static auto Monitorsize{ Input::getMonitorsize() };
+            auto Windowposition = Input::getWindowposition();
+            auto Windowsize = Input::getWindowsize();
+
+            // Restore the window.
+            if (Windowsize.x == Monitorsize.x && Windowsize.y == Monitorsize.y)
+            {
+                Input::onWindowresize(lWidth, lHeight);
+                Input::onWindowmove(lPosX, lPosY);
+            }
+
+            // Fullscreen the window.
+            else
+            {
+                lPosX = Windowposition.x; lPosY = Windowposition.y;
+                lWidth = Windowsize.x; lHeight = Windowsize.y;
+
+                Input::onWindowresize(Monitorsize.x, Monitorsize.y);
+                Input::onWindowmove(0, 0);
+            }
+        }
+        Armed = !Released;
+        return Armed;
+    };
     Toolbar->Children.push_back(Maxbutton);
 
     auto Minbutton = new Element_t("ui.toolbar.min");

@@ -9,38 +9,39 @@
 #include "../Stdinclude.hpp"
 
 extern double gWidth, gHeight, gPosX, gPosY;
+static double lWidth{}, lHeight{};
 
 #if defined(_WIN32)
 
 namespace Rendering
 {
+    static vec2_t Resolution{ 1200, 600 };
     static HDC Surfacecontext{};
     static HBITMAP Surface{};
     static uint8_t *Pixels{};
-    static bool Shown{ true };
 
     // System-code interaction, assumes single-threaded sync.
     void onPresent(const void *Handle)
     {
-        BitBlt((HDC)Handle, 0, 0, gWidth, gHeight, Surfacecontext, 0, 0, SRCCOPY);
-        Shown = true;
+        StretchBlt((HDC)Handle, 0, 0, gWidth, gHeight, Surfacecontext, 0, 0, Resolution.x, Resolution.y, SRCCOPY);
+        //BitBlt((HDC)Handle, 0, 0, gWidth, gHeight, Surfacecontext, 0, 0, SRCCOPY);
+    }
+    vec2_t getResolution()
+    {
+        return Resolution;
     }
     void onRender()
     {
-        while (!Shown) std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        Shown = false;
-
-        static double lWidth{ gWidth }, lHeight{ gHeight };
-        if (!Pixels || lWidth != gWidth || lHeight != gHeight)
+        if (!Pixels)
         {
             auto Devicecontext{ GetDC(NULL) };
             BITMAPINFO Format{};
 
             // Bitmap format.
             Format.bmiHeader.biSize = sizeof(BITMAPINFO);
+            Format.bmiHeader.biHeight =  -Resolution.y;
+            Format.bmiHeader.biWidth = Resolution.x;
             Format.bmiHeader.biCompression = BI_RGB;
-            Format.bmiHeader.biHeight =  -gHeight;
-            Format.bmiHeader.biWidth = gWidth;
             Format.bmiHeader.biBitCount = 24;
             Format.bmiHeader.biPlanes = 1;
 
@@ -55,8 +56,14 @@ namespace Rendering
 
             // C-style cleanup needed.
             DeleteDC(Devicecontext);
+        }
 
-            // Locals update.
+        // Update the elements if the resolution changed.
+        if (lWidth != gWidth || lHeight != gHeight)
+        {
+            getRootelement()->Renderbox = { 0, 0, Resolution.x, Resolution.y };
+            getRootelement()->Boundingbox = { 0, 0, gWidth, gHeight };
+            getRootelement()->onModifiedstate(getRootelement());
             lWidth = gWidth; lHeight = gHeight;
         }
 
@@ -101,24 +108,24 @@ namespace Rendering
         }
         ainline void Setpixel(uint32_t X, uint32_t Y, uint32_t BGR)
         {
-            if (X >= gWidth || Y >= gHeight) return;
-            std::memcpy(Pixels + Y * uint32_t(gWidth) * 3 + X * 3, &BGR, 3);
+            if (X >= Resolution.x || Y >= Resolution.y) return;
+            std::memcpy(Pixels + Y * uint32_t(Resolution.x) * 3 + X * 3, &BGR, 3);
         }
         ainline void Setpixel(uint32_t X, uint32_t Y, rgba_t RGBA)
         {
             if (0.0 == RGBA.a) return;
-            if (X >= gWidth || Y >= gHeight) return;
+            if (X >= Resolution.x || Y >= Resolution.y) return;
             if (1.0 == RGBA.a) return Setpixel(X, Y, toBGR(Normalize(RGBA)));
 
-            uint32_t Base{ *(uint32_t *)(Pixels + Y * uint32_t(gWidth) * 3 + X * 3) };
+            uint32_t Base{ *(uint32_t *)(Pixels + Y * uint32_t(Resolution.x) * 3 + X * 3) };
             return Setpixel(X, Y, BlendBGR(Base, toBGR(Normalize(RGBA)), RGBA.a));
         }
 
         void Quad(rgba_t Color, rect_t Box)
         {
-            for (uint32_t Y = std::max(Box.y0, 0.0); Y < std::min(Box.y1, gHeight); ++Y)
+            for (uint32_t Y = std::max(Box.y0, 0.0); Y < std::min(Box.y1, Resolution.y); ++Y)
             {
-                for (uint32_t X = std::max(Box.x0, 0.0); X < std::min(Box.x1, gWidth); ++X)
+                for (uint32_t X = std::max(Box.x0, 0.0); X < std::min(Box.x1, Resolution.x); ++X)
                 {
                     Setpixel(X, Y, Color);
                 }
@@ -131,14 +138,14 @@ namespace Rendering
 
             if (std::abs(DeltaX) > std::abs(DeltaY))
             {
-                for (uint32_t x = std::max(std::min(Box.x0, Box.x1), 0.0); x <= std::min(std::max(Box.x0, Box.x1), gWidth); ++x)
+                for (uint32_t x = std::max(std::min(Box.x0, Box.x1), 0.0); x <= std::min(std::max(Box.x0, Box.x1), Resolution.x); ++x)
                 {
                     Setpixel(x, (Box.y0 + ((x - Box.x0) * (DeltaY / DeltaX))), Color);
                 }
             }
             else
             {
-                for (uint32_t y = std::max(std::min(Box.y0, Box.y1), 0.0); y <= std::min(std::max(Box.y0, Box.y1), gHeight); ++y)
+                for (uint32_t y = std::max(std::min(Box.y0, Box.y1), 0.0); y <= std::min(std::max(Box.y0, Box.y1), Resolution.y); ++y)
                 {
                     Setpixel((Box.x0 + ((y - Box.y0) * (DeltaX / DeltaY))), y, Color);
                 }
@@ -158,9 +165,9 @@ namespace Rendering
             auto Colorsize{ Colors.size() };
             size_t Colorindex{};
 
-            for (uint32_t Y = std::max(Box.y0, 0.0); Y < std::min(Box.y1, gHeight); ++Y)
+            for (uint32_t Y = std::max(Box.y0, 0.0); Y < std::min(Box.y1, Resolution.y); ++Y)
             {
-                for (uint32_t X = std::max(Box.x0, 0.0); X < std::min(Box.x1, gWidth); ++X)
+                for (uint32_t X = std::max(Box.x0, 0.0); X < std::min(Box.x1, Resolution.x); ++X)
                 {
                     Setpixel(X, Y, Colors[Colorindex++ % Colorsize]);
                 }
@@ -175,14 +182,14 @@ namespace Rendering
 
             if (std::abs(DeltaX) > std::abs(DeltaY))
             {
-                for (uint32_t x = std::max(std::min(Box.x0, Box.x1), 0.0); x <= std::min(std::max(Box.x0, Box.x1), gWidth); ++x)
+                for (uint32_t x = std::max(std::min(Box.x0, Box.x1), 0.0); x <= std::min(std::max(Box.x0, Box.x1), Resolution.x); ++x)
                 {
                     Setpixel(x, (Box.y0 + ((x - Box.x0) * (DeltaY / DeltaX))), Colors[Colorindex++ % Colorsize]);
                 }
             }
             else
             {
-                for (uint32_t y = std::max(std::min(Box.y0, Box.y1), 0.0); y <= std::min(std::max(Box.y0, Box.y1), gHeight); ++y)
+                for (uint32_t y = std::max(std::min(Box.y0, Box.y1), 0.0); y <= std::min(std::max(Box.y0, Box.y1), Resolution.y); ++y)
                 {
                     Setpixel((Box.x0 + ((y - Box.y0) * (DeltaX / DeltaY))), y,  Colors[Colorindex++ % Colorsize]);
                 }

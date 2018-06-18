@@ -28,6 +28,7 @@ namespace Input
     // User-code interaction.
     vec2_t getWindowposition();
     vec2_t getMouseposition();
+    vec2_t getMonitorsize();
     vec2_t getWindowsize();
     void Minimize();
 }

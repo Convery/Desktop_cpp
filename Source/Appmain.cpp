@@ -46,13 +46,12 @@ int __stdcall WinMain(HINSTANCE hCurrentInst, HINSTANCE hPreviousInst, LPSTR lps
     Input::onInit(Handle);
 
     // Cache window properties.
-    ShowWindow(Handle, nCmdShow);
+    ShowWindow(Handle, SW_SHOWNORMAL);
     Input::getWindowposition();
     Input::getWindowsize();
 
     // Create the initial scene and render the first frame.
     Rendering::getRootelement()->Backgroundcolor = { 38, 39, 43, 1 };
-    Rendering::getRootelement()->Boundingbox = { 0, 0, 1200, 600 };
     Rendering::getRootelement()->State.Noinput = true;
     Rendering::Menu::Switch("homescreen");
     Rendering::onRender();
