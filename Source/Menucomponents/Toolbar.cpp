@@ -7,8 +7,6 @@
 */
 
 #include "../Stdinclude.hpp"
-#include <Mmsystem.h>
-#pragma comment(lib, "Winmm.lib")
 
 static auto Goldgradient{ Rendering::Creategradient(512, { 255, 255, 168, 1.0f }, { 246, 201, 76, 1.0f }) };
 static void Renderbutton(Element_t *Caller)
