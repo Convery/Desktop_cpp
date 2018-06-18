@@ -118,7 +118,7 @@ namespace Rendering
             {
                 for (size_t X = std::clamp(Box.x0, -1.0, Resolution.x - 1); X <= std::clamp(Box.x1, -1.0, Resolution.x - 1); ++X)
                 {
-                    if (X > 0 && Y > 0) Pixels[Y * size_t(Resolution.x) + X] = Blend(Pixels[Y * size_t(Resolution.x) + X], Input, Alpha);
+                    if (X >= 0 && Y >= 0) Pixels[Y * size_t(Resolution.x) + X] = Blend(Pixels[Y * size_t(Resolution.x) + X], Input, Alpha);
                 }
             }
         }
@@ -132,7 +132,7 @@ namespace Rendering
             {
                 for (size_t X = std::clamp(Box.x0, -1.0, Resolution.x - 1); X <= std::clamp(Box.x1, -1.0, Resolution.x - 1); ++X)
                 {
-                    if (X > 0 && Y > 0) Pixels[Y * size_t(Resolution.x) + X] = Input;
+                    if (X >= 0 && Y >= 0) Pixels[Y * size_t(Resolution.x) + X] = Input;
                 }
             }
         }
@@ -164,14 +164,14 @@ namespace Rendering
                 {
                     for (size_t X = std::clamp(Box.x0, -1.0, Resolution.x - 1); X <= std::clamp(Box.x1, -1.0, Resolution.x - 1); ++X)
                     {
-                        if (X > 0 && Box.y0 + (X - Box.x0) * K > 0) Setpixel(Pixel, X, Box.y0 + (X - Box.x0) * K);
+                        if (X >= 0 && Box.y0 + (X - Box.x0) * K > 0) Setpixel(Pixel, X, Box.y0 + (X - Box.x0) * K);
                     }
                 }
                 else
                 {
                     for (size_t X = std::clamp(Box.x0, -1.0, Resolution.x - 1); X <= std::clamp(Box.x1, -1.0, Resolution.x - 1); ++X)
                     {
-                        if (X > 0 && Box.y0 + (X - Box.x0) * K > 0) Setpixel(Pixel, X, Box.y0 + (X - Box.x0) * K, Color.a);
+                        if (X >= 0 && Box.y0 + (X - Box.x0) * K > 0) Setpixel(Pixel, X, Box.y0 + (X - Box.x0) * K, Color.a);
                     }
                 }
             }
@@ -183,14 +183,14 @@ namespace Rendering
                 {
                     for (size_t Y = std::clamp(Box.y0, -1.0, Resolution.y - 1); Y <= std::clamp(Box.y1, -1.0, Resolution.y - 1); ++Y)
                     {
-                        if (Box.x0 + (Y - Box.x0) * K > 0 && Y > 0) Setpixel(Pixel, Box.x0 + (Y - Box.x0) * K, Y);
+                        if (Box.x0 + (Y - Box.x0) * K > 0 && Y >= 0) Setpixel(Pixel, Box.x0 + (Y - Box.x0) * K, Y);
                     }
                 }
                 else
                 {
                     for (size_t Y = std::clamp(Box.y0, -1.0, Resolution.y - 1); Y <= std::clamp(Box.y1, -1.0, Resolution.y - 1); ++Y)
                     {
-                        if (Box.x0 + (Y - Box.x0) * K > 0 && Y > 0) Setpixel(Pixel, Box.x0 + (Y - Box.x0) * K, Y, Color.a);
+                        if (Box.x0 + (Y - Box.x0) * K > 0 && Y >= 0) Setpixel(Pixel, Box.x0 + (Y - Box.x0) * K, Y, Color.a);
                     }
                 }
             }
@@ -219,7 +219,7 @@ namespace Rendering
             {
                 for (size_t X = std::clamp(Box.x0, -1.0, Resolution.x - 1); X <= std::clamp(Box.x1, -1.0, Resolution.x - 1); ++X)
                 {
-                    if (X > 0 && Y > 0) Setpixel(Pixel[Colorindex++ % Colorcount], X, Y);
+                    if (X >= 0 && Y >= 0) Setpixel(Pixel[Colorindex++ % Colorcount], X, Y);
                 }
             }
         }
@@ -246,7 +246,7 @@ namespace Rendering
 
                 for (size_t X = std::clamp(Box.x0, -1.0, Resolution.x - 1); X <= std::clamp(Box.x1, -1.0, Resolution.x - 1); ++X)
                 {
-                    if (X > 0 && Box.y0 + (X - Box.x0) * K > 0) Setpixel(Pixel[Colorindex++ % Colorcount], X, Box.y0 + (X - Box.x0) * K);
+                    if (X >= 0 && Box.y0 + (X - Box.x0) * K > 0) Setpixel(Pixel[Colorindex++ % Colorcount], X, Box.y0 + (X - Box.x0) * K);
                 }
             }
             else
@@ -255,7 +255,7 @@ namespace Rendering
 
                 for (size_t Y = std::clamp(Box.y0, -1.0, Resolution.y - 1); Y <= std::clamp(Box.y1, -1.0, Resolution.y - 1); ++Y)
                 {
-                    if (Box.x0 + (Y - Box.x0) * K > 0 && Y > 0) Setpixel(Pixel[Colorindex++ % Colorcount], Box.x0 + (Y - Box.x0) * K, Y);
+                    if (Box.x0 + (Y - Box.x0) * K > 0 && Y >= 0) Setpixel(Pixel[Colorindex++ % Colorcount], Box.x0 + (Y - Box.x0) * K, Y);
                 }
             }
         }
