@@ -68,13 +68,15 @@ int __stdcall WinMain(HINSTANCE hCurrentInst, HINSTANCE hPreviousInst, LPSTR lps
     {
         while (true)
         {
-            Rendering::onRender();
-            InvalidateRect(Handle, NULL, FALSE);
-
             static auto Lastframe{ std::chrono::high_resolution_clock::now() };
             constexpr std::chrono::microseconds Framedelay{ 1000000 / 60 };
-            std::this_thread::sleep_until(Lastframe + Framedelay);
+
+            InvalidateRect(Handle, NULL, FALSE);
+            std::this_thread::sleep_until(Lastframe + Framedelay / 4);
+
+            Rendering::onRender();
             Lastframe += Framedelay;
+            std::this_thread::sleep_until(Lastframe);
         }
     }).detach();
 
