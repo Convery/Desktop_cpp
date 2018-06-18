@@ -8,11 +8,12 @@
 
 #include "../Stdinclude.hpp"
 
-static auto Goldgradient{ Rendering::Creategradient(512, { 255, 255, 168, 1.0f }, { 246, 201, 76, 1.0f }) };
+auto Goldgradient{ Rendering::Creategradient(512, { 255, 255, 168, 1.0f }, { 246, 201, 76, 1.0f }) };
 static void Renderbutton(Element_t *Caller)
 {
     auto Box{ Caller->Renderdimensions }; Box.y0 -= 1;
     if(Caller->State.Hoover) Rendering::Draw::Quadgradient(Goldgradient, Caller->Renderdimensions);
+    else Rendering::Draw::Quad({ 50, 58, 69, 1 }, Caller->Renderdimensions);
     Rendering::Draw::Bordergradient(Goldgradient, Box);
 }
 static void Renderbox(Element_t *Caller)
