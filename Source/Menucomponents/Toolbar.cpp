@@ -7,6 +7,8 @@
 */
 
 #include "../Stdinclude.hpp"
+#include <Mmsystem.h>
+#pragma comment(lib, "Winmm.lib")
 
 static auto Goldgradient{ Rendering::Creategradient(512, { 255, 255, 168, 1.0f }, { 246, 201, 76, 1.0f }) };
 static void Renderbutton(Element_t *Caller)
@@ -33,6 +35,8 @@ static void Rendercross(Element_t *Caller)
 
 void Createtoolbar()
 {
+
+    static bool Shouldmove{ false };
     auto Rootelement{ Rendering::getRootelement() };
 
     // Bounding box.
@@ -43,6 +47,32 @@ void Createtoolbar()
         auto Box{ Caller->Dimensions }; Box.y0 = Box.y1;
         Rendering::Draw::Linegradient(Goldgradient, Box);
     };
+    Toolbar->onClicked = [&](Element_t *Caller, bool Released) -> bool
+    {
+        static auto Lastclick{ std::chrono::high_resolution_clock::now() };
+        Shouldmove = !Released;
+
+        if (Shouldmove)
+        {
+            std::thread([&]() -> void
+            {
+                auto Origin{ Input::getMouseposition() };
+                auto Window{ Input::getWindowposition() };
+
+                while (Shouldmove)
+                {
+                    auto Current = Input::getMouseposition();
+                    Window.x += (Current.x - Origin.x) * 1.0;
+                    Window.y += (Current.y - Origin.y) * 1.0;
+
+                    Input::onWindowmove(Window.x, Window.y);
+                }
+            }).detach();
+        }
+
+        return Shouldmove;
+    };
+    Rootelement->Children.push_back(Toolbar);
 
     // Top-right buttons.
     auto Closebutton = new Element_t("ui.toolbar.close");
@@ -50,8 +80,9 @@ void Createtoolbar()
     Closebutton->onRender = Renderbutton;
     Closebutton->onClicked = [](Element_t *Caller, bool Released) -> bool
     {
-        static bool Armed; Armed = !Released;
-        if(Armed && Caller->State.Hoover) std::terminate();
+        static bool Armed{ false };
+        if(Armed && Caller->State.Hoover) std::exit(0);
+        Armed = !Released;
         return Armed;
     };
     Toolbar->Children.push_back(Closebutton);
@@ -66,12 +97,13 @@ void Createtoolbar()
     Minbutton->onRender = Renderbutton;
     Minbutton->onClicked = [](Element_t *Caller, bool Released) -> bool
     {
-        static bool Armed; Armed = !Released;
+        static bool Armed{ false };
         if (Armed && Caller->State.Hoover)
         {
             Input::Minimize();
             return true;
         }
+         Armed = !Released;
         return Armed;
     };
     Toolbar->Children.push_back(Minbutton);
@@ -94,9 +126,6 @@ void Createtoolbar()
     Minicon->Margin = { 0.6, 1.4, 0.6, 0.6 };
     Minicon->onRender = Renderbox;
     Minbutton->Children.push_back(Minicon);
-
-    // Return the toolbar.
-    Rootelement->Children.push_back(Toolbar);
 }
 
 namespace
