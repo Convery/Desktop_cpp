@@ -10,12 +10,12 @@
 
 extern std::vector<rgba_t> Goldgradient;
 
-static void Renderbutton(Element_t *Caller)
+static void Renderbutton(Element_t *Caller, rect_t Clip)
 {
     auto Box{ Caller->Renderdimensions }; Box.y0 += 2; Box.x0 -= 1;
-    if (Caller->State.Hoover) Rendering::Draw::Quad({ 205, 197, 186, 0.2 }, Box);
-    else Rendering::Draw::Quad(Caller->Backgroundcolor, Box);
-    Rendering::Draw::Bordergradient(Goldgradient, Box);
+    if (Caller->State.Hoover) Rendering::Draw::Quad({ 205, 197, 186, 0.2 }, Box, Clip);
+    else Rendering::Draw::Quad(Caller->Backgroundcolor, Box, Clip);
+    Rendering::Draw::Bordergradient(Goldgradient, Box, Clip);
 }
 
 void Createsidebar()
@@ -32,11 +32,11 @@ void Createsidebar()
     auto Devstatus = new Element_t("ui.sidebar.devstatus");
     Devstatus->Margin = { 0, 0.03, 0, 1.85 };
     Devstatus->Backgroundcolor = { 1, 1, 1, 1 };
-    Devstatus->onRender = [](Element_t *Caller) -> void
+    Devstatus->onRender = [](Element_t *Caller, rect_t Clip) -> void
     {
         auto Box{ Caller->Renderdimensions }; Box.y0 += 2; Box.x0 -= 1;
-        Rendering::Draw::Quadgradient(Goldgradient, Box);
-        Rendering::Draw::Bordergradient(Goldgradient, Box);
+        Rendering::Draw::Quadgradient(Goldgradient, Box, Clip);
+        Rendering::Draw::Bordergradient(Goldgradient, Box, Clip);
     };
     Sidebar->Children.push_back(Devstatus);
 

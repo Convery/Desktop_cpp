@@ -9,27 +9,27 @@
 #include "../Stdinclude.hpp"
 
 auto Goldgradient{ Rendering::Creategradient(512, { 255, 255, 168, 1.0f }, { 246, 201, 76, 1.0f }) };
-static void Renderbutton(Element_t *Caller)
+static void Renderbutton(Element_t *Caller, rect_t Clip)
 {
     auto Box{ Caller->Renderdimensions }; Box.y0 -= 1;
-    if(Caller->State.Hoover) Rendering::Draw::Quadgradient(Goldgradient, Caller->Renderdimensions);
-    else Rendering::Draw::Quad({ 205, 197, 186, 0.1 }, Caller->Renderdimensions);
-    Rendering::Draw::Bordergradient(Goldgradient, Box);
+    if(Caller->State.Hoover) Rendering::Draw::Quadgradient(Goldgradient, Caller->Renderdimensions, Clip);
+    else Rendering::Draw::Quad({ 205, 197, 186, 0.1 }, Caller->Renderdimensions, Clip);
+    Rendering::Draw::Bordergradient(Goldgradient, Box, Clip);
 }
-static void Renderbox(Element_t *Caller)
+static void Renderbox(Element_t *Caller, rect_t Clip)
 {
     auto Box{ Caller->Renderdimensions }; Box.y0 -= 1;
-    Rendering::Draw::Border(Caller->Backgroundcolor, Box);
+    Rendering::Draw::Border(Caller->Backgroundcolor, Box, Clip);
 }
-static void Rendercross(Element_t *Caller)
+static void Rendercross(Element_t *Caller, rect_t Clip)
 {
     auto Box{ Caller->Renderdimensions };
 
-    Rendering::Draw::Line(Caller->Backgroundcolor, Box);
+    Rendering::Draw::Line(Caller->Backgroundcolor, Box, Clip);
     Box.x0 += 1; Box.x1 += 1;
-    Rendering::Draw::Line(Caller->Backgroundcolor, Box);
+    Rendering::Draw::Line(Caller->Backgroundcolor, Box, Clip);
     Box.x0 -= 2; Box.x1 -= 2;
-    Rendering::Draw::Line(Caller->Backgroundcolor, Box);
+    Rendering::Draw::Line(Caller->Backgroundcolor, Box, Clip);
 }
 
 void Createtoolbar()
@@ -41,10 +41,10 @@ void Createtoolbar()
     // Bounding box.
     auto Toolbar = new Element_t("ui.toolbar");
     Toolbar->Margin = { 0, 0, 0, 1.95 };
-    Toolbar->onRender = [](Element_t *Caller) -> void
+    Toolbar->onRender = [](Element_t *Caller, rect_t Clip) -> void
     {
         auto Box{ Caller->Renderdimensions }; Box.y0 = Box.y1;
-        Rendering::Draw::Linegradient(Goldgradient, Box);
+        Rendering::Draw::Linegradient(Goldgradient, Box, Clip);
     };
     Toolbar->onClicked = [&](Element_t *Caller, bool Released) -> bool
     {

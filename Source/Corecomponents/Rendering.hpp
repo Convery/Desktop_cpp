@@ -42,10 +42,8 @@ struct Element_t
     // Callbacks on user-interaction, returns if the event is handled.
     std::function<bool (Element_t *Caller, bool Released)> onClicked;
     std::function<bool (Element_t *Caller, bool Released)> onHoover;
-
-    // Recalculate the properties and render them.
+    std::function<void(Element_t *Caller, rect_t Clip)> onRender;
     std::function<void(Element_t *Caller)> onModifiedstate;
-    std::function<void(Element_t *Caller)> onRender;
 
     // Inlined modifiers.
     void Show() { State.Hidden = false; }
@@ -70,13 +68,13 @@ namespace Rendering
     {
         // Basic drawing.
         void Quad(const rgba_t Color, const rect_t Box, const rect_t Clip = { 0, 0, Resolution.x, Resolution.y });
-        void Line(const rgba_t Color, const rect_t Box);
-        void Border(const rgba_t Color, const rect_t Box);
+        void Line(const rgba_t Color, const rect_t Box, const rect_t Clip = { 0, 0, Resolution.x, Resolution.y });
+        void Border(const rgba_t Color, const rect_t Box, const rect_t Clip = { 0, 0, Resolution.x, Resolution.y });
 
         // Gradient drawing.
-        void Quadgradient(const std::vector<rgba_t> Colors, const rect_t Box);
-        void Linegradient(const std::vector<rgba_t> Colors, const rect_t Box);
-        void Bordergradient(const std::vector<rgba_t> Colors, const rect_t Box);
+        void Quadgradient(const std::vector<rgba_t> Colors, const rect_t Box, const rect_t Clip = { 0, 0, Resolution.x, Resolution.y });
+        void Linegradient(const std::vector<rgba_t> Colors, const rect_t Box, const rect_t Clip = { 0, 0, Resolution.x, Resolution.y });
+        void Bordergradient(const std::vector<rgba_t> Colors, const rect_t Box, const rect_t Clip = { 0, 0, Resolution.x, Resolution.y });
     }
     std::vector<rgba_t> Creategradient(const size_t Steps, const rgba_t Color1, const rgba_t Color2);
 

@@ -74,9 +74,9 @@ void Recalculateboxes(Element_t *Caller)
         Item->onModifiedstate(Item);
     }
 }
-void Renderelement(Element_t *Caller)
+void Renderelement(Element_t *Caller, rect_t Clip)
 {
-    if(!Caller->State.Hidden) Rendering::Draw::Quad(Caller->Backgroundcolor, Caller->Renderdimensions);
+    if(!Caller->State.Hidden) Rendering::Draw::Quad(Caller->Backgroundcolor, Caller->Renderdimensions, Clip);
 }
 
 // Elements require some sort of identifier.
