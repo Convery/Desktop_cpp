@@ -84,7 +84,7 @@ Element_t::Element_t(std::string Identifier) : Identifier(Identifier)
 {
     // Callbacks on user-interaction.
     onClicked = [](Element_t *Caller, bool Released) { (void)Caller; (void)Released; return false; };
-    onHoover = [](Element_t *Caller, bool Released) { (void)Caller; (void)Released; return false; };
+    onHoover = [](Element_t *Caller, bool Released) { (void)Caller; (void)Released;  Rendering::Invalidatearea(Caller->Renderdimensions); return false; };
 
     // Recalculate the properties and render them.
     onModifiedstate = Recalculateboxes;

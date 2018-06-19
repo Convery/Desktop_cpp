@@ -189,18 +189,21 @@ void Createtoolbar()
     Closeicon->Backgroundcolor = { 0.4, 0.4, 0.4, 1.0 };
     Closeicon->Margin = { 0.4, 0.4, 0.4, 0.4 };
     Closeicon->onRender = Rendercross;
+    Closeicon->State.Noinput = true;
     Closebutton->Children.push_back(Closeicon);
 
     auto Maxicon = new Element_t("ui.toolbar.max.icon");
-    Maxicon->Backgroundcolor = { 0.4, 0.4, 0.4, 0.5 };
+    Maxicon->Backgroundcolor = { 0.4, 0.4, 0.4, 1 };
     Maxicon->Margin = { 0.6, 0.6, 0.6, 0.6 };
     Maxicon->onRender = Renderbox;
+    Maxicon->State.Noinput = true;
     Maxbutton->Children.push_back(Maxicon);
 
     auto Minicon = new Element_t("ui.toolbar.min.icon");
-    Minicon->Backgroundcolor = { 0.4, 0.4, 0.4, 0.5 };
+    Minicon->Backgroundcolor = { 0.4, 0.4, 0.4, 1 };
     Minicon->Margin = { 0.6, 1.4, 0.6, 0.6 };
     Minicon->onRender = Renderbox;
+    Minicon->State.Noinput = true;
     Minbutton->Children.push_back(Minicon);
 }
 

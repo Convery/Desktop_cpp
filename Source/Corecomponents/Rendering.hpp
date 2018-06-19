@@ -77,6 +77,7 @@ namespace Rendering
         void Bordergradient(const std::vector<rgba_t> Colors, const rect_t Box, const rect_t Clip = { 0, 0, Resolution.x, Resolution.y });
     }
     std::vector<rgba_t> Creategradient(const size_t Steps, const rgba_t Color1, const rgba_t Color2);
+    void Invalidatearea(const rect_t Box);
 
     // Scene-management.
     namespace Menu

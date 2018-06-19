@@ -7,6 +7,7 @@
 */
 
 #include "../Stdinclude.hpp"
+#include <queue>
 
 extern double gWidth, gHeight, gPosX, gPosY;
 static double lWidth{}, lHeight{};
@@ -24,7 +25,7 @@ namespace Rendering
     };
     #pragma pack()
 
-
+    static std::queue<rect_t> Invalidareas{};
     static HDC Surfacecontext{};
     static HBITMAP Surface{};
     static Pixel_t *Pixels{};
@@ -79,7 +80,14 @@ namespace Rendering
             for (const auto &Child : Parent->Children) Lambda(Child, Clip);
         };
 
-        Lambda(getRootelement(), { -1, -1, Resolution.x, Resolution.y });
+        // Update all areas.
+        while (!Invalidareas.empty())
+        {
+            auto Area = Invalidareas.front();
+            Draw::Quad({ 1, 1, 1, 1 }, Area);
+            Lambda(getRootelement(), Area);
+            Invalidareas.pop();
+        }
     }
 
     // User-code interaction.
@@ -330,6 +338,10 @@ namespace Rendering
         }
 
         return Colors;
+    }
+    void Invalidatearea(const rect_t Box)
+    {
+        Invalidareas.push(Box);
     }
 }
 
