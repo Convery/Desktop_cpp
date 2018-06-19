@@ -13,7 +13,7 @@ static void Renderbutton(Element_t *Caller)
 {
     auto Box{ Caller->Renderdimensions }; Box.y0 -= 1;
     if(Caller->State.Hoover) Rendering::Draw::Quadgradient(Goldgradient, Caller->Renderdimensions);
-    else Rendering::Draw::Quad({ 50, 58, 69, 1 }, Caller->Renderdimensions);
+    else Rendering::Draw::Quad({ 205, 197, 186, 0.1 }, Caller->Renderdimensions);
     Rendering::Draw::Bordergradient(Goldgradient, Box);
 }
 static void Renderbox(Element_t *Caller)
