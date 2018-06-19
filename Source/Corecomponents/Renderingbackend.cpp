@@ -83,9 +83,7 @@ namespace Rendering
         // Update all areas.
         while (!Invalidareas.empty())
         {
-            auto Area = Invalidareas.front();
-            Draw::Quad({ 1, 1, 1, 1 }, Area);
-            Lambda(getRootelement(), Area);
+            Lambda(getRootelement(), Invalidareas.front());
             Invalidareas.pop();
         }
     }
