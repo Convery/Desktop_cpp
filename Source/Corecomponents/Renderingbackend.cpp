@@ -24,7 +24,7 @@ namespace Rendering
     };
     #pragma pack()
 
-    constexpr vec2_t Resolution{ 1280, 720 };
+
     static HDC Surfacecontext{};
     static HBITMAP Surface{};
     static Pixel_t *Pixels{};
@@ -34,10 +34,6 @@ namespace Rendering
     {
         StretchBlt((HDC)Handle, 0, 0, gWidth, gHeight, Surfacecontext, 0, 0, Resolution.x, Resolution.y, SRCCOPY);
         //BitBlt((HDC)Handle, 0, 0, gWidth, gHeight, Surfacecontext, 0, 0, SRCCOPY);
-    }
-    vec2_t getResolution()
-    {
-        return Resolution;
     }
     void onRender()
     {
@@ -138,11 +134,17 @@ namespace Rendering
         }
 
         // Basic drawing.
-        void Quad(const rgba_t Color, const rect_t Box)
+        void Quad(const rgba_t Color, const rect_t Box, const rect_t Clip)
         {
             if (Color.a == 0.0) return;
-            if (Color.a == 1.0) Solidfill(fromRGBA(Color), Box);
-            else return Blendedfill(fromRGBA(Color), Box, Color.a);
+            rect_t Area
+            {
+                std::max(Box.x0, Clip.x0), std::max(Box.y0, Clip.y0),
+                std::min(Box.x1, Clip.x1), std::min(Box.y1, Clip.y1)
+            };
+
+            if (Color.a == 1.0) Solidfill(fromRGBA(Color), Area);
+            else return Blendedfill(fromRGBA(Color), Area, Color.a);
         }
         void Line(const rgba_t Color, const rect_t Box)
         {

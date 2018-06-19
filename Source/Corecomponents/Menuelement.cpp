@@ -63,7 +63,6 @@ rect_t Createbox(rect_t Boundingbox, rect_t Margin)
 }
 void Recalculateboxes(Element_t *Caller)
 {
-    static auto Resolution{ Rendering::getResolution() };
     Caller->Renderdimensions = Createbox(Caller->Renderbox, Caller->Margin);
     Caller->Worlddimensions = Createbox(Caller->Boundingbox, Caller->Margin);
 

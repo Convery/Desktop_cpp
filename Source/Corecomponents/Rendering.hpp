@@ -57,17 +57,19 @@ struct Element_t
 
 namespace Rendering
 {
+    // Internal rendering resolution.
+    constexpr vec2_t Resolution{ 1280, 720 };
+
     // System-code interaction, assumes single-threaded sync.
     void onPresent(const void *Handle);
     Element_t *getRootelement();
-    vec2_t getResolution();
     void onRender();
 
     // User-code interaction.
     namespace Draw
     {
         // Basic drawing.
-        void Quad(const rgba_t Color, const rect_t Box);
+        void Quad(const rgba_t Color, const rect_t Box, const rect_t Clip = { 0, 0, Resolution.x, Resolution.y });
         void Line(const rgba_t Color, const rect_t Box);
         void Border(const rgba_t Color, const rect_t Box);
 
