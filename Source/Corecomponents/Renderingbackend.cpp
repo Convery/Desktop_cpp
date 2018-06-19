@@ -301,7 +301,7 @@ namespace Rendering
             const rgba_t ColorB{ Color2.R <= 1 ? Color2.R * 255 : Color2.R, Color2.G <= 1 ? Color2.G * 255 : Color2.G, Color2.B <= 1 ? Color2.B * 255 : Color2.B };
 
             // Generate half the steps from each direction.
-            for (double i = 0; i < 1; i += (1.0 / (Steps / 2)))
+            for (float i = 0; i < 1; i += (1.0 / (Steps / 2)))
             {
                 rgba_t Blended;
                 Blended.R = (ColorA.R / 255 * i) + (ColorB.R / 255 * (1 - i));
@@ -311,7 +311,7 @@ namespace Rendering
 
                 Entry->push_back(Draw::fromRGBA(Blended));
             }
-            for (double i = 0; i < 1; i += (1.0 / (Steps / 2)))
+            for (float i = 0; i < 1; i += (1.0 / (Steps / 2)))
             {
                 rgba_t Blended;
                 Blended.R = (ColorB.R / 255 * i) + (ColorA.R / 255 * (1 - i));
