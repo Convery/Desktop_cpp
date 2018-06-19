@@ -28,8 +28,6 @@ static void Rendercross(Element_t *Caller, rect_t Clip)
     Rendering::Draw::Line(Caller->Backgroundcolor, Box, Clip);
     Box.x0 += 1; Box.x1 += 1;
     Rendering::Draw::Line(Caller->Backgroundcolor, Box, Clip);
-    Box.x0 -= 2; Box.x1 -= 2;
-    Rendering::Draw::Line(Caller->Backgroundcolor, Box, Clip);
 }
 
 void Createtoolbar()

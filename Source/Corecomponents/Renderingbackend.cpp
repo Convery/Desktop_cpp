@@ -79,7 +79,7 @@ namespace Rendering
             for (const auto &Child : Parent->Children) Lambda(Child, Clip);
         };
 
-        Lambda(getRootelement(), { 0, 0, Resolution.x, 200 });
+        Lambda(getRootelement(), { -1, -1, Resolution.x, Resolution.y });
     }
 
     // User-code interaction.
@@ -136,69 +136,68 @@ namespace Rendering
         // Basic drawing.
         void Quad(const rgba_t Color, const rect_t Box, const rect_t Clip)
         {
+            // Invisible element.
             if (Color.a == 0.0) return;
-            rect_t Area
+
+            // Clipped area.
+            const rect_t Area
             {
                 std::max(Box.x0, Clip.x0), std::max(Box.y0, Clip.y0),
                 std::min(Box.x1, Clip.x1), std::min(Box.y1, Clip.y1)
             };
 
+            // Solid element.
             if (Color.a == 1.0) Solidfill(fromRGBA(Color), Area);
+
+            // Transparent element.
             else return Blendedfill(fromRGBA(Color), Area, Color.a);
         }
         void Line(const rgba_t Color, const rect_t Box, const rect_t Clip)
         {
+            // Invisible element.
             if (Color.a == 0.0) return;
-            rect_t Area
+
+            // Clipped area.
+            rect_t Area{ Box };
+
+            // Check if the line is steep and invert.
+            const bool Steep{ std::abs(Area.x0 - Area.x1) < std::abs(Area.y0 - Area.y1) };
+            if (Area.x0 > Area.x1)
             {
-                std::max(Box.x0, Clip.x0), std::max(Box.y0, Clip.y0),
-                std::min(Box.x1, Clip.x1), std::min(Box.y1, Clip.y1)
-            };
+                std::swap(Area.x0, Area.x1);
+                std::swap(Area.y0, Area.y1);
+            }
 
             const auto DeltaX{ Area.x1 - Area.x0 };
             const auto DeltaY{ Area.y1 - Area.y0 };
-            const auto Pixel{ fromRGBA(Color) };
 
-            // Straight line.
-            if (DeltaX == 0.0 || DeltaY == 0.0) return Solidfill(fromRGBA(Color), Area);
+            // Straight line, just quad-fill.
+            if (DeltaX == 0.0 || DeltaY == 0.0) return Quad(Color, Area);
 
-            // Slope down.
-            if (DeltaX > DeltaY)
+            // Draw the actual line.
+            const auto Pixel = fromRGBA(Color);
+            int64_t Y{ int64_t(Area.y0) }, Error{};
+            const int64_t Deltaerror{ int64_t(std::abs(DeltaY) * 2) };
+            for (int64_t X = Area.x0; X <= Area.x1; ++X)
             {
-                const auto K{ DeltaY / DeltaX };
+                // Only draw inside the canvas.
+                if (X >= 0 && Y >= 0)
+                {
+                    // Only draw inside the clipped area.
+                    if (X >= Clip.x0 && X <= Clip.x1 && Y >= Clip.y0 && Y <= Clip.y1)
+                    {
+                        // Invert the coordinates if too steep.
+                        if (Steep) Setpixel(Pixel, Y, X, Color.a);
+                        else Setpixel(Pixel, X, Y, Color.a);
+                    }
+                }
 
-                if (Color.a == 1.0)
+                // Update the error offset.
+                Error += Deltaerror;
+                if (Error > DeltaX)
                 {
-                    for (int64_t X = std::clamp(Area.x0, -1.0, Resolution.x - 1); X <= std::clamp(Area.x1, -1.0, Resolution.x - 1); ++X)
-                    {
-                        if (X >= 0 && Area.y0 + (X - Area.x0) * K > 0) Setpixel(Pixel, X, Area.y0 + (X - Area.x0) * K);
-                    }
-                }
-                else
-                {
-                    for (int64_t X = std::clamp(Area.x0, -1.0, Resolution.x - 1); X <= std::clamp(Area.x1, -1.0, Resolution.x - 1); ++X)
-                    {
-                        if (X >= 0 && Area.y0 + (X - Area.x0) * K > 0) Setpixel(Pixel, X, Area.y0 + (X - Area.x0) * K, Color.a);
-                    }
-                }
-            }
-            else
-            {
-                const auto K{ DeltaX / DeltaY };
-
-                if (Color.a == 1.0)
-                {
-                    for (int64_t Y = std::clamp(Area.y0, -1.0, Resolution.y - 1); Y <= std::clamp(Area.y1, -1.0, Resolution.y - 1); ++Y)
-                    {
-                        if (Area.x0 + (Y - Area.x0) * K > 0 && Y >= 0) Setpixel(Pixel, Area.x0 + (Y - Area.x0) * K, Y);
-                    }
-                }
-                else
-                {
-                    for (int64_t Y = std::clamp(Area.y0, -1.0, Resolution.y - 1); Y <= std::clamp(Area.y1, -1.0, Resolution.y - 1); ++Y)
-                    {
-                        if (Area.x0 + (Y - Area.x0) * K > 0 && Y >= 0) Setpixel(Pixel, Area.x0 + (Y - Area.x0) * K, Y, Color.a);
-                    }
+                    Y += Area.y1 > Area.y0 ? 1 : -1;
+                    Error -= DeltaX * 2;
                 }
             }
         }
@@ -214,42 +213,48 @@ namespace Rendering
         // Gradient drawing.
         void Quadgradient(const std::vector<rgba_t> Colors, const rect_t Box, const rect_t Clip)
         {
-            size_t Colorcount{ Colors.size() };
+            const size_t Colorcount{ Colors.size() };
             std::vector<Pixel_t> Pixel;
             Pixel.reserve(Colorcount);
             size_t Colorindex{};
 
-            rect_t Area
-            {
-                std::max(Box.x0, Clip.x0), std::max(Box.y0, Clip.y0),
-                std::min(Box.x1, Clip.x1), std::min(Box.y1, Clip.y1)
-            };
-
             // Use the Windows format of the pixels.
             for (const auto &Item : Colors) Pixel.push_back(fromRGBA(Item));
 
-            for (int64_t Y = std::clamp(Area.y0, -1.0, Resolution.y - 1); Y <= std::clamp(Area.y1, -1.0, Resolution.y - 1); ++Y)
+            // Fill the quad.
+            for (int64_t Y = std::clamp(Box.y0, -1.0, Resolution.y - 1); Y <= std::clamp(Box.y1, -1.0, Resolution.y - 1); ++Y)
             {
-                for (int64_t X = std::clamp(Area.x0, -1.0, Resolution.x - 1); X <= std::clamp(Area.x1, -1.0, Resolution.x - 1); ++X)
+                for (int64_t X = std::clamp(Box.x0, -1.0, Resolution.x - 1); X <= std::clamp(Box.x1, -1.0, Resolution.x - 1); ++X)
                 {
-                    if (X >= 0 && Y >= 0) Setpixel(Pixel[Colorindex++ % Colorcount], X, Y);
+                    // Only draw inside the canvas.
+                    if (X >= 0 && Y >= 0)
+                    {
+                        // Only draw inside the clipped area.
+                        if (X >= Clip.x0 && X <= Clip.x1 && Y >= Clip.y0 && Y <= Clip.y1)
+                        {
+                            Setpixel(Pixel[Colorindex++ % Colorcount], X, Y);
+                        }
+                    }
                 }
             }
         }
         void Linegradient(const std::vector<rgba_t> Colors, const rect_t Box, const rect_t Clip)
         {
-            rect_t Area
-            {
-                std::max(Box.x0, Clip.x0), std::max(Box.y0, Clip.y0),
-                std::min(Box.x1, Clip.x1), std::min(Box.y1, Clip.y1)
-            };
+            // Clipped area.
+            rect_t Area{ Box };
+
+            // Check if the line is steep and invert.
+            const bool Steep{ std::abs(Area.x0 - Area.x1) < std::abs(Area.y0 - Area.y1) };
+            if (Area.x0 > Area.x1) std::swap(Area.x0, Area.x1);
+            if (Area.y0 > Area.y1) std::swap(Area.y0, Area.y1);
+
             const auto DeltaX{ Area.x1 - Area.x0 };
             const auto DeltaY{ Area.y1 - Area.y0 };
 
-            // Straight line.
-            if (DeltaX == 0.0 || DeltaY == 0.0) return Quadgradient(Colors, Area);
+            // Straight line, just quad-fill.
+            if (DeltaX == 0.0 || DeltaY == 0.0) return Quadgradient(Colors, Box, Clip);
 
-            size_t Colorcount{ Colors.size() };
+            const size_t Colorcount{ Colors.size() };
             std::vector<Pixel_t> Pixel;
             Pixel.reserve(Colorcount);
             size_t Colorindex{};
@@ -257,23 +262,29 @@ namespace Rendering
             // Use the Windows format of the pixels.
             for (const auto &Item : Colors) Pixel.push_back(fromRGBA(Item));
 
-            // Slope down.
-            if (DeltaX > DeltaY)
+            // Draw the actual line.
+            int64_t Y{ int64_t(Area.y0) }, Error{};
+            const int64_t Deltaerror{ int64_t(std::abs(DeltaY) * 2) };
+            for (int64_t X = Area.x0; X <= Area.x1; ++X)
             {
-                const auto K{ DeltaY / DeltaX };
-
-                for (int64_t X = std::clamp(Area.x0, -1.0, Resolution.x - 1); X <= std::clamp(Area.x1, -1.0, Resolution.x - 1); ++X)
+                // Only draw inside the canvas.
+                if (X >= 0 && Y >= 0)
                 {
-                    if (X >= 0 && Area.y0 + (X - Area.x0) * K > 0) Setpixel(Pixel[Colorindex++ % Colorcount], X, Area.y0 + (X - Area.x0) * K);
+                    // Only draw inside the clipped area.
+                    if (X >= Clip.x0 && X <= Clip.x1 && Y >= Clip.y0 && Y <= Clip.y1)
+                    {
+                        // Invert the coordinates if too steep.
+                        if (Steep) Setpixel(Pixel[Colorindex++ % Colorcount], Y, X);
+                        else Setpixel(Pixel[Colorindex++ % Colorcount], X, Y);
+                    }
                 }
-            }
-            else
-            {
-                const auto K{ DeltaX / DeltaY };
 
-                for (int64_t Y = std::clamp(Area.y0, -1.0, Resolution.y - 1); Y <= std::clamp(Area.y1, -1.0, Resolution.y - 1); ++Y)
+                // Update the error offset.
+                Error += Deltaerror;
+                if (Error > DeltaX)
                 {
-                    if (Area.x0 + (Y - Area.x0) * K > 0 && Y >= 0) Setpixel(Pixel[Colorindex++ % Colorcount], Area.x0 + (Y - Area.x0) * K, Y);
+                    Y += Area.y1 > Area.y0 ? 1 : -1;
+                    Error -= DeltaX * 2;
                 }
             }
         }
