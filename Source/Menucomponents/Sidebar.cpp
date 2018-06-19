@@ -8,14 +8,14 @@
 
 #include "../Stdinclude.hpp"
 
-extern std::vector<rgba_t> Goldgradient;
+extern texture_t Goldgradient;
 
 static void Renderbutton(Element_t *Caller, vec4_t Clip)
 {
     auto Box{ Caller->Renderdimensions }; Box.y0 += 2; Box.x0 -= 1;
     if (Caller->State.Hoover) Rendering::Draw::Quad({ 205, 197, 186, 0.2f }, Box, Clip);
     else Rendering::Draw::Quad(Caller->Backgroundcolor, Box, Clip);
-    Rendering::Draw::Bordergradient(Goldgradient, Box, Clip);
+    Rendering::Draw::Texturedborder(Goldgradient, Box, Clip);
 }
 
 void Createsidebar()
@@ -36,8 +36,8 @@ void Createsidebar()
     Devstatus->onRender = [](Element_t *Caller, vec4_t Clip) -> void
     {
         auto Box{ Caller->Renderdimensions }; Box.y0 += 2; Box.x0 -= 1;
-        Rendering::Draw::Quadgradient(Goldgradient, Box, Clip);
-        Rendering::Draw::Bordergradient(Goldgradient, Box, Clip);
+        Rendering::Draw::Texturedquad(Goldgradient, Box, Clip);
+        Rendering::Draw::Texturedborder(Goldgradient, Box, Clip);
     };
     Sidebar->Children.push_back(Devstatus);
 

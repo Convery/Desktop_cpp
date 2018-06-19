@@ -8,13 +8,13 @@
 
 #include "../Stdinclude.hpp"
 
-auto Goldgradient{ Rendering::Creategradient(512, { 255, 255, 168, 1.0f }, { 246, 201, 76, 1.0f }) };
+auto Goldgradient{ Rendering::Texture::Creategradient(512, { 255, 255, 168, 1.0f }, { 246, 201, 76, 1.0f }) };
 static void Renderbutton(Element_t *Caller, vec4_t Clip)
 {
     auto Box{ Caller->Renderdimensions }; Box.y0 -= 1;
-    if(Caller->State.Hoover) Rendering::Draw::Quadgradient(Goldgradient, Caller->Renderdimensions, Clip);
+    if(Caller->State.Hoover) Rendering::Draw::Texturedquad(Goldgradient, Caller->Renderdimensions, Clip);
     else Rendering::Draw::Quad({ 205, 197, 186, 0.1f }, Caller->Renderdimensions, Clip);
-    Rendering::Draw::Bordergradient(Goldgradient, Box, Clip);
+    Rendering::Draw::Texturedborder(Goldgradient, Box, Clip);
 }
 static void Renderbox(Element_t *Caller, vec4_t Clip)
 {
@@ -42,7 +42,7 @@ void Createtoolbar()
     Toolbar->onRender = [](Element_t *Caller, vec4_t Clip) -> void
     {
         auto Box{ Caller->Renderdimensions }; Box.y0 = Box.y1;
-        Rendering::Draw::Linegradient(Goldgradient, Box, Clip);
+        Rendering::Draw::Texturedline(Goldgradient, Box, Clip);
     };
     Toolbar->onClicked = [&](Element_t *Caller, bool Released) -> bool
     {

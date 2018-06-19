@@ -18,8 +18,8 @@ namespace Rendering
 {
     static std::queue<vec4_t> Invalidareas{};
     static HDC Surfacecontext{};
+    static pixel24_t *Canvas{};
     static HBITMAP Surface{};
-    static pixel24_t *Pixels{};
 
     // System-code interaction, assumes single-threaded sync.
     void onPresent(const void *Handle)
@@ -29,7 +29,7 @@ namespace Rendering
     }
     void onRender()
     {
-        if (!Pixels)
+        if (!Canvas)
         {
             auto Devicecontext{ GetDC(NULL) };
             BITMAPINFO Format{};
@@ -47,7 +47,7 @@ namespace Rendering
             if (Surfacecontext) DeleteDC(Surfacecontext);
 
             // Create the new surface.
-            Surface = CreateDIBSection(Devicecontext, &Format, DIB_RGB_COLORS, (void **)&Pixels, NULL, 0);
+            Surface = CreateDIBSection(Devicecontext, &Format, DIB_RGB_COLORS, (void **)&Canvas, NULL, 0);
             Surfacecontext = CreateCompatibleDC(Devicecontext);
             SelectObject(Surfacecontext, Surface);
 
@@ -103,7 +103,7 @@ namespace Rendering
         }
         ainline void Setpixel(const pixel24_t Input, const size_t X, const size_t Y, const double Alpha)
         {
-            Pixels[Y * size_t(Resolution.x) + X] = Blend(Pixels[Y * size_t(Resolution.x - 1) + X], Input, Alpha);
+            Canvas[Y * size_t(Resolution.x) + X] = Blend(Canvas[Y * size_t(Resolution.x - 1) + X], Input, Alpha);
         }
         ainline void Blendedfill(const pixel24_t Input, const vec4_t Box, const double Alpha)
         {
@@ -111,13 +111,13 @@ namespace Rendering
             {
                 for (int64_t X = std::clamp(Box.x0, -1.0f, Resolution.x - 1); X <= std::clamp(Box.x1, -1.0f, Resolution.x - 1); ++X)
                 {
-                    if (X >= 0 && Y >= 0) Pixels[Y * size_t(Resolution.x) + X] = Blend(Pixels[Y * size_t(Resolution.x) + X], Input, Alpha);
+                    if (X >= 0 && Y >= 0) Canvas[Y * size_t(Resolution.x) + X] = Blend(Canvas[Y * size_t(Resolution.x) + X], Input, Alpha);
                 }
             }
         }
         ainline void Setpixel(const pixel24_t Input, const size_t X, const size_t Y)
         {
-            Pixels[Y * size_t(Resolution.x) + X] = Input;
+            Canvas[Y * size_t(Resolution.x) + X] = Input;
         }
         ainline void Solidfill(const pixel24_t Input, const vec4_t Box)
         {
@@ -125,7 +125,7 @@ namespace Rendering
             {
                 for (int64_t X = std::clamp(Box.x0, -1.0f, Resolution.x - 1); X <= std::clamp(Box.x1, -1.0f, Resolution.x - 1); ++X)
                 {
-                    if (X >= 0 && Y >= 0) Pixels[Y * size_t(Resolution.x) + X] = Input;
+                    if (X >= 0 && Y >= 0) Canvas[Y * size_t(Resolution.x) + X] = Input;
                 }
             }
         }
@@ -207,16 +207,12 @@ namespace Rendering
             Line(Color, { Box.x1, Box.y0 + 1, Box.x1, Box.y1 - 1 }, Clip);
         }
 
-        // Gradient drawing.
-        void Quadgradient(const std::vector<rgba_t> Colors, const vec4_t Box, const vec4_t Clip)
+        // Textured drawing.
+        void Texturedquad(const texture_t Texture, const vec4_t Box, const vec4_t Clip)
         {
-            const size_t Colorcount{ Colors.size() };
-            std::vector<pixel24_t> Pixel;
-            Pixel.reserve(Colorcount);
+            const auto Colors{ Texture::getGradient(Texture) }; if (!Colors) return;
+            const size_t Colorcount{ Colors->size() };
             size_t Colorindex{};
-
-            // Use the Windows format of the pixels.
-            for (const auto &Item : Colors) Pixel.push_back(fromRGBA(Item));
 
             // Fill the quad.
             for (int64_t Y = std::clamp(Box.y0, -1.0f, Resolution.y - 1); Y <= std::clamp(Box.y1, -1.0f, Resolution.y - 1); ++Y)
@@ -229,13 +225,13 @@ namespace Rendering
                         // Only draw inside the clipped area.
                         if (X >= Clip.x0 && X <= Clip.x1 && Y >= Clip.y0 && Y <= Clip.y1)
                         {
-                            Setpixel(Pixel[Colorindex++ % Colorcount], X, Y);
+                            Setpixel((*Colors)[Colorindex++ % Colorcount], X, Y);
                         }
                     }
                 }
             }
         }
-        void Linegradient(const std::vector<rgba_t> Colors, const vec4_t Box, const vec4_t Clip)
+        void Texturedline(const texture_t Texture, const vec4_t Box, const vec4_t Clip)
         {
             // Clipped area.
             vec4_t Area{ Box };
@@ -249,15 +245,11 @@ namespace Rendering
             const auto DeltaY{ Area.y1 - Area.y0 };
 
             // Straight line, just quad-fill.
-            if (DeltaX == 0.0 || DeltaY == 0.0) return Quadgradient(Colors, Box, Clip);
+            if (DeltaX == 0.0 || DeltaY == 0.0) return Texturedquad(Texture, Box, Clip);
 
-            const size_t Colorcount{ Colors.size() };
-            std::vector<pixel24_t> Pixel;
-            Pixel.reserve(Colorcount);
+            const auto Colors{ Texture::getGradient(Texture) }; if (!Colors) return;
+            const size_t Colorcount{ Colors->size() };
             size_t Colorindex{};
-
-            // Use the Windows format of the pixels.
-            for (const auto &Item : Colors) Pixel.push_back(fromRGBA(Item));
 
             // Draw the actual line.
             int64_t Y{ int64_t(Area.y0) }, Error{};
@@ -271,8 +263,8 @@ namespace Rendering
                     if (X >= Clip.x0 && X <= Clip.x1 && Y >= Clip.y0 && Y <= Clip.y1)
                     {
                         // Invert the coordinates if too steep.
-                        if (Steep) Setpixel(Pixel[Colorindex++ % Colorcount], Y, X);
-                        else Setpixel(Pixel[Colorindex++ % Colorcount], X, Y);
+                        if (Steep) Setpixel((*Colors)[Colorindex++ % Colorcount], Y, X);
+                        else Setpixel((*Colors)[Colorindex++ % Colorcount], X, Y);
                     }
                 }
 
@@ -285,49 +277,61 @@ namespace Rendering
                 }
             }
         }
-        void Bordergradient(const std::vector<rgba_t> Colors, const vec4_t Box, const vec4_t Clip)
+        void Texturedborder(const texture_t Texture, const vec4_t Box, const vec4_t Clip)
         {
-            Linegradient(Colors, { Box.x0, Box.y0, Box.x1, Box.y0 }, Clip);
-            Linegradient(Colors, { Box.x0, Box.y1, Box.x1, Box.y1 }, Clip);
+            Texturedline(Texture, { Box.x0, Box.y0, Box.x1, Box.y0 }, Clip);
+            Texturedline(Texture, { Box.x0, Box.y1, Box.x1, Box.y1 }, Clip);
 
-            Linegradient(Colors, { Box.x0, Box.y0 + 1, Box.x0, Box.y1 - 1 }, Clip);
-            Linegradient(Colors, { Box.x1, Box.y0 + 1, Box.x1, Box.y1 - 1 }, Clip);
+            Texturedline(Texture, { Box.x0, Box.y0 + 1, Box.x0, Box.y1 - 1 }, Clip);
+            Texturedline(Texture, { Box.x1, Box.y0 + 1, Box.x1, Box.y1 - 1 }, Clip);
         }
     }
-
-    std::vector<rgba_t> Creategradient(const size_t Steps, const rgba_t Color1, const rgba_t Color2)
+    namespace Texture
     {
-        std::vector<rgba_t> Colors;
-        Colors.reserve(Steps);
-
-        // Normalize the colors.
-        const rgba_t ColorA{ Color1.R <= 1 ? Color1.R * 255 : Color1.R, Color1.G <= 1 ? Color1.G * 255 : Color1.G, Color1.B <= 1 ? Color1.B * 255 : Color1.B };
-        const rgba_t ColorB{ Color2.R <= 1 ? Color2.R * 255 : Color2.R, Color2.G <= 1 ? Color2.G * 255 : Color2.G, Color2.B <= 1 ? Color2.B * 255 : Color2.B };
-
-        // Generate half the steps from each direction.
-        for (double i = 0; i < 1; i += (1.0 / (Steps / 2)))
+        std::atomic<uint32_t> Texturecount{ 0 };
+        std::unordered_map<texture_t, std::vector<pixel24_t>> Texturemap;
+        texture_t Creategradient(const size_t Steps, const rgba_t Color1, const rgba_t Color2)
         {
-            rgba_t Blended;
-            Blended.R = (ColorA.R / 255 * i) + (ColorB.R / 255 * (1 - i));
-            Blended.G = (ColorA.G / 255 * i) + (ColorB.G / 255 * (1 - i));
-            Blended.B = (ColorA.B / 255 * i) + (ColorB.B / 255 * (1 - i));
-            Blended.A = 1;
+            auto TextureID{ Texturecount++ };
+            auto Entry = &Texturemap[TextureID];
+            Entry->reserve(Steps);
 
-            Colors.push_back(Blended);
+            // Normalize the colors.
+            const rgba_t ColorA{ Color1.R <= 1 ? Color1.R * 255 : Color1.R, Color1.G <= 1 ? Color1.G * 255 : Color1.G, Color1.B <= 1 ? Color1.B * 255 : Color1.B };
+            const rgba_t ColorB{ Color2.R <= 1 ? Color2.R * 255 : Color2.R, Color2.G <= 1 ? Color2.G * 255 : Color2.G, Color2.B <= 1 ? Color2.B * 255 : Color2.B };
+
+            // Generate half the steps from each direction.
+            for (double i = 0; i < 1; i += (1.0 / (Steps / 2)))
+            {
+                rgba_t Blended;
+                Blended.R = (ColorA.R / 255 * i) + (ColorB.R / 255 * (1 - i));
+                Blended.G = (ColorA.G / 255 * i) + (ColorB.G / 255 * (1 - i));
+                Blended.B = (ColorA.B / 255 * i) + (ColorB.B / 255 * (1 - i));
+                Blended.A = 1;
+
+                Entry->push_back(Draw::fromRGBA(Blended));
+            }
+            for (double i = 0; i < 1; i += (1.0 / (Steps / 2)))
+            {
+                rgba_t Blended;
+                Blended.R = (ColorB.R / 255 * i) + (ColorA.R / 255 * (1 - i));
+                Blended.G = (ColorB.G / 255 * i) + (ColorA.G / 255 * (1 - i));
+                Blended.B = (ColorB.B / 255 * i) + (ColorA.B / 255 * (1 - i));
+                Blended.A = 1;
+
+                Entry->push_back(Draw::fromRGBA(Blended));
+            }
+
+            return TextureID;
         }
-        for (double i = 0; i < 1; i += (1.0 / (Steps / 2)))
+        std::vector<pixel24_t> *getGradient(const texture_t ID)
         {
-            rgba_t Blended;
-            Blended.R = (ColorB.R / 255 * i) + (ColorA.R / 255 * (1 - i));
-            Blended.G = (ColorB.G / 255 * i) + (ColorA.G / 255 * (1 - i));
-            Blended.B = (ColorB.B / 255 * i) + (ColorA.B / 255 * (1 - i));
-            Blended.A = 1;
-
-            Colors.push_back(Blended);
+            if (const auto Item = Texturemap.find(ID); Item != Texturemap.end())
+                return &Item->second;
+            return nullptr;
         }
-
-        return Colors;
     }
+
     void Invalidatearea(const vec4_t Box)
     {
         Invalidareas.push(Box);

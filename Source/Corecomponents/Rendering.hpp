@@ -62,20 +62,16 @@ namespace Rendering
         void Line(const rgba_t Color, const vec4_t Box, const vec4_t Clip = { 0, 0, Resolution.x, Resolution.y });
         void Border(const rgba_t Color, const vec4_t Box, const vec4_t Clip = { 0, 0, Resolution.x, Resolution.y });
 
-        // Gradient drawing.
-        void Quadgradient(const std::vector<rgba_t> Colors, const vec4_t Box, const vec4_t Clip = { 0, 0, Resolution.x, Resolution.y });
-        void Linegradient(const std::vector<rgba_t> Colors, const vec4_t Box, const vec4_t Clip = { 0, 0, Resolution.x, Resolution.y });
-        void Bordergradient(const std::vector<rgba_t> Colors, const vec4_t Box, const vec4_t Clip = { 0, 0, Resolution.x, Resolution.y });
+        // Textured drawing.
+        void Texturedquad(const texture_t Texture, const vec4_t Box, const vec4_t Clip = { 0, 0, Resolution.x, Resolution.y });
+        void Texturedline(const texture_t Texture, const vec4_t Box, const vec4_t Clip = { 0, 0, Resolution.x, Resolution.y });
+        void Texturedborder(const texture_t Texture, const vec4_t Box, const vec4_t Clip = { 0, 0, Resolution.x, Resolution.y });
     }
     namespace Texture
     {
         texture_t Creategradient(const size_t Steps, const rgba_t Color1, const rgba_t Color2);
-
+        std::vector<pixel24_t> *getGradient(const texture_t ID);
     }
-
-
-
-    std::vector<rgba_t> Creategradient(const size_t Steps, const rgba_t Color1, const rgba_t Color2);
     void Invalidatearea(const vec4_t Box);
 
     // Scene-management.
