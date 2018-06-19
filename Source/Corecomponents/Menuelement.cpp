@@ -47,9 +47,9 @@ namespace Rendering
 }
 
 // Default callbacks for the elements.
-rect_t Createbox(rect_t Boundingbox, rect_t Margin)
+vec4_t Createbox(vec4_t Boundingbox, vec4_t Margin)
 {
-    rect_t Dimensions;
+    vec4_t Dimensions;
 
     // Calculate the dimensions.
     double Width = std::abs(Boundingbox.x1 - Boundingbox.x0) / 2;
@@ -74,7 +74,7 @@ void Recalculateboxes(Element_t *Caller)
         Item->onModifiedstate(Item);
     }
 }
-void Renderelement(Element_t *Caller, rect_t Clip)
+void Renderelement(Element_t *Caller, vec4_t Clip)
 {
     if(!Caller->State.Hidden) Rendering::Draw::Quad(Caller->Backgroundcolor, Caller->Renderdimensions, Clip);
 }

@@ -9,19 +9,19 @@
 #include "../Stdinclude.hpp"
 
 auto Goldgradient{ Rendering::Creategradient(512, { 255, 255, 168, 1.0f }, { 246, 201, 76, 1.0f }) };
-static void Renderbutton(Element_t *Caller, rect_t Clip)
+static void Renderbutton(Element_t *Caller, vec4_t Clip)
 {
     auto Box{ Caller->Renderdimensions }; Box.y0 -= 1;
     if(Caller->State.Hoover) Rendering::Draw::Quadgradient(Goldgradient, Caller->Renderdimensions, Clip);
-    else Rendering::Draw::Quad({ 205, 197, 186, 0.1 }, Caller->Renderdimensions, Clip);
+    else Rendering::Draw::Quad({ 205, 197, 186, 0.1f }, Caller->Renderdimensions, Clip);
     Rendering::Draw::Bordergradient(Goldgradient, Box, Clip);
 }
-static void Renderbox(Element_t *Caller, rect_t Clip)
+static void Renderbox(Element_t *Caller, vec4_t Clip)
 {
     auto Box{ Caller->Renderdimensions }; Box.y0 -= 1;
     Rendering::Draw::Border(Caller->Backgroundcolor, Box, Clip);
 }
-static void Rendercross(Element_t *Caller, rect_t Clip)
+static void Rendercross(Element_t *Caller, vec4_t Clip)
 {
     auto Box{ Caller->Renderdimensions };
 
@@ -38,8 +38,8 @@ void Createtoolbar()
 
     // Bounding box.
     auto Toolbar = new Element_t("ui.toolbar");
-    Toolbar->Margin = { 0, 0, 0, 1.95 };
-    Toolbar->onRender = [](Element_t *Caller, rect_t Clip) -> void
+    Toolbar->Margin = { 0.0f, 0.0f, 0.0f, 1.95f };
+    Toolbar->onRender = [](Element_t *Caller, vec4_t Clip) -> void
     {
         auto Box{ Caller->Renderdimensions }; Box.y0 = Box.y1;
         Rendering::Draw::Linegradient(Goldgradient, Box, Clip);
@@ -115,7 +115,7 @@ void Createtoolbar()
 
     // Top-right buttons.
     auto Closebutton = new Element_t("ui.toolbar.close");
-    Closebutton->Margin = { 1.945, 0.0, 0.005, 0.6 };
+    Closebutton->Margin = { 1.945f, 0.0f, 0.005f, 0.6f };
     Closebutton->onRender = Renderbutton;
     Closebutton->onClicked = [](Element_t *Caller, bool Released) -> bool
     {
@@ -127,7 +127,7 @@ void Createtoolbar()
     Toolbar->Children.push_back(Closebutton);
 
     auto Maxbutton = new Element_t("ui.toolbar.max");
-    Maxbutton->Margin = { 1.891, 0.0, 0.059, 0.6 };
+    Maxbutton->Margin = { 1.891f, 0.0f, 0.059f, 0.6f };
     Maxbutton->onRender = Renderbutton;
     Maxbutton->onClicked = [](Element_t *Caller, bool Released) -> bool
     {
@@ -169,7 +169,7 @@ void Createtoolbar()
     Toolbar->Children.push_back(Maxbutton);
 
     auto Minbutton = new Element_t("ui.toolbar.min");
-    Minbutton->Margin = { 1.837, 0.0, 0.114, 0.6 };
+    Minbutton->Margin = { 1.837f, 0.0f, 0.114f, 0.6f };
     Minbutton->onRender = Renderbutton;
     Minbutton->onClicked = [](Element_t *Caller, bool Released) -> bool
     {
@@ -186,22 +186,22 @@ void Createtoolbar()
 
     // The icons drawn over the buttons.
     auto Closeicon = new Element_t("ui.toolbar.close.icon");
-    Closeicon->Backgroundcolor = { 0.4, 0.4, 0.4, 1.0 };
-    Closeicon->Margin = { 0.4, 0.4, 0.4, 0.4 };
+    Closeicon->Backgroundcolor = { 0.4f, 0.4f, 0.4f, 1.0f };
+    Closeicon->Margin = { 0.4f, 0.4f, 0.4f, 0.4f };
     Closeicon->onRender = Rendercross;
     Closeicon->State.Noinput = true;
     Closebutton->Children.push_back(Closeicon);
 
     auto Maxicon = new Element_t("ui.toolbar.max.icon");
-    Maxicon->Backgroundcolor = { 0.4, 0.4, 0.4, 1 };
-    Maxicon->Margin = { 0.6, 0.6, 0.6, 0.6 };
+    Maxicon->Backgroundcolor = { 0.4f, 0.4f, 0.4f, 1.0f };
+    Maxicon->Margin = { 0.6f, 0.6f, 0.6f, 0.6f };
     Maxicon->onRender = Renderbox;
     Maxicon->State.Noinput = true;
     Maxbutton->Children.push_back(Maxicon);
 
     auto Minicon = new Element_t("ui.toolbar.min.icon");
-    Minicon->Backgroundcolor = { 0.4, 0.4, 0.4, 1 };
-    Minicon->Margin = { 0.6, 1.4, 0.6, 0.6 };
+    Minicon->Backgroundcolor = { 0.4f, 0.4f, 0.4f, 1.0f };
+    Minicon->Margin = { 0.6f, 1.4f, 0.6f, 0.6f };
     Minicon->onRender = Renderbox;
     Minicon->State.Noinput = true;
     Minbutton->Children.push_back(Minicon);

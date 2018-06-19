@@ -8,7 +8,7 @@
 
 #include "../Stdinclude.hpp"
 
-double gWidth{}, gHeight{}, gPosX{}, gPosY{};
+float gWidth{}, gHeight{}, gPosX{}, gPosY{};
 
 #if defined(_WIN32)
 
@@ -143,15 +143,15 @@ namespace Input
 
         return
         {
-            double(std::clamp(Mouse.x - gPosX, 0.0, gWidth)),
-            double(std::clamp(Mouse.y - gPosY, 0.0, gHeight))
+            std::clamp(Mouse.x - gPosX, 0.0f, gWidth),
+            std::clamp(Mouse.y - gPosY, 0.0f, gHeight)
         };
     }
     vec2_t getMonitorsize()
     {
         RECT Displaysize{};
         SystemParametersInfoA(SPI_GETWORKAREA, 0, &Displaysize, 0);
-        return { double(Displaysize.right - Displaysize.left), double(Displaysize.bottom - Displaysize.top) };
+        return { float(Displaysize.right - Displaysize.left), float(Displaysize.bottom - Displaysize.top) };
     }
     vec2_t getWindowsize()
     {

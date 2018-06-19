@@ -61,5 +61,6 @@
 #include "Utility/Base64.hpp"
 
 // Our components.
-#include "Corecomponents/Rendering.hpp"
+#include "Commontypes.hpp"
 #include "Corecomponents/Input.hpp"
+#include "Corecomponents/Rendering.hpp"

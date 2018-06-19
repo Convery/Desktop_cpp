@@ -9,26 +9,17 @@
 #include "../Stdinclude.hpp"
 #include <queue>
 
-extern double gWidth, gHeight, gPosX, gPosY;
-static double lWidth{}, lHeight{};
+extern float gWidth, gHeight, gPosX, gPosY;
+static float lWidth{}, lHeight{};
 
 #if defined(_WIN32)
 
 namespace Rendering
 {
-    #pragma pack(1)
-    struct Pixel_t
-    {
-        uint8_t B;
-        uint8_t G;
-        uint8_t R;
-    };
-    #pragma pack()
-
-    static std::queue<rect_t> Invalidareas{};
+    static std::queue<vec4_t> Invalidareas{};
     static HDC Surfacecontext{};
     static HBITMAP Surface{};
-    static Pixel_t *Pixels{};
+    static pixel24_t *Pixels{};
 
     // System-code interaction, assumes single-threaded sync.
     void onPresent(const void *Handle)
@@ -74,7 +65,7 @@ namespace Rendering
         }
 
         // Render the element-tree.
-        std::function<void(Element_t *, rect_t Clip)> Lambda = [&](Element_t *Parent, rect_t Clip) -> void
+        std::function<void(Element_t *, vec4_t Clip)> Lambda = [&](Element_t *Parent, vec4_t Clip) -> void
         {
             Parent->onRender(Parent, Clip);
             for (const auto &Child : Parent->Children) Lambda(Child, Clip);
@@ -92,16 +83,16 @@ namespace Rendering
     namespace Draw
     {
         // Windows wants to use BGR.
-        ainline Pixel_t fromRGBA(const rgba_t Color)
+        ainline pixel24_t fromRGBA(const rgba_t Color)
         {
             return
             {
-                uint8_t(Color.b <= 1 ? Color.b * 255 : Color.b),
-                uint8_t(Color.g <= 1 ? Color.g * 255 : Color.g),
-                uint8_t(Color.r <= 1 ? Color.r * 255 : Color.r)
+                uint8_t(Color.B <= 1 ? Color.B * 255 : Color.B),
+                uint8_t(Color.G <= 1 ? Color.G * 255 : Color.G),
+                uint8_t(Color.R <= 1 ? Color.R * 255 : Color.R)
             };
         }
-        ainline Pixel_t Blend(const Pixel_t Base, const Pixel_t Overlay, const double Alpha)
+        ainline pixel24_t Blend(const pixel24_t Base, const pixel24_t Overlay, const double Alpha)
         {
             return
             {
@@ -110,29 +101,29 @@ namespace Rendering
                 uint8_t(Base.R * (1.0 - Alpha) + Overlay.R * Alpha)
             };
         }
-        ainline void Setpixel(const Pixel_t Input, const size_t X, const size_t Y, const double Alpha)
+        ainline void Setpixel(const pixel24_t Input, const size_t X, const size_t Y, const double Alpha)
         {
             Pixels[Y * size_t(Resolution.x) + X] = Blend(Pixels[Y * size_t(Resolution.x - 1) + X], Input, Alpha);
         }
-        ainline void Blendedfill(const Pixel_t Input, const rect_t Box, const double Alpha)
+        ainline void Blendedfill(const pixel24_t Input, const vec4_t Box, const double Alpha)
         {
-            for (int64_t Y = std::clamp(Box.y0, -1.0, Resolution.y - 1); Y <= std::clamp(Box.y1, -1.0, Resolution.y - 1); ++Y)
+            for (int64_t Y = std::clamp(Box.y0, -1.0f, Resolution.y - 1); Y <= std::clamp(Box.y1, -1.0f, Resolution.y - 1); ++Y)
             {
-                for (int64_t X = std::clamp(Box.x0, -1.0, Resolution.x - 1); X <= std::clamp(Box.x1, -1.0, Resolution.x - 1); ++X)
+                for (int64_t X = std::clamp(Box.x0, -1.0f, Resolution.x - 1); X <= std::clamp(Box.x1, -1.0f, Resolution.x - 1); ++X)
                 {
                     if (X >= 0 && Y >= 0) Pixels[Y * size_t(Resolution.x) + X] = Blend(Pixels[Y * size_t(Resolution.x) + X], Input, Alpha);
                 }
             }
         }
-        ainline void Setpixel(const Pixel_t Input, const size_t X, const size_t Y)
+        ainline void Setpixel(const pixel24_t Input, const size_t X, const size_t Y)
         {
             Pixels[Y * size_t(Resolution.x) + X] = Input;
         }
-        ainline void Solidfill(const Pixel_t Input, const rect_t Box)
+        ainline void Solidfill(const pixel24_t Input, const vec4_t Box)
         {
-            for (int64_t Y = std::clamp(Box.y0, -1.0, Resolution.y - 1); Y <= std::clamp(Box.y1, -1.0, Resolution.y - 1); ++Y)
+            for (int64_t Y = std::clamp(Box.y0, -1.0f, Resolution.y - 1); Y <= std::clamp(Box.y1, -1.0f, Resolution.y - 1); ++Y)
             {
-                for (int64_t X = std::clamp(Box.x0, -1.0, Resolution.x - 1); X <= std::clamp(Box.x1, -1.0, Resolution.x - 1); ++X)
+                for (int64_t X = std::clamp(Box.x0, -1.0f, Resolution.x - 1); X <= std::clamp(Box.x1, -1.0f, Resolution.x - 1); ++X)
                 {
                     if (X >= 0 && Y >= 0) Pixels[Y * size_t(Resolution.x) + X] = Input;
                 }
@@ -140,31 +131,31 @@ namespace Rendering
         }
 
         // Basic drawing.
-        void Quad(const rgba_t Color, const rect_t Box, const rect_t Clip)
+        void Quad(const rgba_t Color, const vec4_t Box, const vec4_t Clip)
         {
             // Invisible element.
-            if (Color.a == 0.0) return;
+            if (Color.A == 0.0) return;
 
             // Clipped area.
-            const rect_t Area
+            const vec4_t Area
             {
                 std::max(Box.x0, Clip.x0), std::max(Box.y0, Clip.y0),
                 std::min(Box.x1, Clip.x1), std::min(Box.y1, Clip.y1)
             };
 
             // Solid element.
-            if (Color.a == 1.0) Solidfill(fromRGBA(Color), Area);
+            if (Color.A == 1.0) Solidfill(fromRGBA(Color), Area);
 
             // Transparent element.
-            else return Blendedfill(fromRGBA(Color), Area, Color.a);
+            else return Blendedfill(fromRGBA(Color), Area, Color.A);
         }
-        void Line(const rgba_t Color, const rect_t Box, const rect_t Clip)
+        void Line(const rgba_t Color, const vec4_t Box, const vec4_t Clip)
         {
             // Invisible element.
-            if (Color.a == 0.0) return;
+            if (Color.A == 0.0) return;
 
             // Clipped area.
-            rect_t Area{ Box };
+            vec4_t Area{ Box };
 
             // Check if the line is steep and invert.
             const bool Steep{ std::abs(Area.x0 - Area.x1) < std::abs(Area.y0 - Area.y1) };
@@ -193,8 +184,8 @@ namespace Rendering
                     if (X >= Clip.x0 && X <= Clip.x1 && Y >= Clip.y0 && Y <= Clip.y1)
                     {
                         // Invert the coordinates if too steep.
-                        if (Steep) Setpixel(Pixel, Y, X, Color.a);
-                        else Setpixel(Pixel, X, Y, Color.a);
+                        if (Steep) Setpixel(Pixel, Y, X, Color.A);
+                        else Setpixel(Pixel, X, Y, Color.A);
                     }
                 }
 
@@ -207,7 +198,7 @@ namespace Rendering
                 }
             }
         }
-        void Border(const rgba_t Color, const rect_t Box, const rect_t Clip)
+        void Border(const rgba_t Color, const vec4_t Box, const vec4_t Clip)
         {
             Line(Color, { Box.x0, Box.y0, Box.x1, Box.y0 }, Clip);
             Line(Color, { Box.x0, Box.y1, Box.x1, Box.y1 }, Clip);
@@ -217,10 +208,10 @@ namespace Rendering
         }
 
         // Gradient drawing.
-        void Quadgradient(const std::vector<rgba_t> Colors, const rect_t Box, const rect_t Clip)
+        void Quadgradient(const std::vector<rgba_t> Colors, const vec4_t Box, const vec4_t Clip)
         {
             const size_t Colorcount{ Colors.size() };
-            std::vector<Pixel_t> Pixel;
+            std::vector<pixel24_t> Pixel;
             Pixel.reserve(Colorcount);
             size_t Colorindex{};
 
@@ -228,9 +219,9 @@ namespace Rendering
             for (const auto &Item : Colors) Pixel.push_back(fromRGBA(Item));
 
             // Fill the quad.
-            for (int64_t Y = std::clamp(Box.y0, -1.0, Resolution.y - 1); Y <= std::clamp(Box.y1, -1.0, Resolution.y - 1); ++Y)
+            for (int64_t Y = std::clamp(Box.y0, -1.0f, Resolution.y - 1); Y <= std::clamp(Box.y1, -1.0f, Resolution.y - 1); ++Y)
             {
-                for (int64_t X = std::clamp(Box.x0, -1.0, Resolution.x - 1); X <= std::clamp(Box.x1, -1.0, Resolution.x - 1); ++X)
+                for (int64_t X = std::clamp(Box.x0, -1.0f, Resolution.x - 1); X <= std::clamp(Box.x1, -1.0f, Resolution.x - 1); ++X)
                 {
                     // Only draw inside the canvas.
                     if (X >= 0 && Y >= 0)
@@ -244,10 +235,10 @@ namespace Rendering
                 }
             }
         }
-        void Linegradient(const std::vector<rgba_t> Colors, const rect_t Box, const rect_t Clip)
+        void Linegradient(const std::vector<rgba_t> Colors, const vec4_t Box, const vec4_t Clip)
         {
             // Clipped area.
-            rect_t Area{ Box };
+            vec4_t Area{ Box };
 
             // Check if the line is steep and invert.
             const bool Steep{ std::abs(Area.x0 - Area.x1) < std::abs(Area.y0 - Area.y1) };
@@ -261,7 +252,7 @@ namespace Rendering
             if (DeltaX == 0.0 || DeltaY == 0.0) return Quadgradient(Colors, Box, Clip);
 
             const size_t Colorcount{ Colors.size() };
-            std::vector<Pixel_t> Pixel;
+            std::vector<pixel24_t> Pixel;
             Pixel.reserve(Colorcount);
             size_t Colorindex{};
 
@@ -294,7 +285,7 @@ namespace Rendering
                 }
             }
         }
-        void Bordergradient(const std::vector<rgba_t> Colors, const rect_t Box, const rect_t Clip)
+        void Bordergradient(const std::vector<rgba_t> Colors, const vec4_t Box, const vec4_t Clip)
         {
             Linegradient(Colors, { Box.x0, Box.y0, Box.x1, Box.y0 }, Clip);
             Linegradient(Colors, { Box.x0, Box.y1, Box.x1, Box.y1 }, Clip);
@@ -310,34 +301,34 @@ namespace Rendering
         Colors.reserve(Steps);
 
         // Normalize the colors.
-        const rgba_t ColorA{ Color1.r <= 1 ? Color1.r * 255 : Color1.r, Color1.g <= 1 ? Color1.g * 255 : Color1.g, Color1.b <= 1 ? Color1.b * 255 : Color1.b };
-        const rgba_t ColorB{ Color2.r <= 1 ? Color2.r * 255 : Color2.r, Color2.g <= 1 ? Color2.g * 255 : Color2.g, Color2.b <= 1 ? Color2.b * 255 : Color2.b };
+        const rgba_t ColorA{ Color1.R <= 1 ? Color1.R * 255 : Color1.R, Color1.G <= 1 ? Color1.G * 255 : Color1.G, Color1.B <= 1 ? Color1.B * 255 : Color1.B };
+        const rgba_t ColorB{ Color2.R <= 1 ? Color2.R * 255 : Color2.R, Color2.G <= 1 ? Color2.G * 255 : Color2.G, Color2.B <= 1 ? Color2.B * 255 : Color2.B };
 
         // Generate half the steps from each direction.
         for (double i = 0; i < 1; i += (1.0 / (Steps / 2)))
         {
             rgba_t Blended;
-            Blended.r = (ColorA.r / 255 * i) + (ColorB.r / 255 * (1 - i));
-            Blended.g = (ColorA.g / 255 * i) + (ColorB.g / 255 * (1 - i));
-            Blended.b = (ColorA.b / 255 * i) + (ColorB.b / 255 * (1 - i));
-            Blended.a = 1;
+            Blended.R = (ColorA.R / 255 * i) + (ColorB.R / 255 * (1 - i));
+            Blended.G = (ColorA.G / 255 * i) + (ColorB.G / 255 * (1 - i));
+            Blended.B = (ColorA.B / 255 * i) + (ColorB.B / 255 * (1 - i));
+            Blended.A = 1;
 
             Colors.push_back(Blended);
         }
         for (double i = 0; i < 1; i += (1.0 / (Steps / 2)))
         {
             rgba_t Blended;
-            Blended.r = (ColorB.r / 255 * i) + (ColorA.r / 255 * (1 - i));
-            Blended.g = (ColorB.g / 255 * i) + (ColorA.g / 255 * (1 - i));
-            Blended.b = (ColorB.b / 255 * i) + (ColorA.b / 255 * (1 - i));
-            Blended.a = 1;
+            Blended.R = (ColorB.R / 255 * i) + (ColorA.R / 255 * (1 - i));
+            Blended.G = (ColorB.G / 255 * i) + (ColorA.G / 255 * (1 - i));
+            Blended.B = (ColorB.B / 255 * i) + (ColorA.B / 255 * (1 - i));
+            Blended.A = 1;
 
             Colors.push_back(Blended);
         }
 
         return Colors;
     }
-    void Invalidatearea(const rect_t Box)
+    void Invalidatearea(const vec4_t Box)
     {
         Invalidareas.push(Box);
     }
@@ -355,9 +346,9 @@ namespace Rendering
     // User-code interaction.
     namespace Draw
     {
-        void Quad(rgba_t Color, rect_t Box, rect_t Margin) {}
-        void Line(rgba_t Color, rect_t Box, rect_t Margin) {}
-        void Border(rgba_t Color, rect_t Box, rect_t Margin) {}
+        void Quad(rgba_t Color, vec4_t Box, vec4_t Margin) {}
+        void Line(rgba_t Color, vec4_t Box, vec4_t Margin) {}
+        void Border(rgba_t Color, vec4_t Box, vec4_t Margin) {}
     }
 }
 

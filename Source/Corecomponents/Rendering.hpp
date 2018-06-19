@@ -7,26 +7,17 @@
 */
 
 #pragma once
-#include "Input.hpp"
-#include <functional>
-#include <cstdint>
-#include <string>
-#include <vector>
-
-// Some common types.
-using vec3_t = struct { double x, y, z; };
-using rgba_t = struct { double r, g, b, a; };
-using rect_t = struct { double x0, y0, x1, y1; };
+#include "../Stdinclude.hpp"
 
 // A virtual element that's the core of all menus.
 // The state is largely for the system, not user-code.
 struct Element_t
 {
-    rect_t Margin{};
-    rect_t Renderbox{};
-    rect_t Boundingbox{};
-    rect_t Worlddimensions{};
-    rect_t Renderdimensions{};
+    vec4_t Margin{};
+    vec4_t Renderbox{};
+    vec4_t Boundingbox{};
+    vec4_t Worlddimensions{};
+    vec4_t Renderdimensions{};
     std::string Identifier;
     struct
     {
@@ -42,7 +33,7 @@ struct Element_t
     // Callbacks on user-interaction, returns if the event is handled.
     std::function<bool (Element_t *Caller, bool Released)> onClicked;
     std::function<bool (Element_t *Caller, bool Released)> onHoover;
-    std::function<void(Element_t *Caller, rect_t Clip)> onRender;
+    std::function<void(Element_t *Caller, vec4_t Clip)> onRender;
     std::function<void(Element_t *Caller)> onModifiedstate;
 
     // Inlined modifiers.
@@ -67,17 +58,25 @@ namespace Rendering
     namespace Draw
     {
         // Basic drawing.
-        void Quad(const rgba_t Color, const rect_t Box, const rect_t Clip = { 0, 0, Resolution.x, Resolution.y });
-        void Line(const rgba_t Color, const rect_t Box, const rect_t Clip = { 0, 0, Resolution.x, Resolution.y });
-        void Border(const rgba_t Color, const rect_t Box, const rect_t Clip = { 0, 0, Resolution.x, Resolution.y });
+        void Quad(const rgba_t Color, const vec4_t Box, const vec4_t Clip = { 0, 0, Resolution.x, Resolution.y });
+        void Line(const rgba_t Color, const vec4_t Box, const vec4_t Clip = { 0, 0, Resolution.x, Resolution.y });
+        void Border(const rgba_t Color, const vec4_t Box, const vec4_t Clip = { 0, 0, Resolution.x, Resolution.y });
 
         // Gradient drawing.
-        void Quadgradient(const std::vector<rgba_t> Colors, const rect_t Box, const rect_t Clip = { 0, 0, Resolution.x, Resolution.y });
-        void Linegradient(const std::vector<rgba_t> Colors, const rect_t Box, const rect_t Clip = { 0, 0, Resolution.x, Resolution.y });
-        void Bordergradient(const std::vector<rgba_t> Colors, const rect_t Box, const rect_t Clip = { 0, 0, Resolution.x, Resolution.y });
+        void Quadgradient(const std::vector<rgba_t> Colors, const vec4_t Box, const vec4_t Clip = { 0, 0, Resolution.x, Resolution.y });
+        void Linegradient(const std::vector<rgba_t> Colors, const vec4_t Box, const vec4_t Clip = { 0, 0, Resolution.x, Resolution.y });
+        void Bordergradient(const std::vector<rgba_t> Colors, const vec4_t Box, const vec4_t Clip = { 0, 0, Resolution.x, Resolution.y });
     }
+    namespace Texture
+    {
+        texture_t Creategradient(const size_t Steps, const rgba_t Color1, const rgba_t Color2);
+
+    }
+
+
+
     std::vector<rgba_t> Creategradient(const size_t Steps, const rgba_t Color1, const rgba_t Color2);
-    void Invalidatearea(const rect_t Box);
+    void Invalidatearea(const vec4_t Box);
 
     // Scene-management.
     namespace Menu

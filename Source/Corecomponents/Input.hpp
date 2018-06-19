@@ -7,10 +7,7 @@
 */
 
 #pragma once
-#include <cstdint>
-
-// Some common types.
-using vec2_t = struct { double x, y; };
+#include "../Stdinclude.hpp"
 
 namespace Input
 {
