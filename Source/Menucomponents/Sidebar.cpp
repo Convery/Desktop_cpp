@@ -26,6 +26,7 @@ void Createsidebar()
     auto Sidebar = new Element_t("ui.sidebar");
     Sidebar->Margin = { 0, 0.05, 1.70, 0.05 };
     Sidebar->State.Hidden = true;
+    Sidebar->State.Noinput = true;
     Rootelement->Children.push_back(Sidebar);
 
     // Developmentstatus..
@@ -42,28 +43,28 @@ void Createsidebar()
 
     // Homescreen.
     auto Button1 = new Element_t("ui.sidebar.button1");
-    Button1->Margin = { 0, 0.15, 0, 1.70 };
+    Button1->Margin = { 0, 0.152, 0, 1.70 };
     Button1->Backgroundcolor = { 50, 58, 69, 1 };
     Button1->onRender = Renderbutton;
     Sidebar->Children.push_back(Button1);
 
     // Library.
     auto Button2 = new Element_t("ui.sidebar.button2");
-    Button2->Margin = { 0, 0.30, 0, 1.55 };
+    Button2->Margin = { 0, 0.305, 0, 1.55 };
     Button2->Backgroundcolor = { 50, 58, 69, 1 };
     Button2->onRender = Renderbutton;
     Sidebar->Children.push_back(Button2);
 
     // Plugins.
     auto Button3 = new Element_t("ui.sidebar.button3");
-    Button3->Margin = { 0, 0.45, 0, 1.40 };
+    Button3->Margin = { 0, 0.455, 0, 1.40 };
     Button3->Backgroundcolor = { 50, 58, 69, 1 };
     Button3->onRender = Renderbutton;
     Sidebar->Children.push_back(Button3);
 
     // Leaderboards or something..
     auto Button4 = new Element_t("ui.sidebar.button4");
-    Button4->Margin = { 0, 0.60, 0, 1.25 };
+    Button4->Margin = { 0, 0.605, 0, 1.25 };
     Button4->Backgroundcolor = { 50, 58, 69, 1 };
     Button4->onRender = Renderbutton;
     Sidebar->Children.push_back(Button4);
@@ -72,12 +73,14 @@ void Createsidebar()
     Area1->Margin = { 0, 0.76, 0, 0.21 };
     Area1->Backgroundcolor = { 205, 197, 186, 0.2 };
     Area1->onRender = Renderbutton;
+    Area1->State.Noinput = true;
     Sidebar->Children.push_back(Area1);
 
     auto Area2 = new Element_t("ui.sidebar.area2");
     Area2->Margin = { 0, 1.8, 0, 0.0 };
     Area2->Backgroundcolor = { 205, 197, 186, 0.2 };
     Area2->onRender = Renderbutton;
+    Area2->State.Noinput = true;
     Sidebar->Children.push_back(Area2);
 }
 
