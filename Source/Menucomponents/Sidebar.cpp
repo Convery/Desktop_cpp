@@ -36,6 +36,7 @@ void Createsidebar()
     {
         auto Box{ Caller->Renderdimensions }; Box.y0 += 2; Box.x0 -= 1;
         Rendering::Draw::Quadgradient(Goldgradient, Box);
+        Rendering::Draw::Bordergradient(Goldgradient, Box);
     };
     Sidebar->Children.push_back(Devstatus);
 
@@ -67,7 +68,17 @@ void Createsidebar()
     Button4->onRender = Renderbutton;
     Sidebar->Children.push_back(Button4);
 
+    auto Area1 = new Element_t("ui.sidebar.area1");
+    Area1->Margin = { 0, 0.76, 0, 0.21 };
+    Area1->Backgroundcolor = { 205, 197, 186, 0.2 };
+    Area1->onRender = Renderbutton;
+    Sidebar->Children.push_back(Area1);
 
+    auto Area2 = new Element_t("ui.sidebar.area2");
+    Area2->Margin = { 0, 1.8, 0, 0.0 };
+    Area2->Backgroundcolor = { 205, 197, 186, 0.2 };
+    Area2->onRender = Renderbutton;
+    Sidebar->Children.push_back(Area2);
 }
 
 
