@@ -36,7 +36,7 @@ namespace Rendering
 
             // Bitmap format.
             Format.bmiHeader.biSize = sizeof(BITMAPINFO);
-            Format.bmiHeader.biHeight =  -Resolution.y;
+            Format.bmiHeader.biHeight =  -(Resolution.y + 1);
             Format.bmiHeader.biWidth = Resolution.x;
             Format.bmiHeader.biCompression = BI_RGB;
             Format.bmiHeader.biBitCount = 24;
@@ -96,22 +96,22 @@ namespace Rendering
         {
             return
             {
-                uint8_t(Base.B * (1.0 - Alpha) + Overlay.B * Alpha),
-                uint8_t(Base.G * (1.0 - Alpha) + Overlay.G * Alpha),
-                uint8_t(Base.R * (1.0 - Alpha) + Overlay.R * Alpha)
+                uint8_t(Base.BGR.B * (1.0 - Alpha) + Overlay.BGR.B * Alpha),
+                uint8_t(Base.BGR.G * (1.0 - Alpha) + Overlay.BGR.G * Alpha),
+                uint8_t(Base.BGR.R * (1.0 - Alpha) + Overlay.BGR.R * Alpha)
             };
         }
         ainline void Setpixel(const pixel24_t Input, const size_t X, const size_t Y, const double Alpha)
         {
-            Canvas[Y * size_t(Resolution.x) + X] = Blend(Canvas[Y * size_t(Resolution.x - 1) + X], Input, Alpha);
+            Canvas[Y * size_t(Resolution.x) + X] = Blend(Canvas[Y * size_t(Resolution.x) + X], Input, Alpha);
         }
         ainline void Blendedfill(const pixel24_t Input, const vec4_t Box, const double Alpha)
         {
-            for (int64_t Y = std::clamp(Box.y0, -1.0f, Resolution.y - 1); Y <= std::clamp(Box.y1, -1.0f, Resolution.y - 1); ++Y)
+            for (int64_t Y = std::clamp(Box.y0, -1.0f, Resolution.y); Y <= std::clamp(Box.y1, -1.0f, Resolution.y); ++Y)
             {
-                for (int64_t X = std::clamp(Box.x0, -1.0f, Resolution.x - 1); X <= std::clamp(Box.x1, -1.0f, Resolution.x - 1); ++X)
+                for (int64_t X = std::clamp(Box.x0, -1.0f, Resolution.x); X <= std::clamp(Box.x1, -1.0f, Resolution.x); ++X)
                 {
-                    if (X >= 0 && Y >= 0) Canvas[Y * size_t(Resolution.x) + X] = Blend(Canvas[Y * size_t(Resolution.x) + X], Input, Alpha);
+                    if (X >= 0 && Y >= 0) Setpixel(Input, X, Y, Alpha);
                 }
             }
         }
@@ -121,11 +121,11 @@ namespace Rendering
         }
         ainline void Solidfill(const pixel24_t Input, const vec4_t Box)
         {
-            for (int64_t Y = std::clamp(Box.y0, -1.0f, Resolution.y - 1); Y <= std::clamp(Box.y1, -1.0f, Resolution.y - 1); ++Y)
+            for (int64_t Y = std::clamp(Box.y0, -1.0f, Resolution.y); Y <= std::clamp(Box.y1, -1.0f, Resolution.y); ++Y)
             {
-                for (int64_t X = std::clamp(Box.x0, -1.0f, Resolution.x - 1); X <= std::clamp(Box.x1, -1.0f, Resolution.x - 1); ++X)
+                for (int64_t X = std::clamp(Box.x0, -1.0f, Resolution.x); X <= std::clamp(Box.x1, -1.0f, Resolution.x); ++X)
                 {
-                    if (X >= 0 && Y >= 0) Canvas[Y * size_t(Resolution.x) + X] = Input;
+                    if (X >= 0 && Y >= 0) Setpixel(Input, X, Y);
                 }
             }
         }
@@ -159,11 +159,13 @@ namespace Rendering
 
             // Check if the line is steep and invert.
             const bool Steep{ std::abs(Area.x0 - Area.x1) < std::abs(Area.y0 - Area.y1) };
-            if (Area.x0 > Area.x1)
+            if (Steep)
             {
-                std::swap(Area.x0, Area.x1);
-                std::swap(Area.y0, Area.y1);
+                std::swap(Area.x0, Area.y0);
+                std::swap(Area.x1, Area.y1);
             }
+            if (Area.x0 > Area.x1) std::swap(Area.x0, Area.x1);
+            if (Area.y0 > Area.y1) std::swap(Area.y0, Area.y1);
 
             const auto DeltaX{ Area.x1 - Area.x0 };
             const auto DeltaY{ Area.y1 - Area.y0 };
@@ -178,7 +180,7 @@ namespace Rendering
             for (int64_t X = Area.x0; X <= Area.x1; ++X)
             {
                 // Only draw inside the canvas.
-                if (X >= 0 && Y >= 0)
+                if (X > 0 && Y > 0)
                 {
                     // Only draw inside the clipped area.
                     if (X >= Clip.x0 && X <= Clip.x1 && Y >= Clip.y0 && Y <= Clip.y1)
@@ -215,9 +217,9 @@ namespace Rendering
             size_t Colorindex{};
 
             // Fill the quad.
-            for (int64_t Y = std::clamp(Box.y0, -1.0f, Resolution.y - 1); Y <= std::clamp(Box.y1, -1.0f, Resolution.y - 1); ++Y)
+            for (int64_t Y = std::clamp(Box.y0, -1.0f, Resolution.y); Y <= std::clamp(Box.y1, -1.0f, Resolution.y); ++Y)
             {
-                for (int64_t X = std::clamp(Box.x0, -1.0f, Resolution.x - 1); X <= std::clamp(Box.x1, -1.0f, Resolution.x - 1); ++X)
+                for (int64_t X = std::clamp(Box.x0, -1.0f, Resolution.x); X <= std::clamp(Box.x1, -1.0f, Resolution.x); ++X)
                 {
                     // Only draw inside the canvas.
                     if (X >= 0 && Y >= 0)
@@ -238,6 +240,11 @@ namespace Rendering
 
             // Check if the line is steep and invert.
             const bool Steep{ std::abs(Area.x0 - Area.x1) < std::abs(Area.y0 - Area.y1) };
+            if (Steep)
+            {
+                std::swap(Area.x0, Area.y0);
+                std::swap(Area.x1, Area.y1);
+            }
             if (Area.x0 > Area.x1) std::swap(Area.x0, Area.x1);
             if (Area.y0 > Area.y1) std::swap(Area.y0, Area.y1);
 
@@ -257,13 +264,13 @@ namespace Rendering
             for (int64_t X = Area.x0; X <= Area.x1; ++X)
             {
                 // Only draw inside the canvas.
-                if (X >= 0 && Y >= 0)
+                if (X > 0 && Y > 0)
                 {
                     // Only draw inside the clipped area.
                     if (X >= Clip.x0 && X <= Clip.x1 && Y >= Clip.y0 && Y <= Clip.y1)
                     {
                         // Invert the coordinates if too steep.
-                        if (Steep) Setpixel((*Colors)[Colorindex++ % Colorcount], Y, X);
+                        if(Steep) Setpixel((*Colors)[Colorindex++ % Colorcount], Y, X);
                         else Setpixel((*Colors)[Colorindex++ % Colorcount], X, Y);
                     }
                 }
