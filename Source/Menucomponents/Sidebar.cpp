@@ -8,7 +8,7 @@
 
 #include "../Stdinclude.hpp"
 
-extern texture_t Goldgradient;
+static texture_t Goldgradient{ Rendering::Texture::Creategradient(64, { 255, 255, 168, 1.0f }, { 246, 201, 76, 1.0f }) };
 
 static void Renderbutton(Element_t *Caller, vec4_t Clip)
 {
@@ -24,18 +24,18 @@ void Createsidebar()
 
     // Bounding box.
     auto Sidebar = new Element_t("ui.sidebar");
-    Sidebar->Margin = { 0.0f, 0.05f, 1.70f, 0.05f };
+    Sidebar->Margin = { 0.0f, 0.0f, 1.90f, 0.05f };
     Sidebar->State.Hidden = true;
     Sidebar->State.Noinput = true;
     Rootelement->Children.push_back(Sidebar);
 
     // Developmentstatus..
     auto Devstatus = new Element_t("ui.sidebar.devstatus");
-    Devstatus->Margin = { 0.0f, 0.03f, 0.0f, 1.85f };
+    Devstatus->Margin = { 0.0f, 0.0f, 0.0f, 1.85f };
     Devstatus->Backgroundcolor = { 1, 1, 1, 1 };
     Devstatus->onRender = [](Element_t *Caller, vec4_t Clip) -> void
     {
-        auto Box{ Caller->Renderdimensions }; Box.y0 += 2; Box.x0 -= 1;
+        auto Box{ Caller->Renderdimensions }; Box.x0 -= 1; Box.y1 -= 2;
         Rendering::Draw::Texturedquad(Goldgradient, Box, Clip);
         Rendering::Draw::Texturedborder(Goldgradient, Box, Clip);
     };

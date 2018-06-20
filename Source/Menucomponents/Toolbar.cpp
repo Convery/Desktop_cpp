@@ -8,7 +8,7 @@
 
 #include "../Stdinclude.hpp"
 
-auto Goldgradient{ Rendering::Texture::Creategradient(512, { 255, 255, 168, 1.0f }, { 246, 201, 76, 1.0f }) };
+auto Goldgradient{ Rendering::Texture::Creategradient(256, { 255, 255, 168, 1.0f }, { 246, 201, 76, 1.0f }) };
 static void Renderbutton(Element_t *Caller, vec4_t Clip)
 {
     auto Box{ Caller->Renderdimensions }; Box.y0 -= 1;
