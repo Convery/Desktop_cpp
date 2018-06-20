@@ -180,7 +180,7 @@ namespace Rendering
             for (int64_t X = Area.x0; X <= Area.x1; ++X)
             {
                 // Only draw inside the canvas.
-                if (X > 0 && Y > 0)
+                if (X >= 0 && Y >= 0)
                 {
                     // Only draw inside the clipped area.
                     if (X >= Clip.x0 && X <= Clip.x1 && Y >= Clip.y0 && Y <= Clip.y1)
@@ -264,7 +264,7 @@ namespace Rendering
             for (int64_t X = Area.x0; X <= Area.x1; ++X)
             {
                 // Only draw inside the canvas.
-                if (X > 0 && Y > 0)
+                if (X >= 0 && Y >= 0)
                 {
                     // Only draw inside the clipped area.
                     if (X >= Clip.x0 && X <= Clip.x1 && Y >= Clip.y0 && Y <= Clip.y1)
