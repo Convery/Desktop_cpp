@@ -58,10 +58,10 @@ int __stdcall WinMain(HINSTANCE hCurrentInst, HINSTANCE hPreviousInst, LPSTR lps
     Input::getWindowsize();
 
     // Create the initial scene and render the first frame.
-    Rendering::Invalidatearea({ -1, -1, Rendering::Resolution.x, Rendering::Resolution.y });
-    Rendering::getRootelement()->Backgroundcolor = { 38, 39, 43, 1 };
-    Rendering::getRootelement()->State.Noinput = true;
-    Rendering::Menu::Switch("homescreen");
+    Rendering::Invalidatearea({ 0, 0, Rendering::Resolution.x, Rendering::Resolution.y });
+    Rendering::Scene::getRootelement()->State.Noinput = true;
+    Rendering::Scene::getRootelement()->State.Hidden = true;
+    Rendering::Scene::Switch("homescreen");
     Rendering::onRender();
 
     // Render in a separate thread.
