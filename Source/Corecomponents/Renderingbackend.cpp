@@ -228,6 +228,14 @@ namespace Rendering
             if(Color.A == 1.0f) Internal::fillPoly(Vertices, 2, [&](const size_t X, const size_t Y) { Internal::setPixel(X, Y, Pixel); });
             else Internal::fillPoly(Vertices, 2, [&](const size_t X, const size_t Y) { Internal::setPixel(X, Y, Pixel, Color.A); });
         }
+        void Polygon(const rgba_t Color, const std::vector<vec2_t> Vertices)
+        {
+            if (Color.A == 0.0f) return;
+            auto Pixel{ Internal::fromRGBA(Color) };
+
+            if(Color.A == 1.0f) Internal::fillPoly(Vertices.data(), Vertices.size(), [&](const size_t X, const size_t Y) { Internal::setPixel(X, Y, Pixel); });
+            else Internal::fillPoly(Vertices.data(), Vertices.size(), [&](const size_t X, const size_t Y) { Internal::setPixel(X, Y, Pixel, Color.A); });
+        }
     }
     namespace Textureddraw
     {
@@ -264,6 +272,13 @@ namespace Rendering
         {
             vec2_t Vertices[]{ Start, Stop };
             Internal::fillPoly(Vertices, 2, [&](const size_t X, const size_t Y)
+            {
+                Internal::setPixel(X, Y, ((Pixel_t *)Color.Data)[(Y % Color.Height) * Color.Width + (X % Color.Width)]);
+            });
+        }
+        void Polygon(const texture_t Color, const std::vector<vec2_t> Vertices)
+        {
+            Internal::fillPoly(Vertices.data(), Vertices.size(), [&](const size_t X, const size_t Y)
             {
                 Internal::setPixel(X, Y, ((Pixel_t *)Color.Data)[(Y % Color.Height) * Color.Width + (X % Color.Width)]);
             });
