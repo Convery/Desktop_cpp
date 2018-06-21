@@ -229,8 +229,85 @@ namespace Rendering
             else Internal::fillPoly(Vertices, 2, [&](const size_t X, const size_t Y) { Internal::setPixel(X, Y, Pixel, Color.A); });
         }
     }
+    namespace Textureddraw
+    {
+        template <> void Triangle<false>(const texture_t Color, const vec2_t a, const vec2_t b, const vec2_t c)
+        {
+            Line(Color, { a.x, a.y }, { b.x, b.y });
+            Line(Color, { b.x, b.y }, { c.x, c.y });
+            Line(Color, { c.x, c.y }, { a.x, a.y });
+        }
+        template <> void Triangle<true>(const texture_t Color, const vec2_t a, const vec2_t b, const vec2_t c)
+        {
+            vec2_t Vertices[]{ a, b, c };
+            Internal::fillPoly(Vertices, 3, [&](const size_t X, const size_t Y)
+            {
+                Internal::setPixel(X, Y, ((Pixel_t *)Color.Data)[(Y % Color.Height) * Color.Width + (X % Color.Width)]);
+            });
+        }
+        template <> void Quad<false>(const texture_t Color, const vec4_t Area)
+        {
+            Line(Color, { Area.x0, Area.y0 }, { Area.x1, Area.y0 });
+            Line(Color, { Area.x0, Area.y1 }, { Area.x1, Area.y1 });
+            Line(Color, { Area.x0, Area.y0 + 1 }, { Area.x0, Area.y1 - 1 });
+            Line(Color, { Area.x1, Area.y0 + 1 }, { Area.x1, Area.y1 - 1 });
+        }
+        template <> void Quad<true>(const texture_t Color, const vec4_t Area)
+        {
+            vec2_t Vertices[]{ {Area.x0, Area.y0}, {Area.x1, Area.y0}, {Area.x1, Area.y1}, {Area.x0, Area.y1} };
+            Internal::fillPoly(Vertices, 4, [&](const size_t X, const size_t Y)
+            {
+                Internal::setPixel(X, Y, ((Pixel_t *)Color.Data)[(Y % Color.Height) * Color.Width + (X % Color.Width)]);
+            });
+        }
+        void Line(const texture_t Color, const vec2_t Start, const vec2_t Stop)
+        {
+            vec2_t Vertices[]{ Start, Stop };
+            Internal::fillPoly(Vertices, 2, [&](const size_t X, const size_t Y)
+            {
+                Internal::setPixel(X, Y, ((Pixel_t *)Color.Data)[(Y % Color.Height) * Color.Width + (X % Color.Width)]);
+            });
+        }
+    }
 
+    // Basic textures.
+    namespace Texture
+    {
+        std::atomic<uint32_t> Texturecount{ 0 };
+        texture_t Creategradient(const size_t Steps, const rgba_t Color1, const rgba_t Color2)
+        {
+            texture_t Texture{ Texturecount++, Steps, 1, new Pixel_t[Steps] };
+            size_t Index{};
 
+            // Normalize the colors.
+            const rgba_t ColorA{ Color1.R <= 1 ? Color1.R * 255 : Color1.R, Color1.G <= 1 ? Color1.G * 255 : Color1.G, Color1.B <= 1 ? Color1.B * 255 : Color1.B };
+            const rgba_t ColorB{ Color2.R <= 1 ? Color2.R * 255 : Color2.R, Color2.G <= 1 ? Color2.G * 255 : Color2.G, Color2.B <= 1 ? Color2.B * 255 : Color2.B };
+
+            // Generate half the steps from each direction.
+            for (float i = 0; i < 1; i += (1.0 / (Steps / 2)))
+            {
+                rgba_t Blended;
+                Blended.R = (ColorA.R / 255 * i) + (ColorB.R / 255 * (1 - i));
+                Blended.G = (ColorA.G / 255 * i) + (ColorB.G / 255 * (1 - i));
+                Blended.B = (ColorA.B / 255 * i) + (ColorB.B / 255 * (1 - i));
+                Blended.A = 1;
+
+                ((Pixel_t*)Texture.Data)[Index++] = Internal::fromRGBA(Blended);
+            }
+            for (float i = 0; i < 1; i += (1.0 / (Steps / 2)))
+            {
+                rgba_t Blended;
+                Blended.R = (ColorB.R / 255 * i) + (ColorA.R / 255 * (1 - i));
+                Blended.G = (ColorB.G / 255 * i) + (ColorA.G / 255 * (1 - i));
+                Blended.B = (ColorB.B / 255 * i) + (ColorA.B / 255 * (1 - i));
+                Blended.A = 1;
+
+                ((Pixel_t*)Texture.Data)[Index++] = Internal::fromRGBA(Blended);
+            }
+
+            return Texture;
+        }
+    }
 
 
 

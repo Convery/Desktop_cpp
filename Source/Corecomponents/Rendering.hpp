@@ -79,16 +79,15 @@ namespace Rendering
     }
     namespace Textureddraw
     {
-        template <bool Filled = false> void Triangle(const texture_t Color, const vec2_t a, const vec2_t b, const vec2_t c);
-        template <bool Filled = false> void Quad(const texture_t Color, const vec4_t Area);
-        void Line(const rgba_t Color, const vec2_t Start, const vec2_t Stop);
+        template <bool Filled = true> void Triangle(const texture_t Color, const vec2_t a, const vec2_t b, const vec2_t c);
+        template <bool Filled = true> void Quad(const texture_t Color, const vec4_t Area);
+        void Line(const texture_t Color, const vec2_t Start, const vec2_t Stop);
     }
 
     // Basic textures.
     namespace Texture
     {
         texture_t Creategradient(const size_t Steps, const rgba_t Color1, const rgba_t Color2);
-        std::pair<size_t, Pixel_t *> toPixels(const texture_t ID);
     }
 
     // Scene-management.
