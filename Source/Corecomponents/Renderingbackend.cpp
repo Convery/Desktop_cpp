@@ -102,11 +102,7 @@ namespace Rendering
     namespace Internal
     {
         // Windows wants to use BGR colors.
-        void setPixel(const size_t X, const size_t Y, const Pixel_t Pixel, const float Alpha)
-        {
-            setPixel(X, Y, blendPixel(Canvas[Y * size_t(Resolution.x) + X], Pixel, Alpha));
-        }
-        void fillPoly(const vec2_t *Vertices, const size_t Count, onDrawcallback Callback)
+        template <bool Line> void fillPoly(const vec2_t *Vertices, const size_t Count, onDrawcallback Callback)
         {
             auto Nodes{ std::make_unique<int32_t[]>(Count + 1) };
 
@@ -147,14 +143,29 @@ namespace Rendering
                         if (Nodes[i] < std::max(Clippingarea.x0, 0.0f)) Nodes[i] = std::max(Clippingarea.x0, 0.0f);
                         if (Nodes[i + 1] > std::min(Clippingarea.x1, Resolution.x)) Nodes[i + 1] = std::min(Clippingarea.x1, Resolution.x);
 
-                        for (j = Nodes[i]; j <= Nodes[i + 1]; ++j)
+                        if (!Line)
                         {
-                            Callback(j, Y);
+                            for (j = Nodes[i]; j < Nodes[i + 1]; ++j)
+                            {
+                                Callback(j, Y);
+                            }
+                        }
+                        else
+                        {
+                            for (j = Nodes[i]; j <= Nodes[i + 1]; ++j)
+                            {
+                                Callback(j, Y);
+                            }
                         }
                     }
                 }
             }
         }
+        void setPixel(const size_t X, const size_t Y, const Pixel_t Pixel, const float Alpha)
+        {
+            setPixel(X, Y, blendPixel(Canvas[Y * size_t(Resolution.x) + X], Pixel, Alpha));
+        }
+
         Pixel_t blendPixel(const Pixel_t Base, const Pixel_t Overlay, const float Alpha)
         {
             return
@@ -205,10 +216,10 @@ namespace Rendering
         template <> void Quad<false>(const rgba_t Color, const vec4_t Area)
         {
             if (Color.A == 0.0f) return;
-            Line(Color, { Area.x0, Area.y0 }, { Area.x1, Area.y0 });
-            Line(Color, { Area.x0, Area.y1 }, { Area.x1, Area.y1 });
-            Line(Color, { Area.x0, Area.y0 + 1 }, { Area.x0, Area.y1 - 1 });
-            Line(Color, { Area.x1, Area.y0 + 1 }, { Area.x1, Area.y1 - 1 });
+            Line(Color, { Area.x0, Area.y0 }, { Area.x1 - 1, Area.y0 });
+            Line(Color, { Area.x0, Area.y1 }, { Area.x1 - 1, Area.y1 });
+            Line(Color, { Area.x0, Area.y0 }, { Area.x0, Area.y1 });
+            Line(Color, { Area.x1 - 1, Area.y0 }, { Area.x1 - 1, Area.y1 });
         }
         template <> void Quad<true>(const rgba_t Color, const vec4_t Area)
         {
@@ -225,8 +236,8 @@ namespace Rendering
             vec2_t Vertices[]{ Start, Stop };
             auto Pixel{ Internal::fromRGBA(Color) };
 
-            if(Color.A == 1.0f) Internal::fillPoly(Vertices, 2, [&](const size_t X, const size_t Y) { Internal::setPixel(X, Y, Pixel); });
-            else Internal::fillPoly(Vertices, 2, [&](const size_t X, const size_t Y) { Internal::setPixel(X, Y, Pixel, Color.A); });
+            if(Color.A == 1.0f) Internal::fillPoly<true>(Vertices, 2, [&](const size_t X, const size_t Y) { Internal::setPixel(X, Y, Pixel); });
+            else Internal::fillPoly<true>(Vertices, 2, [&](const size_t X, const size_t Y) { Internal::setPixel(X, Y, Pixel, Color.A); });
         }
         void Polygon(const rgba_t Color, const std::vector<vec2_t> Vertices)
         {
@@ -285,10 +296,10 @@ namespace Rendering
         }
         template <> void Quad<false>(const texture_t Color, const vec4_t Area)
         {
-            Line(Color, { Area.x0, Area.y0 }, { Area.x1, Area.y0 });
-            Line(Color, { Area.x0, Area.y1 }, { Area.x1, Area.y1 });
-            Line(Color, { Area.x0, Area.y0 + 1 }, { Area.x0, Area.y1 - 1 });
-            Line(Color, { Area.x1, Area.y0 + 1 }, { Area.x1, Area.y1 - 1 });
+            Line(Color, { Area.x0, Area.y0 }, { Area.x1 - 1, Area.y0 });
+            Line(Color, { Area.x0, Area.y1 }, { Area.x1 - 1, Area.y1 });
+            Line(Color, { Area.x0, Area.y0 }, { Area.x0, Area.y1 });
+            Line(Color, { Area.x1 - 1, Area.y0 }, { Area.x1 - 1, Area.y1 });
         }
         template <> void Quad<true>(const texture_t Color, const vec4_t Area)
         {
@@ -305,11 +316,11 @@ namespace Rendering
         void Line(const texture_t Color, const vec2_t Start, const vec2_t Stop)
         {
             vec2_t Vertices[]{ Start, Stop };
-            if(Color.Alpha == 1.0f) Internal::fillPoly(Vertices, 2, [&](const size_t X, const size_t Y)
+            if(Color.Alpha == 1.0f) Internal::fillPoly<true>(Vertices, 2, [&](const size_t X, const size_t Y)
             {
                 Internal::setPixel(X, Y, ((Pixel_t *)Color.Data)[(Y % Color.Height) * Color.Width + (X % Color.Width)]);
             });
-            else Internal::fillPoly(Vertices, 2, [&](const size_t X, const size_t Y)
+            else Internal::fillPoly<true>(Vertices, 2, [&](const size_t X, const size_t Y)
             {
                 Internal::setPixel(X, Y, ((Pixel_t *)Color.Data)[(Y % Color.Height) * Color.Width + (X % Color.Width)], Color.Alpha);
             });
