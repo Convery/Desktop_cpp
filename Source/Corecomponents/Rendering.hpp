@@ -87,6 +87,10 @@ namespace Rendering
         void Polygon(const texture_t Color, const std::vector<vec2_t> Vertices);
         void Circle(const texture_t Color, const vec2_t Position, float Radius);
     }
+    namespace Effectdraw
+    {
+        void Blur(const vec4_t Area);
+    }
 
     // Basic textures.
     namespace Texture
