@@ -111,7 +111,7 @@ namespace Rendering
             auto Nodes{ std::make_unique<int32_t[]>(Count + 1) };
 
             // For each row in the canvas.
-            for (size_t Y = std::max(0.0f, Clippingarea.y0); Y < std::min(Resolution.y, Clippingarea.y1); ++Y)
+            for (size_t Y = std::max(0.0f, Clippingarea.y0); Y <= std::min(Resolution.y, Clippingarea.y1); ++Y)
             {
                 int32_t i{}, j{ int32_t(Count) - 1 }, Nodecount{};
 
@@ -120,8 +120,8 @@ namespace Rendering
                 {
                     if ((Vertices[i].y <= Y && Vertices[j].y >= Y) || (Vertices[j].y <= Y && Vertices[i].y >= Y))
                     {
-                        if(Vertices[j].y - Vertices[i].y == 0) Nodes[Nodecount++] = Vertices[i].x;
-                        else Nodes[Nodecount++] = Vertices[i].x + ((double)(Y - Vertices[i].y) / (Vertices[j].y - Vertices[i].y)) * (Vertices[j].x - Vertices[i].x);
+                        if(Vertices[j].y - Vertices[i].y == 0) Nodes[Nodecount++] = Vertices[i].x + (Y - Vertices[i].y) * (Vertices[j].x - Vertices[i].x);
+                        else Nodes[Nodecount++] = Vertices[i].x + ((Y - Vertices[i].y) / (Vertices[j].y - Vertices[i].y)) * (Vertices[j].x - Vertices[i].x);
                     }
                     j = i;
                 }
@@ -141,7 +141,7 @@ namespace Rendering
                 // Fill the pixels between the nodes.
                 for (i = 0; i < Nodecount; i += 2)
                 {
-                    if (Nodes[i] >= std::min(Resolution.x - 1, Clippingarea.x1)) break;
+                    if (Nodes[i] > std::min(Resolution.x, Clippingarea.x1)) break;
                     if (Nodes[i + 1] >= std::min(0.0f, Clippingarea.x0))
                     {
                         if (Nodes[i] < std::max(Clippingarea.x0, 0.0f)) Nodes[i] = std::max(Clippingarea.x0, 0.0f);
@@ -186,14 +186,14 @@ namespace Rendering
     // Basic drawing, converts the color to internal format.
     namespace Soliddraw
     {
-        template<> void Triangle<false>(const rgba_t Color, const vec2_t a, const vec2_t b, const vec2_t c)
+        template <> void Triangle<false>(const rgba_t Color, const vec2_t a, const vec2_t b, const vec2_t c)
         {
             if (Color.A == 0.0f) return;
             Line(Color, { a.x, a.y }, { b.x, b.y });
             Line(Color, { b.x, b.y }, { c.x, c.y });
             Line(Color, { c.x, c.y }, { a.x, a.y });
         }
-        template<> void Triangle<true>(const rgba_t Color, const vec2_t a, const vec2_t b, const vec2_t c)
+        template <> void Triangle<true>(const rgba_t Color, const vec2_t a, const vec2_t b, const vec2_t c)
         {
             if (Color.A == 0.0f) return;
             vec2_t Vertices[]{ a, b, c };
@@ -213,11 +213,8 @@ namespace Rendering
         template <> void Quad<true>(const rgba_t Color, const vec4_t Area)
         {
             if (Color.A == 0.0f) return;
-            auto Pixel{ Internal::fromRGBA(Color) };
-            vec2_t Vertices[]{ {Area.x0, Area.y0}, {Area.x1, Area.y0}, {Area.x1, Area.y1}, {Area.x0, Area.y1} };
-
-            if(Color.A == 1.0f) Internal::fillPoly(Vertices, 4, [&](const size_t X, const size_t Y) { Internal::setPixel(X, Y, Pixel); });
-            else Internal::fillPoly(Vertices, 4, [&](const size_t X, const size_t Y) { Internal::setPixel(X, Y, Pixel, Color.A); });
+            Triangle(Color, { Area.x0, Area.y0 }, { Area.x1, Area.y0 }, { Area.x1, Area.y1 });
+            Triangle(Color, { Area.x0, Area.y0 }, { Area.x0, Area.y1 }, { Area.x1, Area.y1 });
         }
         void Line(const rgba_t Color, const vec2_t Start, const vec2_t Stop)
         {
@@ -292,15 +289,8 @@ namespace Rendering
         }
         template <> void Quad<true>(const texture_t Color, const vec4_t Area)
         {
-            vec2_t Vertices[]{ {Area.x0, Area.y0}, {Area.x1, Area.y0}, {Area.x1, Area.y1}, {Area.x0, Area.y1} };
-            if(Color.Alpha == 1.0f) Internal::fillPoly(Vertices, 4, [&](const size_t X, const size_t Y)
-            {
-                Internal::setPixel(X, Y, ((Pixel_t *)Color.Data)[(Y % Color.Height) * Color.Width + (X % Color.Width)]);
-            });
-            else Internal::fillPoly(Vertices, 4, [&](const size_t X, const size_t Y)
-            {
-                Internal::setPixel(X, Y, ((Pixel_t *)Color.Data)[(Y % Color.Height) * Color.Width + (X % Color.Width)], Color.Alpha);
-            });
+            Triangle(Color, { Area.x0, Area.y0 }, { Area.x1, Area.y0 }, { Area.x1, Area.y1 });
+            Triangle(Color, { Area.x0, Area.y0 }, { Area.x0, Area.y1 }, { Area.x1, Area.y1 });
         }
         void Line(const texture_t Color, const vec2_t Start, const vec2_t Stop)
         {
