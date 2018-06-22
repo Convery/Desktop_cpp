@@ -273,9 +273,13 @@ namespace Rendering
         template <> void Triangle<true>(const texture_t Color, const vec2_t a, const vec2_t b, const vec2_t c)
         {
             vec2_t Vertices[]{ a, b, c };
-            Internal::fillPoly(Vertices, 3, [&](const size_t X, const size_t Y)
+            if(Color.Alpha == 1.0f) Internal::fillPoly(Vertices, 3, [&](const size_t X, const size_t Y)
             {
                 Internal::setPixel(X, Y, ((Pixel_t *)Color.Data)[(Y % Color.Height) * Color.Width + (X % Color.Width)]);
+            });
+            else Internal::fillPoly(Vertices, 3, [&](const size_t X, const size_t Y)
+            {
+                Internal::setPixel(X, Y, ((Pixel_t *)Color.Data)[(Y % Color.Height) * Color.Width + (X % Color.Width)], Color.Alpha);
             });
         }
         template <> void Quad<false>(const texture_t Color, const vec4_t Area)
@@ -288,24 +292,36 @@ namespace Rendering
         template <> void Quad<true>(const texture_t Color, const vec4_t Area)
         {
             vec2_t Vertices[]{ {Area.x0, Area.y0}, {Area.x1, Area.y0}, {Area.x1, Area.y1}, {Area.x0, Area.y1} };
-            Internal::fillPoly(Vertices, 4, [&](const size_t X, const size_t Y)
+            if(Color.Alpha == 1.0f) Internal::fillPoly(Vertices, 4, [&](const size_t X, const size_t Y)
             {
                 Internal::setPixel(X, Y, ((Pixel_t *)Color.Data)[(Y % Color.Height) * Color.Width + (X % Color.Width)]);
+            });
+            else Internal::fillPoly(Vertices, 4, [&](const size_t X, const size_t Y)
+            {
+                Internal::setPixel(X, Y, ((Pixel_t *)Color.Data)[(Y % Color.Height) * Color.Width + (X % Color.Width)], Color.Alpha);
             });
         }
         void Line(const texture_t Color, const vec2_t Start, const vec2_t Stop)
         {
             vec2_t Vertices[]{ Start, Stop };
-            Internal::fillPoly(Vertices, 2, [&](const size_t X, const size_t Y)
+            if(Color.Alpha == 1.0f) Internal::fillPoly(Vertices, 2, [&](const size_t X, const size_t Y)
             {
                 Internal::setPixel(X, Y, ((Pixel_t *)Color.Data)[(Y % Color.Height) * Color.Width + (X % Color.Width)]);
+            });
+            else Internal::fillPoly(Vertices, 2, [&](const size_t X, const size_t Y)
+            {
+                Internal::setPixel(X, Y, ((Pixel_t *)Color.Data)[(Y % Color.Height) * Color.Width + (X % Color.Width)], Color.Alpha);
             });
         }
         void Polygon(const texture_t Color, const std::vector<vec2_t> Vertices)
         {
-            Internal::fillPoly(Vertices.data(), Vertices.size(), [&](const size_t X, const size_t Y)
+            if(Color.Alpha == 1.0f) Internal::fillPoly(Vertices.data(), Vertices.size(), [&](const size_t X, const size_t Y)
             {
                 Internal::setPixel(X, Y, ((Pixel_t *)Color.Data)[(Y % Color.Height) * Color.Width + (X % Color.Width)]);
+            });
+            else Internal::fillPoly(Vertices.data(), Vertices.size(), [&](const size_t X, const size_t Y)
+            {
+                Internal::setPixel(X, Y, ((Pixel_t *)Color.Data)[(Y % Color.Height) * Color.Width + (X % Color.Width)], Color.Alpha);
             });
         }
         void Circle(const texture_t Color, const vec2_t Position, float Radius)
@@ -326,7 +342,8 @@ namespace Rendering
 
                     if (X >= Clipped.x0 && X <= Clipped.x1 && Y >= Clipped.y0 && Y <= Clipped.y1)
                     {
-                        Internal::setPixel(X, Y, ((Pixel_t *)Color.Data)[(Y % Color.Height) * Color.Width + (X % Color.Width)]);
+                        if(Color.Alpha == 1.0f) Internal::setPixel(X, Y, ((Pixel_t *)Color.Data)[(Y % Color.Height) * Color.Width + (X % Color.Width)]);
+                        else Internal::setPixel(X, Y, ((Pixel_t *)Color.Data)[(Y % Color.Height) * Color.Width + (X % Color.Width)], Color.Alpha);
                     }
                 }
             }
@@ -339,7 +356,7 @@ namespace Rendering
         std::atomic<uint32_t> Texturecount{ 0 };
         texture_t Creategradient(const size_t Steps, const rgba_t Color1, const rgba_t Color2)
         {
-            texture_t Texture{ Texturecount++, Steps, 1, new Pixel_t[Steps] };
+            texture_t Texture{ Texturecount++, Steps, 1, 1.0f, new Pixel_t[Steps] };
             size_t Index{};
 
             // Normalize the colors.
