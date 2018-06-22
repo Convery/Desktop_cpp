@@ -12,11 +12,11 @@ void Createbackground()
 {
     auto Rootelement{ Rendering::Scene::getRootelement() };
     static std::vector<vec2_t> Points;
-    Points.reserve(128);
+    Points.reserve(64);
 
     // Create some nice bubbles for the background.
     srand(time(NULL));
-    for (int i = 0; i < 128; i++)
+    for (int i = 0; i < 64; i++)
     {
         Points.push_back({ float(rand() % size_t(Rendering::Resolution.x)), float(rand() % size_t(Rendering::Resolution.y)) });
     }
@@ -32,8 +32,11 @@ void Createbackground()
         // Bubbles.
         for (const auto &Item : Points)
         {
-            Rendering::Soliddraw::Circle({0xca, 0x95, 0x5e, float((*(uint64_t *)Item.Raw % 20 + 1)) / 100}, Item, float(*(uint64_t *)Item.Raw % 30));
+            Rendering::Soliddraw::Circle({0xca, 0x95, 0x5e, float((*(uint64_t *)Item.Raw % 25 + 1)) / 100}, Item, float(*(uint64_t *)Item.Raw % 35));
         }
+
+        // Why anti-alias when you can just blur everything?
+        Rendering::Effectdraw::Blur(Caller->Renderdimensions);
     };
     Rootelement->Children.push_back(Background);
 }
