@@ -62,8 +62,8 @@ namespace Rendering
     {
         using onDrawcallback = std::function<void(const size_t X, const size_t Y)>;
 
-        template <bool Line = false> void fillPoly(const vec2_t *Vertices, const size_t Count, onDrawcallback Callback);
         void setPixel(const size_t X, const size_t Y, const Pixel_t Pixel, const float Alpha);
+        void fillPoly(const vec2_t *Vertices, const size_t Count, onDrawcallback Callback);
         Pixel_t blendPixel(const Pixel_t Base, const Pixel_t Overlay, const float Alpha);
         void setPixel(const size_t X, const size_t Y, const Pixel_t Pixel);
         Pixel_t fromRGBA(const rgba_t Color);
