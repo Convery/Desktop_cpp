@@ -205,16 +205,20 @@ namespace Rendering
         template <> void Quad<false>(const rgba_t Color, const vec4_t Area)
         {
             if (Color.A == 0.0f) return;
-            Line(Color, { Area.x0, Area.y0 }, { Area.x1, Area.y0 });
-            Line(Color, { Area.x0, Area.y1 }, { Area.x1, Area.y1 });
+            Line(Color, { Area.x0 + 1, Area.y0 }, { Area.x1 - 1, Area.y0 });
+            Line(Color, { Area.x0 + 1, Area.y1 }, { Area.x1 - 1, Area.y1 });
             Line(Color, { Area.x0, Area.y0 }, { Area.x0, Area.y1 });
             Line(Color, { Area.x1, Area.y0 }, { Area.x1, Area.y1 });
         }
         template <> void Quad<true>(const rgba_t Color, const vec4_t Area)
         {
             if (Color.A == 0.0f) return;
-            Triangle(Color, { Area.x0, Area.y0 }, { Area.x1, Area.y0 }, { Area.x1, Area.y1 });
-            Triangle(Color, { Area.x0, Area.y0 }, { Area.x0, Area.y1 }, { Area.x1, Area.y1 });
+            auto Pixel{ Internal::fromRGBA(Color) };
+            vec2_t Vertices[]{ {Area.x0, Area.y0}, {Area.x1, Area.y0}, {Area.x1, Area.y1}, {Area.x0, Area.y1} };
+
+            if (Color.A == 1.0f) Internal::fillPoly(Vertices, 4, [&](const size_t X, const size_t Y) { Internal::setPixel(X, Y, Pixel); });
+            else Internal::fillPoly(Vertices, 4, [&](const size_t X, const size_t Y) { Internal::setPixel(X, Y, Pixel, Color.A); });
+            Quad<false>(Color, Area);
         }
         void Line(const rgba_t Color, const vec2_t Start, const vec2_t Stop)
         {
@@ -282,15 +286,23 @@ namespace Rendering
         }
         template <> void Quad<false>(const texture_t Color, const vec4_t Area)
         {
-            Line(Color, { Area.x0, Area.y0 }, { Area.x1, Area.y0 });
-            Line(Color, { Area.x0, Area.y1 }, { Area.x1, Area.y1 });
+            Line(Color, { Area.x0 + 1, Area.y0 }, { Area.x1 - 1, Area.y0 });
+            Line(Color, { Area.x0 + 1, Area.y1 }, { Area.x1 - 1, Area.y1 });
             Line(Color, { Area.x0, Area.y0 }, { Area.x0, Area.y1 });
             Line(Color, { Area.x1, Area.y0 }, { Area.x1, Area.y1 });
         }
         template <> void Quad<true>(const texture_t Color, const vec4_t Area)
         {
-            Triangle(Color, { Area.x0, Area.y0 }, { Area.x1, Area.y0 }, { Area.x1, Area.y1 });
-            Triangle(Color, { Area.x0, Area.y0 }, { Area.x0, Area.y1 }, { Area.x1, Area.y1 });
+            vec2_t Vertices[]{ {Area.x0, Area.y0}, {Area.x1, Area.y0}, {Area.x1, Area.y1}, {Area.x0, Area.y1} };
+            if (Color.Alpha == 1.0f) Internal::fillPoly(Vertices, 4, [&](const size_t X, const size_t Y)
+            {
+                Internal::setPixel(X, Y, ((Pixel_t *)Color.Data)[(Y % Color.Height) * Color.Width + (X % Color.Width)]);
+            });
+            else Internal::fillPoly(Vertices, 4, [&](const size_t X, const size_t Y)
+            {
+                Internal::setPixel(X, Y, ((Pixel_t *)Color.Data)[(Y % Color.Height) * Color.Width + (X % Color.Width)], Color.Alpha);
+            });
+            Quad<false>(Color, Area);
         }
         void Line(const texture_t Color, const vec2_t Start, const vec2_t Stop)
         {
