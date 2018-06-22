@@ -8,8 +8,8 @@
 
 #include "../Stdinclude.hpp"
 
-auto Brassgradient{ Rendering::Texture::Creategradient(32, {202, 178, 147, 1.0f}, {166, 145, 112, 1.0f}) };
 auto Goldgradient{ Rendering::Texture::Creategradient(32, { 255, 255, 168, 1.0f }, { 246, 201, 76, 1.0f }) };
+auto Brassgradient{ Rendering::Texture::Creategradient(512, {166, 145, 112, 1.0f}, {202, 178, 147, 1.0f}) };
 void Createtoolbar()
 {
     auto Rootelement{ Rendering::Scene::getRootelement() };
@@ -17,7 +17,6 @@ void Createtoolbar()
     static bool Shouldmove{ false };
 
     // Rotate the gradient.
-    std::swap(Brassgradient.Height, Brassgradient.Width);
     std::swap(Goldgradient.Height, Goldgradient.Width);
 
     // Bounding box.

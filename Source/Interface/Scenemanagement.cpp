@@ -39,6 +39,7 @@ namespace Rendering
             Root->Children.clear();
             Menumap->find("contentbackground")->second();
             Menumap->find("toolbar")->second();
+            Menumap->find("navbar")->second();
 
             // Build the rest of the menu.
             if (auto Entry = Menumap->find(Name); Entry != Menumap->end()) Entry->second();

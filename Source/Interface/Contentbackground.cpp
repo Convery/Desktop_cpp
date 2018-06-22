@@ -23,6 +23,7 @@ void Createbackground()
 
     // Bounding box.
     auto Background = new Element_t("ui.background");
+    Rootelement->Children.push_back(Background);
     Background->State.Noinput = true;
     Background->onRender = [&](Element_t *Caller) -> void
     {
@@ -38,7 +39,7 @@ void Createbackground()
         // Why anti-alias when you can just blur everything?
         Rendering::Effectdraw::Blur(Caller->Renderdimensions);
     };
-    Rootelement->Children.push_back(Background);
+
 }
 
 namespace
