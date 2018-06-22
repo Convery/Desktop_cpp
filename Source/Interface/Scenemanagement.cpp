@@ -10,23 +10,26 @@
 
 namespace Rendering
 {
-    // The root for all menus.
-    Element_t *getRootelement()
+    // Scene-management.
+    namespace Scene
     {
-        static Element_t Root{ "ui" };
-        return &Root;
-    }
+        std::unordered_map<std::string /* Scenename */, std::function<void()> /* Builder */> *Menumap;
 
-    // Menu management.
-    namespace Menu
-    {
-        std::unordered_map<std::string /* Menuname */, std::function<void()> /* Builder */> *Menumap;
+        // The root for all scenes.
+        Element_t *getRootelement()
+        {
+            static Element_t Root{ "ui" };
+            return &Root;
+        }
 
+        // Register elements.
         void Register(std::string Name, std::function<void()> onChange)
         {
             if (!Menumap) Menumap = new std::unordered_map<std::string, std::function<void()>>();
             Menumap->emplace(Name, onChange);
         }
+
+        // Switch scenes.
         void Switch(std::string Name)
         {
             if (!Menumap) Menumap = new std::unordered_map<std::string, std::function<void()>>();
@@ -34,6 +37,7 @@ namespace Rendering
 
             // Add the default elements.
             Root->Children.clear();
+            Menumap->find("contentbackground")->second();
 
             // Build the rest of the menu.
             if (auto Entry = Menumap->find(Name); Entry != Menumap->end()) Entry->second();
