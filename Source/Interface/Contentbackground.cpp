@@ -12,11 +12,11 @@ void Createbackground()
 {
     auto Rootelement{ Rendering::Scene::getRootelement() };
     static std::vector<vec2_t> Points;
-    Points.reserve(64);
+    Points.reserve(128);
 
     // Create some nice bubbles for the background.
     srand(time(NULL));
-    for (int i = 0; i < 64; i++)
+    for (int i = 0; i < 128; i++)
     {
         Points.push_back({ float(rand() % size_t(Rendering::Resolution.x)), float(rand() % size_t(Rendering::Resolution.y)) });
     }
@@ -26,15 +26,13 @@ void Createbackground()
     Background->State.Noinput = true;
     Background->onRender = [&](Element_t *Caller) -> void
     {
-        auto Box{ Caller->Renderdimensions };
-
         // Background
-        Rendering::Soliddraw::Quad({ 0x0C, 0x0C, 0x0C, 1.0f }, Box);
+        Rendering::Soliddraw::Quad({ 0x0C, 0x0C, 0x0C, 1.0f }, Caller->Renderdimensions);
 
         // Bubbles.
         for (const auto &Item : Points)
         {
-            Rendering::Soliddraw::Circle({0xca, 0x95, 0x5e, float((*(uint64_t *)Item.Raw % 20)) / 100}, Item, float(*(uint64_t *)Item.Raw % 30));
+            Rendering::Soliddraw::Circle({0xca, 0x95, 0x5e, float((*(uint64_t *)Item.Raw % 20 + 1)) / 100}, Item, float(*(uint64_t *)Item.Raw % 30));
         }
     };
     Rootelement->Children.push_back(Background);
