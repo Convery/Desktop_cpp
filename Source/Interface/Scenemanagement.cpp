@@ -38,6 +38,7 @@ namespace Rendering
             // Add the default elements.
             Root->Children.clear();
             Menumap->find("contentbackground")->second();
+            Menumap->find("toolbar")->second();
 
             // Build the rest of the menu.
             if (auto Entry = Menumap->find(Name); Entry != Menumap->end()) Entry->second();
