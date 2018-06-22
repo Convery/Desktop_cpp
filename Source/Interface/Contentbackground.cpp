@@ -8,12 +8,10 @@
 
 #include "../Stdinclude.hpp"
 
-static auto Goldgradient{ Rendering::Texture::Creategradient(64, { 255, 255, 168, 1.0f }, { 246, 201, 76, 1.0f }) };
 void Createbackground()
 {
     auto Rootelement{ Rendering::Scene::getRootelement() };
     static std::vector<vec2_t> Points;
-    Goldgradient.Alpha = 0.1f;
     Points.reserve(64);
 
     // Create some nice bubbles for the background.
@@ -36,7 +34,7 @@ void Createbackground()
         // Bubbles.
         for (const auto &Item : Points)
         {
-            Rendering::Textureddraw::Circle(Goldgradient, Item, float(*(uint64_t *)Item.Raw % 31));
+            Rendering::Soliddraw::Circle({0xca, 0x95, 0x5e, float((*(uint64_t *)Item.Raw % 20)) / 100}, Item, float(*(uint64_t *)Item.Raw % 30));
         }
     };
     Rootelement->Children.push_back(Background);
