@@ -236,6 +236,31 @@ namespace Rendering
             if(Color.A == 1.0f) Internal::fillPoly(Vertices.data(), Vertices.size(), [&](const size_t X, const size_t Y) { Internal::setPixel(X, Y, Pixel); });
             else Internal::fillPoly(Vertices.data(), Vertices.size(), [&](const size_t X, const size_t Y) { Internal::setPixel(X, Y, Pixel, Color.A); });
         }
+        void Circle(const rgba_t Color, const vec2_t Position, float Radius)
+        {
+            if (Color.A == 0.0f) return;
+            const auto Clipped{ Internal::clipArea({ Position.x - Radius, Position.y - Radius, Position.x + Radius, Position.y + Radius}) };
+            const int64_t Rad2{ int64_t(Radius * Radius) };
+            const auto Pixel{ Internal::fromRGBA(Color) };
+            const int64_t Diameter{ int64_t(Radius * 2) };
+
+            for (int64_t i = 0; i < Rad2 << 2; ++i)
+            {
+                const int64_t tx{ int64_t((i % Diameter) - Radius) };
+                const int64_t ty{ int64_t((i / Diameter) - Radius) };
+
+                if (tx * tx + ty * ty <= Rad2)
+                {
+                    const int64_t X{ int64_t(Position.x) + tx };
+                    const int64_t Y{ int64_t(Position.y) + ty };
+
+                    if (X >= Clipped.x0 && X <= Clipped.x1 && Y >= Clipped.y0 && Y <= Clipped.y1)
+                    {
+                        Internal::setPixel(X, Y, Pixel);
+                    }
+                }
+            }
+        }
     }
     namespace Textureddraw
     {
@@ -283,6 +308,29 @@ namespace Rendering
                 Internal::setPixel(X, Y, ((Pixel_t *)Color.Data)[(Y % Color.Height) * Color.Width + (X % Color.Width)]);
             });
         }
+        void Circle(const texture_t Color, const vec2_t Position, float Radius)
+        {
+            const auto Clipped{ Internal::clipArea({ Position.x - Radius, Position.y - Radius, Position.x + Radius, Position.y + Radius}) };
+            const int64_t Rad2{ int64_t(Radius * Radius) };
+            const int64_t Diameter{ int64_t(Radius * 2) };
+
+            for (int64_t i = 0; i < Rad2 << 2; ++i)
+            {
+                const int64_t tx{ int64_t((i % Diameter) - Radius) };
+                const int64_t ty{ int64_t((i / Diameter) - Radius) };
+
+                if (tx * tx + ty * ty <= Rad2)
+                {
+                    const int64_t X{ int64_t(Position.x) + tx };
+                    const int64_t Y{ int64_t(Position.y) + ty };
+
+                    if (X >= Clipped.x0 && X <= Clipped.x1 && Y >= Clipped.y0 && Y <= Clipped.y1)
+                    {
+                        Internal::setPixel(X, Y, ((Pixel_t *)Color.Data)[(Y % Color.Height) * Color.Width + (X % Color.Width)]);
+                    }
+                }
+            }
+        }
     }
 
     // Basic textures.
@@ -323,11 +371,6 @@ namespace Rendering
             return Texture;
         }
     }
-
-
-
-
-
 }
 
 
