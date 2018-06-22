@@ -143,11 +143,11 @@ int __stdcall WinMain(HINSTANCE hCurrentInst, HINSTANCE hPreviousInst, LPSTR lps
         }
 
         // If we should quit, let Windows clean it up.
-        if (Message.message == WM_QUIT || Message.message == WM_DESTROY)
+        if (Message.message == WM_QUIT || Message.message == WM_DESTROY || (Message.message == WM_SYSCOMMAND && Message.wParam == SC_CLOSE))
         {
             // Save a timestamp for tracing.
             Infoprint("Session terminated..");
-            std::terminate();
+            std::exit(0);
         }
 
         // Let windows handle the message if we haven't.
