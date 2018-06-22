@@ -256,7 +256,8 @@ namespace Rendering
 
                     if (X >= Clipped.x0 && X <= Clipped.x1 && Y >= Clipped.y0 && Y <= Clipped.y1)
                     {
-                        Internal::setPixel(X, Y, Pixel);
+                        if(Color.A == 1.0f) Internal::setPixel(X, Y, Pixel);
+                        else Internal::setPixel(X, Y, Pixel, Color.A);
                     }
                 }
             }
