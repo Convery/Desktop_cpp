@@ -1,49 +1,34 @@
 /*
     Initial author: Convery (tcn@ayria.se)
-    Started: 17-06-2018
+    Started: 22-06-2018
     License: MIT
 
-    Provides the toolbar so we can drag the window.
+    Create a random background on startup.
 */
 
 #include "../Stdinclude.hpp"
 
-auto Goldgradient{ Rendering::Texture::Creategradient(512, { 255, 255, 168, 1.0f }, { 246, 201, 76, 1.0f }) };
-static void Renderbutton(Element_t *Caller, vec4_t Clip)
-{
-    auto Box{ Caller->Renderdimensions }; Box.y0 -= 1;
-    if(Caller->State.Hoover) Rendering::Draw::Texturedquad(Goldgradient, Caller->Renderdimensions, Clip);
-    else Rendering::Draw::Quad({ 205, 197, 186, 0.1f }, Caller->Renderdimensions, Clip);
-    Rendering::Draw::Texturedborder(Goldgradient, Box, Clip);
-}
-static void Renderbox(Element_t *Caller, vec4_t Clip)
-{
-    auto Box{ Caller->Renderdimensions }; Box.y0 -= 1;
-    Rendering::Draw::Border(Caller->Backgroundcolor, Box, Clip);
-}
-static void Rendercross(Element_t *Caller, vec4_t Clip)
-{
-    auto Box{ Caller->Renderdimensions };
-
-    Rendering::Draw::Line(Caller->Backgroundcolor, Box, Clip);
-    Box.x0 += 1; Box.x1 += 1;
-    Rendering::Draw::Line(Caller->Backgroundcolor, Box, Clip);
-}
-
+auto Goldgradient{ Rendering::Texture::Creategradient(32, { 255, 255, 168, 1.0f }, { 246, 201, 76, 1.0f }) };
+auto Brassgradient{ Rendering::Texture::Creategradient(512, {166, 145, 112, 1.0f}, {202, 178, 147, 1.0f}) };
 void Createtoolbar()
 {
+    auto Rootelement{ Rendering::Scene::getRootelement() };
     static double lWidth{}, lHeight{}, lPosX{}, lPosY{};
-    auto Rootelement{ Rendering::getRootelement() };
     static bool Shouldmove{ false };
+
+    // Rotate the gradient.
+    std::swap(Goldgradient.Height, Goldgradient.Width);
 
     // Bounding box.
     auto Toolbar = new Element_t("ui.toolbar");
-    Toolbar->Margin = { 0.0f, 0.0f, 0.0f, 1.95f };
-    Toolbar->onRender = [](Element_t *Caller, vec4_t Clip) -> void
+    Rootelement->Children.push_back(Toolbar);
+    Toolbar->Margin = { 0, 0, 0, 1.97f };
+    Toolbar->onRender = [&](Element_t *Caller) -> void
     {
-        auto Box{ Caller->Renderdimensions }; Box.y0 = Box.y1;
-        Rendering::Draw::Texturedline(Goldgradient, Box, Clip);
+        auto Box{ Caller->Renderdimensions };
+        Rendering::Textureddraw::Quad(Brassgradient, Box);
     };
+    Toolbar->onHoover = [](Element_t *Caller, bool Released) { return false; };
     Toolbar->onClicked = [&](Element_t *Caller, bool Released) -> bool
     {
         // Stop moving the window if needed.
@@ -75,9 +60,9 @@ void Createtoolbar()
                     Input::onWindowresize(Monitorsize.x, Monitorsize.y);
 
                     /*
-                    TODO(Convery):
-                    Refactor the work-area into a portable version.
-                */
+                        TODO(Convery):
+                        Refactor the work-area into a portable version.
+                    */
 
                     RECT Displaysize{};
                     SystemParametersInfoA(SPI_GETWORKAREA, 0, &Displaysize, 0);
@@ -91,6 +76,7 @@ void Createtoolbar()
             Lastclick = std::chrono::high_resolution_clock::now();
         }
 
+        // Drag the window.
         if (Shouldmove)
         {
             std::thread([&]() -> void
@@ -101,8 +87,8 @@ void Createtoolbar()
                 while (Shouldmove)
                 {
                     auto Current = Input::getMouseposition();
-                    Window.x += (Current.x - Origin.x) * 1.0;
-                    Window.y += (Current.y - Origin.y) * 1.0;
+                    Window.x += (Current.x - Origin.x);
+                    Window.y += (Current.y - Origin.y);
 
                     Input::onWindowmove(Window.x, Window.y);
                 }
@@ -111,24 +97,38 @@ void Createtoolbar()
 
         return Shouldmove;
     };
-    Rootelement->Children.push_back(Toolbar);
 
-    // Top-right buttons.
-    auto Closebutton = new Element_t("ui.toolbar.close");
-    Closebutton->Margin = { 1.945f, 0.0f, 0.005f, 0.6f };
-    Closebutton->onRender = Renderbutton;
+    // Closing-button, top right.
+    auto Closebutton = new Element_t("ui.toolbar.closebutton");
+    Toolbar->Children.push_back(Closebutton);
+    Closebutton->Margin = { 1.945f, 0, 0.005f, 0 };
+    Closebutton->onRender = [&](Element_t *Caller) -> void
+    {
+        auto Box{ Caller->Renderdimensions }; Box.y0 -= 1;
+        if (Caller->State.Hoover) Rendering::Textureddraw::Quad(Goldgradient, Box);
+        Rendering::Soliddraw::Polygon({ 12, 12, 12, 0.2f }, { {Box.x0 - 2, Box.y0 - 1}, {Box.x0 + 3, Box.y0 - 2}, {Box.x1 + 3, Box.y1 + 1}, {Box.x1 - 2, Box.y1 + 1} });
+        Rendering::Textureddraw::Quad<false>(Goldgradient, Box);
+    };
     Closebutton->onClicked = [](Element_t *Caller, bool Released) -> bool
     {
         static bool Armed{ false };
-        if(Armed && Caller->State.Hoover) std::exit(0);
+        if (Armed && Caller->State.Hoover) std::exit(0);
         Armed = !Released;
         return Armed;
     };
-    Toolbar->Children.push_back(Closebutton);
 
-    auto Maxbutton = new Element_t("ui.toolbar.max");
-    Maxbutton->Margin = { 1.891f, 0.0f, 0.059f, 0.6f };
-    Maxbutton->onRender = Renderbutton;
+    // Maximizing-button, top middle.
+    auto Maxbutton = new Element_t("ui.toolbar.maxbutton");
+    Toolbar->Children.push_back(Maxbutton);
+    Maxbutton->Margin = { 1.891f, 0, 0.059f, 0 };
+    Maxbutton->onRender = [&](Element_t *Caller) -> void
+    {
+        auto Box{ Caller->Renderdimensions }; Box.y0 -= 1;
+        if (Caller->State.Hoover) Rendering::Textureddraw::Quad(Goldgradient, Box);
+        Rendering::Textureddraw::Quad<false>(Goldgradient, Box);
+
+        Rendering::Soliddraw::Quad<false>({ 12, 12, 12, 0.2f }, { Box.x0 + 10, Box.y0 + 3, Box.x1 - 10, Box.y1 - 3 });
+    };
     Maxbutton->onClicked = [](Element_t *Caller, bool Released) -> bool
     {
         static bool Armed{ false };
@@ -166,11 +166,19 @@ void Createtoolbar()
         Armed = !Released;
         return Armed;
     };
-    Toolbar->Children.push_back(Maxbutton);
 
-    auto Minbutton = new Element_t("ui.toolbar.min");
-    Minbutton->Margin = { 1.837f, 0.0f, 0.114f, 0.6f };
-    Minbutton->onRender = Renderbutton;
+    // Minimizing-button, top left.
+    auto Minbutton = new Element_t("ui.toolbar.minbutton");
+    Toolbar->Children.push_back(Minbutton);
+    Minbutton->Margin = { 1.837f, 0, 0.114f, 0 };
+    Minbutton->onRender = [&](Element_t *Caller) -> void
+    {
+        auto Box{ Caller->Renderdimensions }; Box.y0 -= 1;
+        if (Caller->State.Hoover) Rendering::Textureddraw::Quad(Goldgradient, Box);
+        Rendering::Textureddraw::Quad<false>(Goldgradient, Box);
+
+        Rendering::Soliddraw::Quad<false>({ 12, 12, 12, 0.2f }, { Box.x0 + 10, Box.y0 + 7, Box.x1 - 10, Box.y1 - 3 });
+    };
     Minbutton->onClicked = [](Element_t *Caller, bool Released) -> bool
     {
         static bool Armed{ false };
@@ -179,32 +187,9 @@ void Createtoolbar()
             Input::Minimize();
             return true;
         }
-         Armed = !Released;
+        Armed = !Released;
         return Armed;
     };
-    Toolbar->Children.push_back(Minbutton);
-
-    // The icons drawn over the buttons.
-    auto Closeicon = new Element_t("ui.toolbar.close.icon");
-    Closeicon->Backgroundcolor = { 0.4f, 0.4f, 0.4f, 1.0f };
-    Closeicon->Margin = { 0.4f, 0.4f, 0.4f, 0.4f };
-    Closeicon->onRender = Rendercross;
-    Closeicon->State.Noinput = true;
-    Closebutton->Children.push_back(Closeicon);
-
-    auto Maxicon = new Element_t("ui.toolbar.max.icon");
-    Maxicon->Backgroundcolor = { 0.4f, 0.4f, 0.4f, 1.0f };
-    Maxicon->Margin = { 0.6f, 0.6f, 0.6f, 0.6f };
-    Maxicon->onRender = Renderbox;
-    Maxicon->State.Noinput = true;
-    Maxbutton->Children.push_back(Maxicon);
-
-    auto Minicon = new Element_t("ui.toolbar.min.icon");
-    Minicon->Backgroundcolor = { 0.4f, 0.4f, 0.4f, 1.0f };
-    Minicon->Margin = { 0.6f, 1.4f, 0.6f, 0.6f };
-    Minicon->onRender = Renderbox;
-    Minicon->State.Noinput = true;
-    Minbutton->Children.push_back(Minicon);
 }
 
 namespace
@@ -213,7 +198,7 @@ namespace
     {
         Loader()
         {
-            Rendering::Menu::Register("toolbar", Createtoolbar);
+            Rendering::Scene::Register("toolbar", Createtoolbar);
         };
     };
     static Loader Load{};

@@ -8,7 +8,7 @@
 
 #include "../Stdinclude.hpp"
 
-float gWidth{}, gHeight{}, gPosX{}, gPosY{};
+vec2_t Windowdimensions{}, Windowposition{};
 
 #if defined(_WIN32)
 
@@ -59,7 +59,7 @@ namespace Input
             return false;
         };
 
-        Lambda(Rendering::getRootelement(), false);
+        Lambda(Rendering::Scene::getRootelement(), false);
     }
     void onKeyclick(uint32_t Key, uint32_t Modifier, bool Released) {}
     void onMousemove(double PosX, double PosY)
@@ -104,20 +104,20 @@ namespace Input
             return false;
         };
 
-        Lambda(Rendering::getRootelement(), false);
+        Lambda(Rendering::Scene::getRootelement(), false);
     }
     void onMousescroll(bool Down) {}
 
     // Caller-agnostic interactions.
     void onWindowresize(double Width, double Height)
     {
-        gWidth = Width; gHeight = Height;
-        SetWindowPos(Windowhandle, NULL, gPosX, gPosY, gWidth, gHeight, SWP_NOSENDCHANGING | SWP_NOMOVE);
+        Windowdimensions.x = Width; Windowdimensions.y = Height;
+        SetWindowPos(Windowhandle, NULL, Windowposition.x, Windowposition.y, Windowdimensions.x, Windowdimensions.y, SWP_NOSENDCHANGING | SWP_NOMOVE);
     }
     void onWindowmove(double PosX, double PosY)
     {
-        gPosX = PosX; gPosY = PosY;
-        SetWindowPos(Windowhandle, NULL, gPosX, gPosY, gWidth, gHeight, SWP_NOSENDCHANGING | SWP_NOSIZE);
+        Windowposition.x = PosX; Windowposition.y = PosY;
+        SetWindowPos(Windowhandle, NULL, Windowposition.x, Windowposition.y, Windowdimensions.x, Windowdimensions.y, SWP_NOSENDCHANGING | SWP_NOSIZE);
     }
     void onInit(const void *Handle)
     {
@@ -130,11 +130,11 @@ namespace Input
         RECT Window{};
         if (TRUE == GetWindowRect(Windowhandle, &Window))
         {
-            gPosX = Window.left;
-            gPosY = Window.top;
+            Windowposition.x = Window.left;
+            Windowposition.y = Window.top;
         }
 
-        return { gPosX, gPosY };
+        return Windowposition;
     }
     vec2_t getMouseposition()
     {
@@ -143,8 +143,8 @@ namespace Input
 
         return
         {
-            std::clamp(Mouse.x - gPosX, 0.0f, gWidth),
-            std::clamp(Mouse.y - gPosY, 0.0f, gHeight)
+            std::clamp(Mouse.x - Windowposition.x, 0.0f, Windowdimensions.x),
+            std::clamp(Mouse.y - Windowposition.y, 0.0f, Windowdimensions.y)
         };
     }
     vec2_t getMonitorsize()
@@ -158,11 +158,11 @@ namespace Input
         RECT Window{};
         if (TRUE == GetWindowRect(Windowhandle, &Window))
         {
-            gWidth = Window.right - Window.left;
-            gHeight = Window.bottom - Window.top;
+            Windowdimensions.x = Window.right - Window.left;
+            Windowdimensions.y = Window.bottom - Window.top;
         }
 
-        return { gWidth, gHeight };
+        return Windowdimensions;
     }
     void Minimize()
     {

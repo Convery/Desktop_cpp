@@ -8,44 +8,6 @@
 
 #include "../Stdinclude.hpp"
 
-namespace Rendering
-{
-    // The root for all menus.
-    Element_t *getRootelement()
-    {
-        static Element_t Root{ "ui" };
-        return &Root;
-    }
-
-    // Menu management.
-    namespace Menu
-    {
-        std::unordered_map<std::string /* Menuname */, std::function<void()> /* Builder */> *Menumap;
-
-        void Register(std::string Name, std::function<void()> onChange)
-        {
-            if (!Menumap) Menumap = new std::unordered_map<std::string, std::function<void()>>();
-            Menumap->emplace(Name, onChange);
-        }
-        void Switch(std::string Name)
-        {
-            if (!Menumap) Menumap = new std::unordered_map<std::string, std::function<void()>>();
-            auto Root{ getRootelement() };
-
-            // Add the default elements.
-            Root->Children.clear();
-            Menumap->find("toolbar")->second();
-            Menumap->find("sidebar")->second();
-
-            // Build the rest of the menu.
-            if (auto Entry = Menumap->find(Name); Entry != Menumap->end()) Entry->second();
-
-            // Reinitialize the root.
-            Root->onModifiedstate(Root);
-        }
-    }
-}
-
 // Default callbacks for the elements.
 vec4_t Createbox(vec4_t Boundingbox, vec4_t Margin)
 {
@@ -74,9 +36,9 @@ void Recalculateboxes(Element_t *Caller)
         Item->onModifiedstate(Item);
     }
 }
-void Renderelement(Element_t *Caller, vec4_t Clip)
+void Renderelement(Element_t *Caller)
 {
-    if(!Caller->State.Hidden) Rendering::Draw::Quad(Caller->Backgroundcolor, Caller->Renderdimensions, Clip);
+    if(!Caller->State.Hidden) Rendering::Soliddraw::Quad(Caller->Backgroundcolor, Caller->Renderdimensions);
 }
 
 // Elements require some sort of identifier.
