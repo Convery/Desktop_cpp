@@ -38,7 +38,9 @@ int __stdcall WinMain(HINSTANCE hCurrentInst, HINSTANCE hPreviousInst, LPSTR lps
     RegisterClassExA(&Windowclass);
 
     // Initialize GDI.
+    GDIInput.SuppressBackgroundThread = TRUE;
     GdiplusStartup(&GDIToken, &GDIInput, NULL);
+    while (true) Sleep(1); return 1;
 
     // Create the window.
     auto Handle = CreateWindowExA(WS_EX_APPWINDOW, "Desktop_cpp", "", WS_POPUP,
@@ -50,19 +52,19 @@ int __stdcall WinMain(HINSTANCE hCurrentInst, HINSTANCE hPreviousInst, LPSTR lps
     Track.dwFlags = TME_LEAVE;
     Track.hwndTrack = Handle;
     TrackMouseEvent(&Track);
-    Input::onInit(Handle);
+    //Input::onInit(Handle);
 
     // Cache window properties.
     ShowWindow(Handle, SW_SHOWNORMAL);
-    Input::getWindowposition();
-    Input::getWindowsize();
+    //Input::getWindowposition();
+    //Input::getWindowsize();
 
-    // Create the initial scene and render the first frame.
-    Rendering::Invalidatearea({ 0, 0, Rendering::Resolution.x, Rendering::Resolution.y });
-    Rendering::Scene::getRootelement()->State.Noinput = true;
-    Rendering::Scene::getRootelement()->State.Hidden = true;
-    Rendering::Scene::Switch("homescreen");
-    Rendering::onRender();
+    //// Create the initial scene and render the first frame.
+    //Rendering::Invalidatearea({ 0, 0, Rendering::Resolution.x, Rendering::Resolution.y });
+    //Rendering::Scene::getRootelement()->State.Noinput = true;
+    //Rendering::Scene::getRootelement()->State.Hidden = true;
+    //Rendering::Scene::Switch("homescreen");
+    //Rendering::onRender();
 
     // Render in a separate thread.
     std::thread([&]() -> void
@@ -75,7 +77,7 @@ int __stdcall WinMain(HINSTANCE hCurrentInst, HINSTANCE hPreviousInst, LPSTR lps
             InvalidateRect(Handle, NULL, FALSE);
             std::this_thread::sleep_until(Lastframe + Framedelay / 4);
 
-            Rendering::onRender();
+            //Rendering::onRender();
             Lastframe += Framedelay;
             std::this_thread::sleep_until(Lastframe);
         }
@@ -91,7 +93,7 @@ int __stdcall WinMain(HINSTANCE hCurrentInst, HINSTANCE hPreviousInst, LPSTR lps
         if (Message.message == WM_PAINT)
         {
             auto Devicecontext = BeginPaint(Handle, &State);
-            Rendering::onPresent(Devicecontext);
+            //Rendering::onPresent(Devicecontext);
             EndPaint(Handle, &State);
             continue;
         }
@@ -99,29 +101,29 @@ int __stdcall WinMain(HINSTANCE hCurrentInst, HINSTANCE hPreviousInst, LPSTR lps
         // Mouse input.
         if (Message.message == WM_MOUSEMOVE)
         {
-            Input::onMousemove(GET_X_LPARAM(Message.lParam), GET_Y_LPARAM(Message.lParam));
+            //Input::onMousemove(GET_X_LPARAM(Message.lParam), GET_Y_LPARAM(Message.lParam));
             TrackMouseEvent(&Track);
             continue;
         }
         if (Message.message == WM_LBUTTONDOWN || Message.message == WM_LBUTTONUP)
         {
-            Input::onMouseclick(GET_X_LPARAM(Message.lParam), GET_Y_LPARAM(Message.lParam), 0, Message.message == WM_LBUTTONUP);
+            //Input::onMouseclick(GET_X_LPARAM(Message.lParam), GET_Y_LPARAM(Message.lParam), 0, Message.message == WM_LBUTTONUP);
             continue;
         }
         if (Message.message == WM_RBUTTONDOWN || Message.message == WM_RBUTTONUP)
         {
-            Input::onMouseclick(GET_X_LPARAM(Message.lParam), GET_Y_LPARAM(Message.lParam), 1, Message.message == WM_RBUTTONUP);
+            //Input::onMouseclick(GET_X_LPARAM(Message.lParam), GET_Y_LPARAM(Message.lParam), 1, Message.message == WM_RBUTTONUP);
             continue;
         }
         if (Message.message == WM_MOUSEWHEEL)
         {
-            Input::onMousescroll(GET_WHEEL_DELTA_WPARAM(Message.wParam) < 0);
+            //Input::onMousescroll(GET_WHEEL_DELTA_WPARAM(Message.wParam) < 0);
             continue;
         }
         if (Message.message == WM_MOUSELEAVE)
         {
-            Input::onMouseclick(90000, 90000, 0, true);
-            Input::onMousemove(90000, 90000);
+            //Input::onMouseclick(90000, 90000, 0, true);
+            //Input::onMousemove(90000, 90000);
             continue;
         }
 
@@ -137,7 +139,8 @@ int __stdcall WinMain(HINSTANCE hCurrentInst, HINSTANCE hPreviousInst, LPSTR lps
                     break;
 
                 default:
-                    Input::onKeyclick(Message.wParam, Keymodifiers, Message.message == WM_KEYUP);
+                    //Input::onKeyclick(Message.wParam, Keymodifiers, Message.message == WM_KEYUP);
+                    break;
             }
             continue;
         }
