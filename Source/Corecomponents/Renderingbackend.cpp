@@ -91,14 +91,10 @@ namespace Rendering
         // Re-draw the dirty areas.
         while (!Dirtyareas.empty())
         {
-            static uint64_t Last{};
-            if (auto Hash = Hash::FNV1a_64(Dirtyareas.front().Raw, sizeof(vec4_t)); Hash != Last)
-            {
-                Last = Hash;
-                setClipping(Dirtyareas.front());
-                doRendering(Scene::getRootelement());
-            }
+            setClipping(Dirtyareas.front());
             Dirtyareas.pop();
+
+            doRendering(Scene::getRootelement());
         }
     }
 
