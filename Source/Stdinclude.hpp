@@ -1,6 +1,6 @@
 /*
     Initial author: Convery (tcn@ayria.se)
-    Started: 08-06-2018
+    Started: 17-06-2018
     License: MIT
 
     Provides a single include-file for all modules.
@@ -12,6 +12,9 @@
 #include "Configuration/Buildsettings.hpp"
 #include "Configuration/Definitions.hpp"
 #include "Configuration/Macros.hpp"
+
+// Ignore warnings from third-party code.
+#pragma warning(push, 0)
 
 // Standard-library includes.
 #include <unordered_map>
@@ -27,13 +30,16 @@
 #include <chrono>
 #include <thread>
 #include <string>
-#include <mutex>
+#include <atomic>
 
 // Platform-specific libraries.
 #if defined(_WIN32)
+    #include <Windowsx.h>
     #include <Windows.h>
     #include <direct.h>
     #include <intrin.h>
+    #include <ObjIdl.h>
+    #include <gdiplus.h>
     #undef min
     #undef max
 #else
@@ -45,18 +51,16 @@
     #include <dlfcn.h>
 #endif
 
+// Restore warnings.
+#pragma warning(pop)
+
 // Utility includes.
 #include "Utility/Variadicstring.hpp"
 #include "Utility/FNV1Hash.hpp"
 #include "Utility/Logfile.hpp"
 #include "Utility/Base64.hpp"
-#include "Utility/Bitmap.hpp"
-
-// Third-party libraries.
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
 
 // Our components.
-#include "Menucomponents/Components.hpp"
-#include "Graphicsbackend/Graphics.hpp"
-#include "Application/Application.hpp"
+#include "Commontypes.hpp"
+#include "Corecomponents/Input.hpp"
+#include "Corecomponents/Rendering.hpp"

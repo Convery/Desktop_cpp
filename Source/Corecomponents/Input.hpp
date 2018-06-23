@@ -1,0 +1,31 @@
+/*
+    Initial author: Convery (tcn@ayria.se)
+    Started: 17-06-2018
+    License: MIT
+
+    Provides input processing.
+*/
+
+#pragma once
+#include "../Stdinclude.hpp"
+
+namespace Input
+{
+    // System-code interaction, assumes single-threaded sync.
+    void onMouseclick(double PosX, double PosY, uint32_t Key, bool Released);
+    void onKeyclick(uint32_t Key, uint32_t Modifier, bool Released);
+    void onMousemove(double PosX, double PosY);
+    void onMousescroll(bool Down);
+
+    // Caller-agnostic interactions.
+    void onWindowresize(double Width, double Height);
+    void onWindowmove(double PosX, double PosY);
+    void onInit(const void *Handle);
+
+    // User-code interaction.
+    vec2_t getWindowposition();
+    vec2_t getMouseposition();
+    vec2_t getMonitorsize();
+    vec2_t getWindowsize();
+    void Minimize();
+}
