@@ -201,43 +201,52 @@ namespace Rendering
 
             if(Color.A == 1.0f) Internal::fillPoly(Vertices, 3, [&](const size_t X, const size_t Y) { Internal::setPixel(X, Y, Pixel); });
             else Internal::fillPoly(Vertices, 3, [&](const size_t X, const size_t Y) { Internal::setPixel(X, Y, Pixel, Color.A); });
+            if (Color.A == 1.0f) Triangle<false>(Color, a, b, c);
         }
-        template <> void Quad<false>(const rgba_t Color, const vec4_t Area)
+        template <> void Circle<false>(const rgba_t Color, const vec2_t Position, float Radius)
         {
             if (Color.A == 0.0f) return;
-            Line(Color, { Area.x0 + 1, Area.y0 }, { Area.x1 - 1, Area.y0 });
-            Line(Color, { Area.x0 + 1, Area.y1 }, { Area.x1 - 1, Area.y1 });
-            Line(Color, { Area.x0, Area.y0 }, { Area.x0, Area.y1 });
-            Line(Color, { Area.x1, Area.y0 }, { Area.x1, Area.y1 });
-        }
-        template <> void Quad<true>(const rgba_t Color, const vec4_t Area)
-        {
-            if (Color.A == 0.0f) return;
-            auto Pixel{ Internal::fromRGBA(Color) };
-            vec2_t Vertices[]{ {Area.x0, Area.y0}, {Area.x1, Area.y0}, {Area.x1, Area.y1}, {Area.x0, Area.y1} };
+            const auto Clipped{ Internal::clipArea({ Position.x - Radius, Position.y - Radius, Position.x + Radius, Position.y + Radius}) };
+            int64_t Y{}, X{ int64_t(Radius - 1) }, DeltaY{ 1 }, DeltaX{ 1 }, Error{ DeltaX - (int64_t(Radius) << 1) };
+            const auto Pixel{ Internal::fromRGBA(Color) };
 
-            if (Color.A == 1.0f) Internal::fillPoly(Vertices, 4, [&](const size_t X, const size_t Y) { Internal::setPixel(X, Y, Pixel); });
-            else Internal::fillPoly(Vertices, 4, [&](const size_t X, const size_t Y) { Internal::setPixel(X, Y, Pixel, Color.A); });
-            Quad<false>(Color, Area);
-        }
-        void Line(const rgba_t Color, const vec2_t Start, const vec2_t Stop)
-        {
-            if (Color.A == 0.0f) return;
-            vec2_t Vertices[]{ Start, Stop };
-            auto Pixel{ Internal::fromRGBA(Color) };
+            auto Lambda = [&](const size_t X, const size_t Y)
+            {
+                if (X >= Clipped.x0 && X <= Clipped.x1 && Y >= Clipped.y0 && Y <= Clipped.y1)
+                {
+                    if(Color.A == 1.0f) Internal::setPixel(X, Y, Pixel);
+                        else Internal::setPixel(X, Y, Pixel, Color.A);
+                }
+            };
 
-            if(Color.A == 1.0f) Internal::fillPoly(Vertices, 2, [&](const size_t X, const size_t Y) { Internal::setPixel(X, Y, Pixel); });
-            else Internal::fillPoly(Vertices, 2, [&](const size_t X, const size_t Y) { Internal::setPixel(X, Y, Pixel, Color.A); });
-        }
-        void Polygon(const rgba_t Color, const std::vector<vec2_t> Vertices)
-        {
-            if (Color.A == 0.0f) return;
-            auto Pixel{ Internal::fromRGBA(Color) };
+            while (X > Y)
+            {
+                Lambda(Position.x + X, Position.y + Y);
+                Lambda(Position.x + Y, Position.y + X);
+                Lambda(Position.x - Y, Position.y + X);
+                Lambda(Position.x - X, Position.y + Y);
+                Lambda(Position.x - X, Position.y - Y);
+                Lambda(Position.x - Y, Position.y - X);
+                Lambda(Position.x + Y, Position.y - X);
+                Lambda(Position.x + X, Position.y - Y);
 
-            if(Color.A == 1.0f) Internal::fillPoly(Vertices.data(), Vertices.size(), [&](const size_t X, const size_t Y) { Internal::setPixel(X, Y, Pixel); });
-            else Internal::fillPoly(Vertices.data(), Vertices.size(), [&](const size_t X, const size_t Y) { Internal::setPixel(X, Y, Pixel, Color.A); });
+
+                if (Error <= 0)
+                {
+                    Y++;
+                    Error += DeltaY;
+                    DeltaY += 2;
+                }
+
+                if (Error > 0)
+                {
+                    X--;
+                    DeltaX += 2;
+                    Error += DeltaX - (int64_t(Radius) << 1);
+                }
+            }
         }
-        void Circle(const rgba_t Color, const vec2_t Position, float Radius)
+        template <> void Circle<true>(const rgba_t Color, const vec2_t Position, float Radius)
         {
             if (Color.A == 0.0f) return;
             const auto Clipped{ Internal::clipArea({ Position.x - Radius, Position.y - Radius, Position.x + Radius, Position.y + Radius}) };
@@ -263,6 +272,41 @@ namespace Rendering
                 }
             }
         }
+        template <> void Quad<false>(const rgba_t Color, const vec4_t Area)
+        {
+            if (Color.A == 0.0f) return;
+            Line(Color, { Area.x0 + 1, Area.y0 }, { Area.x1 - 1, Area.y0 });
+            Line(Color, { Area.x0 + 1, Area.y1 }, { Area.x1 - 1, Area.y1 });
+            Line(Color, { Area.x0, Area.y0 }, { Area.x0, Area.y1 });
+            Line(Color, { Area.x1, Area.y0 }, { Area.x1, Area.y1 });
+        }
+        template <> void Quad<true>(const rgba_t Color, const vec4_t Area)
+        {
+            if (Color.A == 0.0f) return;
+            auto Pixel{ Internal::fromRGBA(Color) };
+            vec2_t Vertices[]{ {Area.x0, Area.y0}, {Area.x1, Area.y0}, {Area.x1, Area.y1}, {Area.x0, Area.y1} };
+
+            if (Color.A == 1.0f) Internal::fillPoly(Vertices, 4, [&](const size_t X, const size_t Y) { Internal::setPixel(X, Y, Pixel); });
+            else Internal::fillPoly(Vertices, 4, [&](const size_t X, const size_t Y) { Internal::setPixel(X, Y, Pixel, Color.A); });
+            if (Color.A == 1.0f) Quad<false>(Color, Area);
+        }
+        void Line(const rgba_t Color, const vec2_t Start, const vec2_t Stop)
+        {
+            if (Color.A == 0.0f) return;
+            vec2_t Vertices[]{ Start, Stop };
+            auto Pixel{ Internal::fromRGBA(Color) };
+
+            if(Color.A == 1.0f) Internal::fillPoly(Vertices, 2, [&](const size_t X, const size_t Y) { Internal::setPixel(X, Y, Pixel); });
+            else Internal::fillPoly(Vertices, 2, [&](const size_t X, const size_t Y) { Internal::setPixel(X, Y, Pixel, Color.A); });
+        }
+        void Polygon(const rgba_t Color, const std::vector<vec2_t> Vertices)
+        {
+            if (Color.A == 0.0f) return;
+            auto Pixel{ Internal::fromRGBA(Color) };
+
+            if(Color.A == 1.0f) Internal::fillPoly(Vertices.data(), Vertices.size(), [&](const size_t X, const size_t Y) { Internal::setPixel(X, Y, Pixel); });
+            else Internal::fillPoly(Vertices.data(), Vertices.size(), [&](const size_t X, const size_t Y) { Internal::setPixel(X, Y, Pixel, Color.A); });
+        }
     }
     namespace Textureddraw
     {
@@ -283,6 +327,7 @@ namespace Rendering
             {
                 Internal::setPixel(X, Y, ((Pixel_t *)Color.Data)[(Y % Color.Height) * Color.Width + (X % Color.Width)], Color.Alpha);
             });
+            if (Color.Alpha == 1.0f) Triangle<false>(Color, a, b, c);
         }
         template <> void Quad<false>(const texture_t Color, const vec4_t Area)
         {
@@ -302,7 +347,7 @@ namespace Rendering
             {
                 Internal::setPixel(X, Y, ((Pixel_t *)Color.Data)[(Y % Color.Height) * Color.Width + (X % Color.Width)], Color.Alpha);
             });
-            Quad<false>(Color, Area);
+            if (Color.Alpha == 1.0f) Quad<false>(Color, Area);
         }
         void Line(const texture_t Color, const vec2_t Start, const vec2_t Stop)
         {
@@ -327,7 +372,48 @@ namespace Rendering
                 Internal::setPixel(X, Y, ((Pixel_t *)Color.Data)[(Y % Color.Height) * Color.Width + (X % Color.Width)], Color.Alpha);
             });
         }
-        void Circle(const texture_t Color, const vec2_t Position, float Radius)
+        template <> void Circle<false>(const texture_t Color, const vec2_t Position, float Radius)
+        {
+            const auto Clipped{ Internal::clipArea({ Position.x - Radius, Position.y - Radius, Position.x + Radius, Position.y + Radius}) };
+            int64_t Y{}, X{ int64_t(Radius - 1) }, DeltaY{ 1 }, DeltaX{ 1 }, Error{ DeltaX - (int64_t(Radius) << 1) };
+
+            auto Lambda = [&](const size_t X, const size_t Y)
+            {
+                if (X >= Clipped.x0 && X <= Clipped.x1 && Y >= Clipped.y0 && Y <= Clipped.y1)
+                {
+                    if(Color.Alpha == 1.0f) Internal::setPixel(X, Y, ((Pixel_t *)Color.Data)[(Y % Color.Height) * Color.Width + (X % Color.Width)]);
+                    else Internal::setPixel(X, Y, ((Pixel_t *)Color.Data)[(Y % Color.Height) * Color.Width + (X % Color.Width)], Color.Alpha);
+                }
+            };
+
+            while (X > Y)
+            {
+                Lambda(Position.x + X, Position.y + Y);
+                Lambda(Position.x + Y, Position.y + X);
+                Lambda(Position.x - Y, Position.y + X);
+                Lambda(Position.x - X, Position.y + Y);
+                Lambda(Position.x - X, Position.y - Y);
+                Lambda(Position.x - Y, Position.y - X);
+                Lambda(Position.x + Y, Position.y - X);
+                Lambda(Position.x + X, Position.y - Y);
+
+
+                if (Error <= 0)
+                {
+                    Y++;
+                    Error += DeltaY;
+                    DeltaY += 2;
+                }
+
+                if (Error > 0)
+                {
+                    X--;
+                    DeltaX += 2;
+                    Error += DeltaX - (int64_t(Radius) << 1);
+                }
+            }
+        }
+        template <> void Circle<true>(const texture_t Color, const vec2_t Position, float Radius)
         {
             const auto Clipped{ Internal::clipArea({ Position.x - Radius, Position.y - Radius, Position.x + Radius, Position.y + Radius}) };
             const int64_t Rad2{ int64_t(Radius * Radius) };

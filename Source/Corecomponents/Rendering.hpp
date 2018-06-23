@@ -74,18 +74,18 @@ namespace Rendering
     namespace Soliddraw
     {
         template <bool Filled = true> void Triangle(const rgba_t Color, const vec2_t a, const vec2_t b, const vec2_t c);
+        template <bool Filled = true> void Circle(const rgba_t Color, const vec2_t Position, float Radius);
         template <bool Filled = true> void Quad(const rgba_t Color, const vec4_t Area);
         void Line(const rgba_t Color, const vec2_t Start, const vec2_t Stop);
         void Polygon(const rgba_t Color, const std::vector<vec2_t> Vertices);
-        void Circle(const rgba_t Color, const vec2_t Position, float Radius);
     }
     namespace Textureddraw
     {
         template <bool Filled = true> void Triangle(const texture_t Color, const vec2_t a, const vec2_t b, const vec2_t c);
+        template <bool Filled = true> void Circle(const texture_t Color, const vec2_t Position, float Radius);
         template <bool Filled = true> void Quad(const texture_t Color, const vec4_t Area);
         void Line(const texture_t Color, const vec2_t Start, const vec2_t Stop);
         void Polygon(const texture_t Color, const std::vector<vec2_t> Vertices);
-        void Circle(const texture_t Color, const vec2_t Position, float Radius);
     }
     namespace Effectdraw
     {
