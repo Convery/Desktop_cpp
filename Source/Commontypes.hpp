@@ -10,6 +10,7 @@
 #include <cstdint>
 
 #pragma pack(1)
+#pragma warning(disable: 4201)
 
 using vec2_t = struct { union { struct { float x, y; }; float Raw[2]; }; };
 using vec3_t = struct { union { struct { float x, y, z; }; float Raw[3]; }; };
