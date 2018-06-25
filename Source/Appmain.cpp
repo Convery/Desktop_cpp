@@ -10,7 +10,10 @@
 
 int main(int argc, char **argv)
 {
+    Engine::Rendering::Createframebuffer({ 1280, 720 });
     Engine::Window::Create({ 1280, 720 });
+    //Engine::Compositions::Parseblueprint();
+    //Engine::Compositions::Switch("login");
     Engine::Window::Togglevisibility();
 
     auto Lastframe{ std::chrono::high_resolution_clock::now() };
@@ -21,6 +24,13 @@ int main(int argc, char **argv)
         // Let the core rest a little.
         Lastframe = std::chrono::high_resolution_clock::now();
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+        #if !defined(NDEBUG)
+        /*
+            TODO(Convery):
+            STAT the blueprint and reload.
+        */
+        #endif
     }
 
     return 0;

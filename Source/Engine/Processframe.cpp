@@ -28,7 +28,7 @@ namespace Engine
             TrackMouseEvent(&Track);
 
             // Post a message every 30ms for frame redrawing.
-            SetTimer(HWND(gWindowhandle), REDRAW_EVENT, 33, NULL);
+            SetTimer(HWND(gWindowhandle), REDRAW_EVENT, 1000 / 30, NULL);
 
             Initialized = true;
         }
@@ -37,6 +37,23 @@ namespace Engine
         while (PeekMessageA(&Event, HWND(gWindowhandle), NULL, NULL, PM_REMOVE) > 0)
         {
             static uint32_t Keymodifiers{};
+            static PAINTSTRUCT State{};
+
+            // Present the next frame.
+            if (Event.message == WM_PAINT)
+            {
+                auto Devicecontext = BeginPaint(HWND(gWindowhandle), &State);
+                Rendering::onPresent(Devicecontext);
+                EndPaint(HWND(gWindowhandle), &State);
+                continue;
+            }
+
+            // When the timer hits 0, repaint.
+            if (Event.message == REDRAW_EVENT)
+            {
+                InvalidateRect(HWND(gWindowhandle), NULL, FALSE);
+                continue;
+            }
 
             // If we should quit, break the loop early.
             if (Event.message == WM_QUIT || Event.message == WM_DESTROY || (Event.message == WM_SYSCOMMAND && Event.wParam == SC_CLOSE))
@@ -47,6 +64,9 @@ namespace Engine
             // Let windows handle the event if we haven't.
             DispatchMessageA(&Event);
         }
+
+        // Start rendering the next frame.
+        Rendering::onRender();
 
         return false;
     }
