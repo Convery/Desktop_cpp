@@ -12,9 +12,9 @@
 namespace Engine
 {
     // Global engine-variables.
-    vec2_t gWindowsize, gWindowposition;
-    vec4_t gDisplayrectangle;
-    void  *gWindowhandle;
+    point2_t gWindowsize, gWindowposition;
+    point4_t gDisplayrectangle;
+    void    *gWindowhandle;
 
     // Manage the window area.
     namespace Window
@@ -23,15 +23,15 @@ namespace Engine
         bool Visible{ false };
 
         // Create a new window centered and switch focus.
-        bool Create(vec2_t Windowsize)
+        bool Create(point2_t Windowsize)
         {
             do
             {
                 // Get the monitor dimensions.
                 RECT Displaysize{};
                 SystemParametersInfoA(SPI_GETWORKAREA, 0, &Displaysize, 0);
-                gDisplayrectangle = { float(Displaysize.left), float(Displaysize.top), float(Displaysize.right), float(Displaysize.bottom) };
-                gWindowposition = { float(Displaysize.right - Windowsize.x) / 2, float(Displaysize.bottom - Windowsize.y) / 2 };
+                gDisplayrectangle = { uint16_t(Displaysize.left), uint16_t(Displaysize.top), uint16_t(Displaysize.right), uint16_t(Displaysize.bottom) };
+                gWindowposition = { uint16_t((Displaysize.right - Windowsize.x) / 2), uint16_t((Displaysize.bottom - Windowsize.y) / 2) };
                 gWindowsize = Windowsize;
 
                 // Register the window.
@@ -50,7 +50,7 @@ namespace Engine
 
                 // Create a hidden window.
                 gWindowhandle = CreateWindowExA(WS_EX_APPWINDOW, "Desktop_cpp", "", WS_POPUP,
-                    int(gWindowposition.x), int(gWindowposition.y), int(gWindowsize.x), int(gWindowsize.y), NULL, NULL, Windowclass.hInstance, NULL);
+                    gWindowposition.x, gWindowposition.y, gWindowsize.x, gWindowsize.y, NULL, NULL, Windowclass.hInstance, NULL);
                 if (!gWindowhandle) break;
 
                 return true;
@@ -61,15 +61,15 @@ namespace Engine
         }
 
         // Modify the window.
-        void Move(vec2_t Position)
+        void Move(point2_t Position)
         {
             gWindowposition = Position;
-            SetWindowPos((HWND)gWindowhandle, NULL, int(gWindowposition.x), int(gWindowposition.y), int(gWindowsize.x), int(gWindowsize.y), SWP_NOSENDCHANGING | SWP_NOSIZE);
+            SetWindowPos((HWND)gWindowhandle, NULL, gWindowposition.x, gWindowposition.y, gWindowsize.x, gWindowsize.y, SWP_NOSENDCHANGING | SWP_NOSIZE);
         }
-        void Resize(vec2_t Size)
+        void Resize(point2_t Size)
         {
             gWindowsize = Size;
-            SetWindowPos((HWND)gWindowhandle, NULL, int(gWindowposition.x), int(gWindowposition.y), int(gWindowsize.x), int(gWindowsize.y), SWP_NOSENDCHANGING | SWP_NOMOVE);
+            SetWindowPos((HWND)gWindowhandle, NULL, gWindowposition.x, gWindowposition.y, gWindowsize.x, gWindowsize.y, SWP_NOSENDCHANGING | SWP_NOMOVE);
         }
         void Togglevisibility()
         {

@@ -12,6 +12,10 @@
 #pragma pack(1)
 #pragma warning(disable: 4201)
 
+using point2_t = struct { union { struct { uint16_t x, y; }; uint16_t Raw[2]; }; };
+using point3_t = struct { union { struct { uint16_t x, y, z; }; uint16_t Raw[3]; }; };
+using point4_t = struct { union { struct { uint16_t x, y, z, w; }; struct { uint16_t x0, y0, x1, y1; }; uint16_t Raw[4]; }; };
+
 using vec2_t = struct { union { struct { float x, y; }; float Raw[2]; }; };
 using vec3_t = struct { union { struct { float x, y, z; }; float Raw[3]; }; };
 using vec4_t = struct { union { struct { float x, y, z, w; }; struct { float x0, y0, x1, y1; }; float Raw[4]; }; };

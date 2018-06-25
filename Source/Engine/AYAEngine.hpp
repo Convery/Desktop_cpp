@@ -9,11 +9,15 @@
 #pragma once
 #include "../Stdinclude.hpp"
 
+// Will represent an object in the compositions.
+struct Element_t;
+
 namespace Engine
 {
     // Global engine-variables.
-    extern vec2_t gWindowsize, gWindowposition;
-    extern vec4_t gDisplayrectangle;
+    extern point2_t gWindowsize, gWindowposition;
+    extern point4_t gDisplayrectangle;
+    extern Element_t *gRootelement;
     extern void  *gWindowhandle;
 
     // Main-loop for the application, returns error.
@@ -23,19 +27,21 @@ namespace Engine
     namespace Window
     {
         // Create a new window centered and switch focus.
-        bool Create(vec2_t Windowsize);
+        bool Create(point2_t Windowsize);
 
         // Modify the window.
-        void Move(vec2_t Position);
-        void Resize(vec2_t Size);
+        void Move(point2_t Position);
+        void Resize(point2_t Size);
         void Togglevisibility();
     }
 
-    // Handle the compositions and bitblt.
-    namespace Rendering
+    // Manage the compositions and assets.
+    namespace Compositions
     {
+        // Read the layout from disk.
+        void Parseblueprint();
 
-
-
+        // Switch focus to another composition.
+        void Switch(const std::string &&Name);
     }
 }
