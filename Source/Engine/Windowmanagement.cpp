@@ -69,12 +69,12 @@ namespace Engine
         void Move(vec2_t Position)
         {
             gWindowposition = Position;
-            SetWindowPos((HWND)gWindowhandle, NULL, gWindowposition.x, gWindowposition.y, gWindowsize.x, gWindowsize.y, SWP_NOSENDCHANGING | SWP_NOSIZE);
+            SetWindowPos((HWND)gWindowhandle, NULL, int(gWindowposition.x), int(gWindowposition.y), int(gWindowsize.x), int(gWindowsize.y), SWP_NOSENDCHANGING | SWP_NOSIZE);
         }
         void Resize(vec2_t Size)
         {
             gWindowsize = Size;
-            SetWindowPos((HWND)gWindowhandle, NULL, gWindowposition.x, gWindowposition.y, gWindowsize.x, gWindowsize.y, SWP_NOSENDCHANGING | SWP_NOMOVE);
+            SetWindowPos((HWND)gWindowhandle, NULL, int(gWindowposition.x), int(gWindowposition.y), int(gWindowsize.x), int(gWindowsize.y), SWP_NOSENDCHANGING | SWP_NOMOVE);
         }
         void Togglevisibility()
         {

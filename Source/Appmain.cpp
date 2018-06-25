@@ -13,7 +13,16 @@ int main(int argc, char **argv)
     Engine::Window::Create({ 1280, 720 });
     Engine::Window::Togglevisibility();
 
-    while (true) Sleep(1);
+    auto Lastframe{ std::chrono::high_resolution_clock::now() };
+    constexpr std::chrono::microseconds Framedelay{ 1000000 / 60 };
+
+    while (!Engine::doFrame(std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - Lastframe).count()))
+    {
+        // Let the core rest a little.
+        Lastframe = std::chrono::high_resolution_clock::now();
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
     return 0;
 }
 

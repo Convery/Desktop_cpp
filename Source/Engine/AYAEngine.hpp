@@ -30,6 +30,9 @@ namespace Engine
         void Resize(vec2_t Size);
         void Togglevisibility();
     }
+
+
+
 }
 
 

@@ -1,0 +1,56 @@
+/*
+    Initial author: Convery (tcn@ayria.se)
+    Started: 25-06-2018
+    License: MIT
+
+    Provides the main loop.
+*/
+
+#include "../Stdinclude.hpp"
+
+#if defined(_WIN32)
+#define REDRAW_EVENT 42
+namespace Engine
+{
+    TRACKMOUSEEVENT Track{};
+
+    // Main-loop for the application, returns error.
+    bool doFrame(double Deltatime)
+    {
+        static MSG Event;
+        static bool Initialized = false;
+        if (!Initialized)
+        {
+            // Track mouse movement.
+            Track.dwFlags = TME_LEAVE;
+            Track.hwndTrack = HWND(gWindowhandle);
+            Track.cbSize = sizeof(TRACKMOUSEEVENT);
+            TrackMouseEvent(&Track);
+
+            // Post a message every 30ms for frame redrawing.
+            SetTimer(HWND(gWindowhandle), REDRAW_EVENT, 33, NULL);
+
+            Initialized = true;
+        }
+
+        // Process the window-events.
+        while (PeekMessageA(&Event, HWND(gWindowhandle), NULL, NULL, PM_REMOVE) > 0)
+        {
+            static uint32_t Keymodifiers{};
+
+            // If we should quit, break the loop early.
+            if (Event.message == WM_QUIT || Event.message == WM_DESTROY || (Event.message == WM_SYSCOMMAND && Event.wParam == SC_CLOSE))
+            {
+                return true;
+            }
+
+            // Let windows handle the event if we haven't.
+            DispatchMessageA(&Event);
+        }
+
+        return false;
+    }
+}
+#else
+    #error Non-windows abstraction is not implemented (yet!)
+#endif
