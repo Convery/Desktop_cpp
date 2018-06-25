@@ -53,11 +53,6 @@ namespace Engine
                     int(gWindowposition.x), int(gWindowposition.y), int(gWindowsize.x), int(gWindowsize.y), NULL, NULL, Windowclass.hInstance, NULL);
                 if (!gWindowhandle) break;
 
-                // Initialize GDI.
-                ULONG_PTR GDIToken{};
-                Gdiplus::GdiplusStartupInput GDIInput{};
-                GdiplusStartup(&GDIToken, &GDIInput, NULL);
-
                 return true;
             }
             while(false);

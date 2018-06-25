@@ -31,10 +31,11 @@ namespace Engine
         void Togglevisibility();
     }
 
+    // Handle the compositions and bitblt.
+    namespace Rendering
+    {
 
 
+
+    }
 }
-
-
-
-

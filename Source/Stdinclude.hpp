@@ -38,8 +38,6 @@
     #include <Windows.h>
     #include <direct.h>
     #include <intrin.h>
-    #include <ObjIdl.h>
-    #include <gdiplus.h>
     #undef min
     #undef max
 #else
