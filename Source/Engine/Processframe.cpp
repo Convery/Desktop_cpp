@@ -49,9 +49,9 @@ namespace Engine
             }
 
             // When the timer hits 0, repaint.
-            if (Event.message == REDRAW_EVENT)
+            if (Event.message == WM_TIMER)
             {
-                InvalidateRect(HWND(gWindowhandle), NULL, FALSE);
+                if(Event.wParam == REDRAW_EVENT) InvalidateRect(HWND(gWindowhandle), NULL, FALSE);
                 continue;
             }
 
