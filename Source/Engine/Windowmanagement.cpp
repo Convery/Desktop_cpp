@@ -30,8 +30,8 @@ namespace Engine
                 // Get the monitor dimensions.
                 RECT Displaysize{};
                 SystemParametersInfoA(SPI_GETWORKAREA, 0, &Displaysize, 0);
-                gDisplayrectangle = { uint16_t(Displaysize.left), uint16_t(Displaysize.top), uint16_t(Displaysize.right), uint16_t(Displaysize.bottom) };
-                gWindowposition = { uint16_t((Displaysize.right - Windowsize.x) / 2), uint16_t((Displaysize.bottom - Windowsize.y) / 2) };
+                gDisplayrectangle = { int16_t(Displaysize.left), int16_t(Displaysize.top), int16_t(Displaysize.right), int16_t(Displaysize.bottom) };
+                gWindowposition = { int16_t((Displaysize.right - Windowsize.x) / 2), int16_t((Displaysize.bottom - Windowsize.y) / 2) };
                 gWindowsize = Windowsize;
 
                 // Register the window.
