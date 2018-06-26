@@ -56,5 +56,18 @@ namespace Engine
         // Callback on when to process elements.
         void onPresent(const void *Context);
         void onRender();
+
+        // Basic drawing.
+        namespace Draw
+        {
+            template <bool Outline = false> void Circle(const texture_t Color, const point2_t Position, const float Radius);
+            template <bool Outline = false> void Circle(const rgba_t Color, const point2_t Position, const float Radius);
+            template <bool Outline = false> void Polygon(const texture_t Color, const std::vector<vec2_t> Vertices);
+            template <bool Outline = false> void Polygon(const rgba_t Color, const std::vector<vec2_t> Vertices);
+            template <bool Outline = false> void Quad(const texture_t Color, const point4_t Area);
+            template <bool Outline = false> void Quad(const rgba_t Color, const point4_t Area);
+            void Line(const texture_t Color, const point2_t Start, const point2_t Stop);
+            void Line(const rgba_t Color, const point2_t Start, const point2_t Stop);
+        }
     }
 }

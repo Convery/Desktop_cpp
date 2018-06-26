@@ -26,4 +26,6 @@ using pixel32_t = struct { union { struct { uint8_t R, G, B, A; } RGBA; struct {
 using rgb_t = struct { union { struct { float R, G, B; }; float Raw[3]; }; };
 using rgba_t = struct { union { struct { float R, G, B, A; }; float Raw[4]; }; };
 
+using texture_t = struct { point2_t Size; float Alpha; const void *Data; };
+
 #pragma pack()

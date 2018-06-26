@@ -260,10 +260,15 @@ namespace Engine
                     {
                         if (Fill)
                         {
-                            for (int16_t X = int16_t(Origin.x - Size.x); X < int16_t(Origin.x + Size.x); ++X)
+                            thread_local int16_t LastY = -1;
+                            if (LastY != Size.y)
                             {
-                                doCallback({ X, int16_t(Origin.y + Size.y) });
-                                doCallback({ X, int16_t(Origin.y - Size.y) });
+                                for (int16_t X = int16_t(Origin.x - Size.x); X < int16_t(Origin.x + Size.x); ++X)
+                                {
+                                    doCallback({ X, int16_t(Origin.y + Size.y) });
+                                    doCallback({ X, int16_t(Origin.y - Size.y) });
+                                }
+                                LastY = Size.y;
                             }
                             for (int16_t X = int16_t(Origin.x - Size.y); X < int16_t(Origin.x + Size.y); ++X)
                             {
@@ -286,16 +291,18 @@ namespace Engine
                     }
                 };
 
-                // Draw the cardinals.
+                // Draw the cardinals..
                 doDrawing(Position, { X, Y });
 
-                // Draw the rest of the owl.
-                X++; Y = int16_t(std::sqrt(Radius * Radius - 1) + 0.5);
+                // Draw the rest of the owl..
+                X++; Y = int16_t(std::sqrt(Radius * Radius - 1) + 0.5f);
                 while (X < Y)
                 {
                     doDrawing(Position, { X, Y });
-                    X++; Y = int16_t(std::sqrt(Radius * Radius - X * X) + 0.5);
+                    X++; Y = int16_t(std::sqrt(Radius * Radius - X * X) + 0.5f);
                 }
+
+                // Precision..
                 if (X == Y)
                 {
                     doDrawing(Position, { X, Y });
@@ -308,6 +315,186 @@ namespace Engine
             ainline void outlineCircle(const point2_t Position, const float Radius, std::function<void(const point2_t Position)> Callback)
             {
                 return drawCircle<false>(Position, Radius, Callback);
+            }
+
+            // Helpers to place all writes in a single place.
+            ainline pixel24_t fromRGBA(const rgba_t Color)
+            {
+                return
+                {
+                    uint8_t(Color.B <= 1 ? Color.B * 255 : Color.B),
+                    uint8_t(Color.G <= 1 ? Color.G * 255 : Color.G),
+                    uint8_t(Color.R <= 1 ? Color.R * 255 : Color.R)
+                };
+            }
+            ainline void setPixel(const point2_t Position, const pixel24_t Color)
+            {
+                Canvas[Position.y * gRenderingresolution.x + Position.x] = Color;
+            }
+            ainline void setPixel(const point2_t Position, const pixel24_t Color, const float Alpha)
+            {
+                auto Base{ Canvas[Position.y * gRenderingresolution.x + Position.x] };
+                Base.BGR.B = uint8_t(Base.BGR.B * (1.0f - Alpha) + Color.BGR.B * Alpha);
+                Base.BGR.G = uint8_t(Base.BGR.G * (1.0f - Alpha) + Color.BGR.G * Alpha);
+                Base.BGR.R = uint8_t(Base.BGR.R * (1.0f - Alpha) + Color.BGR.R * Alpha);
+                setPixel(Position, Base);
+            }
+        }
+
+        // Basic drawing.
+        namespace Draw
+        {
+            template <bool Outline> void Circle(const texture_t Color, const point2_t Position, const float Radius)
+            {
+                if (Color.Alpha == 0.0f) return;
+                if (Outline)
+                {
+                    Internal::outlineCircle(Position, Radius, [&](const point2_t Position) -> void
+                    {
+                        if (Color.Alpha == 1.0f) Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x]);
+                        else Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x], Color.Alpha);
+                    });
+                }
+                else
+                {
+                    Internal::fillCircle(Position, Radius, [&](const point2_t Position) -> void
+                    {
+                        if (Color.Alpha == 1.0f) Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x]);
+                        else Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x], Color.Alpha);
+                    });
+                }
+            }
+            template <bool Outline> void Circle(const rgba_t Color, const point2_t Position, const float Radius)
+            {
+                if (Color.A == 0.0f) return;
+                const auto Pixel{ Internal::fromRGBA(Color) };
+
+                if (Color.A == 1.0f)
+                {
+                    Internal::outlineCircle(Position, Radius, [&](const point2_t Position) -> void
+                    {
+                        Internal::setPixel(Position, Pixel);
+                    });
+                    if (!Outline)
+                    {
+                        Internal::fillCircle(Position, Radius, [&](const point2_t Position) -> void
+                        {
+                            Internal::setPixel(Position, Pixel);
+                        });
+                    }
+                }
+                else
+                {
+                    if (Outline)
+                    {
+                        Internal::outlineCircle(Position, Radius, [&](const point2_t Position) -> void
+                        {
+                            Internal::setPixel(Position, Pixel, Color.A);
+                        });
+                    }
+                    else
+                    {
+                        Internal::fillCircle(Position, Radius, [&](const point2_t Position) -> void
+                        {
+                            Internal::setPixel(Position, Pixel, Color.A);
+                        });
+                    }
+                }
+            }
+            template <bool Outline> void Polygon(const texture_t Color, const std::vector<vec2_t> Vertices)
+            {
+                if (Color.Alpha == 0.0f) return;
+                Internal::outlinePolygon(Vertices.data(), Vertices.size(), [&](const point2_t Position) -> void
+                {
+                    if (Color.Alpha == 1.0f) Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x]);
+                    else Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x], Color.Alpha);
+                });
+                if (!Outline)
+                {
+                    Internal::fillPolygon(Vertices.data(), Vertices.size(), [&](const point2_t Position) -> void
+                    {
+                        if (Color.Alpha == 1.0f) Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x]);
+                        else Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x], Color.Alpha);
+                    });
+                }
+            }
+            template <bool Outline> void Polygon(const rgba_t Color, const std::vector<vec2_t> Vertices)
+            {
+                if (Color.A == 0.0f) return;
+                const auto Pixel{ Internal::fromRGBA(Color) };
+
+                Internal::outlinePolygon(Vertices.data(), Vertices.size(), [&](const point2_t Position) -> void
+                {
+                    if (Color.A == 1.0f) Internal::setPixel(Position, Pixel);
+                    else Internal::setPixel(Position, Pixel, Color.A);
+                });
+                if (!Outline)
+                {
+                    Internal::fillPolygon(Vertices.data(), Vertices.size(), [&](const point2_t Position) -> void
+                    {
+                        if (Color.A == 1.0f) Internal::setPixel(Position, Pixel);
+                        else Internal::setPixel(Position, Pixel, Color.A);
+                    });
+                }
+            }
+            template <bool Outline> void Quad(const texture_t Color, const point4_t Area)
+            {
+                if (Color.A == 0.0f) return;
+                const vec2_t Vertices[] = { {Area.x0, Area.y0}, {Area.x1, Area.y0}, {Area.x1, Area.y1}, {Area.x0, Area.y1} };
+
+                Internal::outlinePolygon(Vertices, 4, [&](const point2_t Position) -> void
+                {
+                    if (Color.Alpha == 1.0f) Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x]);
+                    else Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x], Color.Alpha);
+                });
+                if (!Outline)
+                {
+                    Internal::fillPolygon(Vertices, 4, [&](const point2_t Position) -> void
+                    {
+                        if (Color.Alpha == 1.0f) Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x]);
+                        else Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x], Color.Alpha);
+                    });
+                }
+            }
+            template <bool Outline> void Quad(const rgba_t Color, const point4_t Area)
+            {
+                if (Color.A == 0.0f) return;
+                const auto Pixel{ Internal::fromRGBA(Color) };
+                const vec2_t Vertices[] = { {Area.x0, Area.y0}, {Area.x1, Area.y0}, {Area.x1, Area.y1}, {Area.x0, Area.y1} };
+
+                Internal::outlinePolygon(Vertices, 4, [&](const point2_t Position) -> void
+                {
+                    if (Color.A == 1.0f) Internal::setPixel(Position, Pixel);
+                    else Internal::setPixel(Position, Pixel, Color.A);
+                });
+                if (!Outline)
+                {
+                    Internal::fillPolygon(Vertices, 4, [&](const point2_t Position) -> void
+                    {
+                        if (Color.A == 1.0f) Internal::setPixel(Position, Pixel);
+                        else Internal::setPixel(Position, Pixel, Color.A);
+                    });
+                }
+            }
+            void Line(const texture_t Color, const point2_t Start, const point2_t Stop)
+            {
+                if (Color.Alpha == 0.0f) return;
+                Internal::drawLine(Start, Stop, [&](const point2_t Position) -> void
+                {
+                    if (Color.Alpha == 1.0f) Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x]);
+                    else Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x], Color.Alpha);
+                });
+            }
+            void Line(const rgba_t Color, const point2_t Start, const point2_t Stop)
+            {
+                if (Color.A == 0.0f) return;
+                const auto Pixel{ Internal::fromRGBA(Color) };
+
+                Internal::drawLine(Start, Stop, [&](const point2_t Position) -> void
+                {
+                    if (Color.A == 1.0f) Internal::setPixel(Position, Pixel);
+                    else Internal::setPixel(Position, Pixel, Color.A);
+                });
             }
         }
     }
