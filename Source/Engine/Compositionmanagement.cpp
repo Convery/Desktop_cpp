@@ -16,31 +16,6 @@ namespace Engine
     {
         namespace Internal
         {
-            // Assets that a blueprint can contain.
-            #pragma pack(push, 1)
-            struct Gradient_t
-            {
-                pixel24_t Start{};
-                pixel24_t Stop{};
-            };
-            struct Color_t
-            {
-                pixel24_t Color{};
-            };
-            struct Area_t
-            {
-                std::vector<std::string> Subareas{};
-                std::string onHoover{};
-                std::string onClick{};
-                std::string onFrame{};
-                vec4_t Margin{};
-            };
-            struct View_t
-            {
-                std::vector<std::string> Areas{};
-                point2_t Size;
-            };
-
             struct Asset_t
             {
                 enum
@@ -50,15 +25,8 @@ namespace Engine
                     eArea,
                     eView,
                 } Type;
-                union
-                {
-                    Gradient_t *Gradient;
-                    Color_t *Color;
-                    Area_t *Area;
-                    View_t *View;
-                };
+                std::string Content;
             };
-            #pragma pack(pop)
         }
 
         // Track all our assets by name.
@@ -83,52 +51,34 @@ namespace Engine
                 Filebuffer = { std::move(Buffer.get()), size_t(Length) };
             }
 
-            // Parse it, just crash on errors.
+            // Parse the blueprint.
             try
             {
                 auto Rootobject{ nlohmann::json::parse(Filebuffer.c_str()) };
 
-                // Parse all the gradients.
                 for (const auto &Object : Rootobject["gradients"])
                 {
                     auto Entry = &Assetmap[Object["name"].get<std::string>()];
-                    std::vector<uint8_t> Start = Object["start"];
-                    std::vector<uint8_t> Stop = Object["stop"];
-
-                    if(!Entry->Gradient) Entry->Gradient = new Internal::Gradient_t();
+                    Entry->Content = Object.dump();
                     Entry->Type = Entry->eGradient;
-
-                    Entry->Gradient->Start = { Start[0], Start[1], Start[2] };
-                    Entry->Gradient->Stop = { Stop[0], Stop[1], Stop[2] };
                 }
-
-                // Parse all areas
+                for (const auto &Object : Rootobject["colors"])
+                {
+                    auto Entry = &Assetmap[Object["name"].get<std::string>()];
+                    Entry->Content = Object.dump();
+                    Entry->Type = Entry->eColor;
+                }
                 for (const auto &Object : Rootobject["areas"])
                 {
                     auto Entry = &Assetmap[Object["name"].get<std::string>()];
-                    std::vector<float> Margin = Object["margin"];
-
-                    if(!Entry->Area) Entry->Area = new Internal::Area_t();
+                    Entry->Content = Object.dump();
                     Entry->Type = Entry->eArea;
-
-                    for (const auto &Item : Object["subareas"]) Entry->Area->Subareas.push_back(Item.get<std::string>());
-                    Entry->Area->Margin = { Margin[0], Margin[1], Margin[2], Margin[3] };
-                    Entry->Area->onHoover = Object["onhoover"].get<std::string>();
-                    Entry->Area->onClick = Object["onclick"].get<std::string>();
-                    Entry->Area->onFrame = Object["onframe"].get<std::string>();
                 }
-
-                // Parse all views.
                 for (const auto &Object : Rootobject["views"])
                 {
                     auto Entry = &Assetmap[Object["name"].get<std::string>()];
-
-                    if(!Entry->View) Entry->View = new Internal::View_t();
+                    Entry->Content = Object.dump();
                     Entry->Type = Entry->eView;
-
-                    Entry->View->Size.x = Object["width"];
-                    Entry->View->Size.y = Object["height"];
-                    for (const auto &Item : Object["areas"]) Entry->View->Areas.push_back(Item.get<std::string>());
                 }
             }
             catch (std::exception &e)
@@ -142,7 +92,15 @@ namespace Engine
         {
             if (auto Entry = Assetmap.find(Name); Entry != Assetmap.end() && Entry->second.Type == Entry->second.eView)
             {
-                Window::Resize(Entry->second.View->Size);
+                try
+                {
+                    auto Object = nlohmann::json::parse(Entry->second.Content.c_str());
+                    Window::Resize({Object["width"].get<int16_t>(), Object["height"].get<int16_t>()});
+                }
+                catch (std::exception &e)
+                {
+                    Infoprint(e.what());
+                }
             }
         }
     }
