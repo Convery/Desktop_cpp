@@ -260,15 +260,21 @@ namespace Engine
                     {
                         if (Fill)
                         {
-                            thread_local int16_t LastY = -1;
-                            if (LastY != Size.y)
+                            /*
+                                HACK(Convery):
+                                We can not draw multiple lines with the same Y coord
+                                because it messes up the alpha-blending and creates
+                                an orb-like effect. https://i.imgur.com/AhdOsqp.png
+                            */
+                            thread_local int16_t PreviousY = -1;
+                            if (PreviousY != Size.y)
                             {
                                 for (int16_t X = int16_t(Origin.x - Size.x); X < int16_t(Origin.x + Size.x); ++X)
                                 {
                                     doCallback({ X, int16_t(Origin.y + Size.y) });
                                     doCallback({ X, int16_t(Origin.y - Size.y) });
                                 }
-                                LastY = Size.y;
+                                PreviousY = Size.y;
                             }
                             for (int16_t X = int16_t(Origin.x - Size.y); X < int16_t(Origin.x + Size.y); ++X)
                             {
