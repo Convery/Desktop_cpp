@@ -5,8 +5,12 @@
 		{ "name": "brightgold", "start": [ 166, 145, 112 ], "stop":  [ 202, 178, 147 ] },
 		{ "name": "dirtygold", 	"start": [ 235, 196, 127 ], "stop":  [ 186, 158, 92  ] }
 	],
-	"elements":
+	"areas":
 	[
-		{ "name": "defaultelement",	"margin": [0, 0, 0, 0], "onHoover": "", "onClick": "", "onFrame": "" }
+		{ "name": "loginbackground", "margin": [0, 0, 0, 0], "onhoover": "", "onclick": "", "onframe": "", "subareas":[] }
+	],
+	"views":
+	[
+		{ "name": "login", "width": 520, "height": 730, "areas": [ "loginbackground" ] }
 	]
 }

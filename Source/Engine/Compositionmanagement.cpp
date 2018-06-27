@@ -14,60 +14,55 @@ namespace Engine
     // Manage the compositions and assets.
     namespace Compositions
     {
-        #pragma pack(push, 1)
-        // Assets that a blueprint can contain.
-        struct Gradient_t { pixel24_t Start{}, Stop{}; };
-        struct Color_t { pixel24_t Color{}; };
-        struct Element_t
+        namespace Internal
         {
-            // The dimensions of the element.
-            point4_t Localbox{};
-            point4_t Worldbox{};
-            vec4_t Margin{};
-
-            // State so we only update when needed.
-            struct
+            // Assets that a blueprint can contain.
+            #pragma pack(push, 1)
+            struct Gradient_t
             {
-                unsigned int Hoover : 1;
-                unsigned int Clicked : 1;
-                unsigned int Reserved : 6;
-            } State{};
-
-            // Children inherit the parents worldbox.
-            std::vector<Element_t *> Children{};
-
-            // Callbacks on user-interaction, returns if the event is handled.
-            std::string onHoover{}, onClick{}, onFrame{};
-        };
-        struct Scene_t
-        {
-            std::vector<std::string> Children{};
-            point2_t Windowsize{};
-        };
-        struct Asset_t
-        {
-            enum
+                pixel24_t Start{};
+                pixel24_t Stop{};
+            };
+            struct Color_t
             {
-                eGradient,
-                eElement,
-                eColor,
-                eScene,
-            } Type;
-            union
+                pixel24_t Color{};
+            };
+            struct Area_t
             {
-                Gradient_t Gradient;
-                Element_t Element;
-                Color_t Color;
-                Scene_t Scene;
+                std::vector<std::string> Subareas{};
+                std::string onHoover{};
+                std::string onClick{};
+                std::string onFrame{};
+                vec4_t Margin{};
+            };
+            struct View_t
+            {
+                std::vector<std::string> Areas{};
+                point2_t Size;
             };
 
-            ~Asset_t() {}
-            Asset_t() {}
-        };
-        #pragma pack(pop)
+            struct Asset_t
+            {
+                enum
+                {
+                    eGradient,
+                    eColor,
+                    eArea,
+                    eView,
+                } Type;
+                union
+                {
+                    Gradient_t *Gradient;
+                    Color_t *Color;
+                    Area_t *Area;
+                    View_t *View;
+                };
+            };
+            #pragma pack(pop)
+        }
 
         // Track all our assets by name.
-        std::unordered_map<std::string, Asset_t> Assetmap;
+        std::unordered_map<std::string, Internal::Asset_t> Assetmap;
 
         // Read the layout from disk.
         void Parseblueprint()
@@ -100,13 +95,41 @@ namespace Engine
                     std::vector<uint8_t> Start = Object["start"];
                     std::vector<uint8_t> Stop = Object["stop"];
 
-                    Entry->Gradient.Start = { Start[0], Start[1], Start[2] };
-                    Entry->Gradient.Stop = { Stop[0], Stop[1], Stop[2] };
+                    if(!Entry->Gradient) Entry->Gradient = new Internal::Gradient_t();
                     Entry->Type = Entry->eGradient;
+
+                    Entry->Gradient->Start = { Start[0], Start[1], Start[2] };
+                    Entry->Gradient->Stop = { Stop[0], Stop[1], Stop[2] };
                 }
 
+                // Parse all areas
+                for (const auto &Object : Rootobject["areas"])
+                {
+                    auto Entry = &Assetmap[Object["name"].get<std::string>()];
+                    std::vector<float> Margin = Object["margin"];
 
+                    if(!Entry->Area) Entry->Area = new Internal::Area_t();
+                    Entry->Type = Entry->eArea;
 
+                    for (const auto &Item : Object["subareas"]) Entry->Area->Subareas.push_back(Item.get<std::string>());
+                    Entry->Area->Margin = { Margin[0], Margin[1], Margin[2], Margin[3] };
+                    Entry->Area->onHoover = Object["onhoover"].get<std::string>();
+                    Entry->Area->onClick = Object["onclick"].get<std::string>();
+                    Entry->Area->onFrame = Object["onframe"].get<std::string>();
+                }
+
+                // Parse all views.
+                for (const auto &Object : Rootobject["views"])
+                {
+                    auto Entry = &Assetmap[Object["name"].get<std::string>()];
+
+                    if(!Entry->View) Entry->View = new Internal::View_t();
+                    Entry->Type = Entry->eView;
+
+                    Entry->View->Size.x = Object["width"];
+                    Entry->View->Size.y = Object["height"];
+                    for (const auto &Item : Object["areas"]) Entry->View->Areas.push_back(Item.get<std::string>());
+                }
             }
             catch (std::exception &e)
             {
@@ -117,7 +140,10 @@ namespace Engine
         // Switch focus to another composition.
         void Switch(const std::string &&Name)
         {
-
+            if (auto Entry = Assetmap.find(Name); Entry != Assetmap.end() && Entry->second.Type == Entry->second.eView)
+            {
+                Window::Resize(Entry->second.View->Size);
+            }
         }
     }
 }
