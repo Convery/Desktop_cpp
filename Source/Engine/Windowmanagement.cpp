@@ -40,7 +40,7 @@ namespace Engine
                 Windowclass.lpszClassName = "Desktop_cpp";
                 Windowclass.hInstance = GetModuleHandleA(NULL);
                 Windowclass.hCursor = LoadCursorA(NULL, IDC_ARROW);
-                Windowclass.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC | CS_DBLCLKS | CS_DROPSHADOW;
+                Windowclass.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
                 Windowclass.lpfnWndProc = [](HWND Handle, UINT Message, WPARAM wParam, LPARAM lParam) -> LRESULT
                 {
                     if (Message == WM_PAINT) return LRESULT(1);
@@ -52,6 +52,9 @@ namespace Engine
                 gWindowhandle = CreateWindowExA(WS_EX_APPWINDOW, "Desktop_cpp", "", WS_POPUP,
                     gWindowposition.x, gWindowposition.y, gWindowsize.x, gWindowsize.y, NULL, NULL, Windowclass.hInstance, NULL);
                 if (!gWindowhandle) break;
+
+                // Create the framebuffer we'll render into.
+                Rendering::Createframebuffer(gRenderingresolution);
 
                 return true;
             }

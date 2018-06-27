@@ -46,8 +46,8 @@ struct Element_t
 namespace Engine
 {
     // Global engine-variables.
-    constexpr point2_t gRenderingresolution{ 1280, 720 };
     extern point2_t gWindowsize, gWindowposition;
+    extern point2_t gRenderingresolution;
     extern point4_t gDisplayrectangle;
     extern Element_t *gRootelement;
     extern void  *gWindowhandle;

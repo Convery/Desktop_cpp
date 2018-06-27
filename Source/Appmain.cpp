@@ -10,8 +10,7 @@
 
 int main(int argc, char **argv)
 {
-    Engine::Rendering::Createframebuffer({ 1280, 720 });
-    Engine::Window::Create({ 1280, 720 });
+    Engine::Window::Create({ 1920, 1080 });
     Engine::Compositions::Parseblueprint();
     Engine::Compositions::Switch("login");
     Engine::Window::Togglevisibility();

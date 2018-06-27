@@ -9,15 +9,19 @@
 #include "../Stdinclude.hpp"
 
 #if defined(_WIN32)
+#include <dwmapi.h>
+#pragma comment(lib, "Dwmapi.lib")
+
 namespace Engine
 {
     // Get the compositions to the screen.
+    point2_t gRenderingresolution{1280, 720};
     namespace Rendering
     {
         std::atomic<point4_t *> Clippingarea{};
         point4_t Currentclippingarea;
         HDC Surfacecontext{};
-        pixel24_t *Canvas{};
+        pixel32_t *Canvas{};
         bool Presented{};
 
         // Create and invalidate part of a framebuffer.
@@ -32,7 +36,7 @@ namespace Engine
             Format.bmiHeader.biHeight = -(Size.y + 1);
             Format.bmiHeader.biCompression = BI_RGB;
             Format.bmiHeader.biWidth = Size.x;
-            Format.bmiHeader.biBitCount = 24;
+            Format.bmiHeader.biBitCount = 32;
             Format.bmiHeader.biPlanes = 1;
 
             // Cleanup any old memory.
@@ -43,6 +47,15 @@ namespace Engine
             Surface = CreateDIBSection(Devicecontext, &Format, DIB_RGB_COLORS, (void **)&Canvas, NULL, 0);
             Surfacecontext = CreateCompatibleDC(Devicecontext);
             SelectObject(Surfacecontext, Surface);
+
+            // Make regions with alpha == 0 transparent.
+            {
+                DWM_BLURBEHIND bb = { 0 };
+                bb.fEnable = true;
+                bb.dwFlags = DWM_BB_ENABLE | DWM_BB_BLURREGION;
+                bb.hRgnBlur = CreateRectRgn(9000, 9000, 9001, 9001);
+                DwmEnableBlurBehindWindow((HWND)gWindowhandle, &bb);
+            }
 
             // C-style cleanup needed.
             DeleteDC(Devicecontext);
@@ -324,26 +337,33 @@ namespace Engine
             }
 
             // Helpers to place all writes in a single place.
-            ainline pixel24_t fromRGBA(const rgba_t Color)
+            ainline pixel32_t fromRGBA(const rgba_t Color)
             {
                 return
                 {
                     uint8_t(Color.B <= 1 ? Color.B * 255 : Color.B),
                     uint8_t(Color.G <= 1 ? Color.G * 255 : Color.G),
-                    uint8_t(Color.R <= 1 ? Color.R * 255 : Color.R)
+                    uint8_t(Color.R <= 1 ? Color.R * 255 : Color.R),
+                    uint8_t(Color.A <= 1 ? Color.A * 255 : Color.A)
                 };
             }
-            ainline void setPixel(const point2_t Position, const pixel24_t Color)
+            ainline void setPixel(const point2_t Position, const pixel32_t Color)
             {
-                Canvas[Position.y * gRenderingresolution.x + Position.x] = Color;
-            }
-            ainline void setPixel(const point2_t Position, const pixel24_t Color, const float Alpha)
-            {
-                auto Base{ Canvas[Position.y * gRenderingresolution.x + Position.x] };
-                Base.BGR.B = uint8_t(Base.BGR.B * (1.0f - Alpha) + Color.BGR.B * Alpha);
-                Base.BGR.G = uint8_t(Base.BGR.G * (1.0f - Alpha) + Color.BGR.G * Alpha);
-                Base.BGR.R = uint8_t(Base.BGR.R * (1.0f - Alpha) + Color.BGR.R * Alpha);
-                setPixel(Position, Base);
+                if(Color.BGRA.A == 0xFF) Canvas[Position.y * gRenderingresolution.x + Position.x] = Color;
+                else
+                {
+                    const auto Base{ Canvas[Position.y * gRenderingresolution.x + Position.x] };
+                    pixel32_t Result{};
+
+                    Result.BGRA.A = Color.BGRA.A + Base.BGRA.A * (0xFF - Color.BGRA.A);
+                    if (Result.BGRA.A != 0)
+                    {
+                        Result.BGRA.B = (Color.BGRA.B * Color.BGRA.A + Base.BGRA.B * Base.BGRA.A * (0xFF - Base.BGRA.A)) / Result.BGRA.A;
+                        Result.BGRA.G = (Color.BGRA.G * Color.BGRA.A + Base.BGRA.G * Base.BGRA.A * (0xFF - Base.BGRA.A)) / Result.BGRA.A;
+                        Result.BGRA.R = (Color.BGRA.R * Color.BGRA.A + Base.BGRA.R * Base.BGRA.A * (0xFF - Base.BGRA.A)) / Result.BGRA.A;
+                    }
+                    Canvas[Position.y * gRenderingresolution.x + Position.x] = Result;
+                }
             }
         }
 
@@ -357,16 +377,14 @@ namespace Engine
                 {
                     Internal::outlineCircle(Position, Radius, [&](const point2_t Position) -> void
                     {
-                        if (Color.Alpha == 1.0f) Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x]);
-                        else Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x], Color.Alpha);
+                        Internal::setPixel(Position, ((pixel32_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x]);
                     });
                 }
                 else
                 {
                     Internal::fillCircle(Position, Radius, [&](const point2_t Position) -> void
                     {
-                        if (Color.Alpha == 1.0f) Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x]);
-                        else Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x], Color.Alpha);
+                        Internal::setPixel(Position, ((pixel32_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x]);
                     });
                 }
             }
@@ -375,36 +393,19 @@ namespace Engine
                 if (Color.A == 0.0f) return;
                 const auto Pixel{ Internal::fromRGBA(Color) };
 
-                if (Color.A == 1.0f)
+                if (Outline)
                 {
                     Internal::outlineCircle(Position, Radius, [&](const point2_t Position) -> void
                     {
                         Internal::setPixel(Position, Pixel);
                     });
-                    if (!Outline)
-                    {
-                        Internal::fillCircle(Position, Radius, [&](const point2_t Position) -> void
-                        {
-                            Internal::setPixel(Position, Pixel);
-                        });
-                    }
                 }
                 else
                 {
-                    if (Outline)
+                    Internal::fillCircle(Position, Radius, [&](const point2_t Position) -> void
                     {
-                        Internal::outlineCircle(Position, Radius, [&](const point2_t Position) -> void
-                        {
-                            Internal::setPixel(Position, Pixel, Color.A);
-                        });
-                    }
-                    else
-                    {
-                        Internal::fillCircle(Position, Radius, [&](const point2_t Position) -> void
-                        {
-                            Internal::setPixel(Position, Pixel, Color.A);
-                        });
-                    }
+                        Internal::setPixel(Position, Pixel);
+                    });
                 }
             }
             template <bool Outline> void Polygon(const texture_t Color, const std::vector<vec2_t> Vertices)
@@ -412,15 +413,13 @@ namespace Engine
                 if (Color.Alpha == 0.0f) return;
                 Internal::outlinePolygon(Vertices.data(), Vertices.size(), [&](const point2_t Position) -> void
                 {
-                    if (Color.Alpha == 1.0f) Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x]);
-                    else Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x], Color.Alpha);
+                    Internal::setPixel(Position, ((pixel32_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x]);
                 });
                 if (!Outline)
                 {
                     Internal::fillPolygon(Vertices.data(), Vertices.size(), [&](const point2_t Position) -> void
                     {
-                        if (Color.Alpha == 1.0f) Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x]);
-                        else Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x], Color.Alpha);
+                        Internal::setPixel(Position, ((pixel32_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x]);
                     });
                 }
             }
@@ -431,15 +430,13 @@ namespace Engine
 
                 Internal::outlinePolygon(Vertices.data(), Vertices.size(), [&](const point2_t Position) -> void
                 {
-                    if (Color.A == 1.0f) Internal::setPixel(Position, Pixel);
-                    else Internal::setPixel(Position, Pixel, Color.A);
+                    Internal::setPixel(Position, Pixel);
                 });
                 if (!Outline)
                 {
                     Internal::fillPolygon(Vertices.data(), Vertices.size(), [&](const point2_t Position) -> void
                     {
-                        if (Color.A == 1.0f) Internal::setPixel(Position, Pixel);
-                        else Internal::setPixel(Position, Pixel, Color.A);
+                        Internal::setPixel(Position, Pixel);
                     });
                 }
             }
@@ -450,15 +447,13 @@ namespace Engine
 
                 Internal::outlinePolygon(Vertices, 4, [&](const point2_t Position) -> void
                 {
-                    if (Color.Alpha == 1.0f) Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x]);
-                    else Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x], Color.Alpha);
+                    Internal::setPixel(Position, ((pixel32_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x]);
                 });
                 if (!Outline)
                 {
                     Internal::fillPolygon(Vertices, 4, [&](const point2_t Position) -> void
                     {
-                        if (Color.Alpha == 1.0f) Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x]);
-                        else Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x], Color.Alpha);
+                        Internal::setPixel(Position, ((pixel32_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x]);
                     });
                 }
             }
@@ -470,15 +465,13 @@ namespace Engine
 
                 Internal::outlinePolygon(Vertices, 4, [&](const point2_t Position) -> void
                 {
-                    if (Color.A == 1.0f) Internal::setPixel(Position, Pixel);
-                    else Internal::setPixel(Position, Pixel, Color.A);
+                    Internal::setPixel(Position, Pixel);
                 });
                 if (!Outline)
                 {
                     Internal::fillPolygon(Vertices, 4, [&](const point2_t Position) -> void
                     {
-                        if (Color.A == 1.0f) Internal::setPixel(Position, Pixel);
-                        else Internal::setPixel(Position, Pixel, Color.A);
+                        Internal::setPixel(Position, Pixel);
                     });
                 }
             }
@@ -487,8 +480,7 @@ namespace Engine
                 if (Color.Alpha == 0.0f) return;
                 Internal::drawLine(Start, Stop, [&](const point2_t Position) -> void
                 {
-                    if (Color.Alpha == 1.0f) Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x]);
-                    else Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x], Color.Alpha);
+                    Internal::setPixel(Position, ((pixel32_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x]);
                 });
             }
             void Line(const rgba_t Color, const point2_t Start, const point2_t Stop)
@@ -498,8 +490,7 @@ namespace Engine
 
                 Internal::drawLine(Start, Stop, [&](const point2_t Position) -> void
                 {
-                    if (Color.A == 1.0f) Internal::setPixel(Position, Pixel);
-                    else Internal::setPixel(Position, Pixel, Color.A);
+                    Internal::setPixel(Position, Pixel);
                 });
             }
         }
