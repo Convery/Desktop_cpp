@@ -9,7 +9,7 @@
 #pragma once
 #include <cstdint>
 
-#pragma pack(1)
+#pragma pack(push, 1)
 #pragma warning(disable: 4201)
 
 using point2_t = struct { union { struct { int16_t x, y; }; int16_t Raw[2]; }; };
@@ -28,4 +28,4 @@ using rgba_t = struct { union { struct { float R, G, B, A; }; float Raw[4]; }; }
 
 using texture_t = struct { point2_t Size; float Alpha; const void *Data; };
 
-#pragma pack()
+#pragma pack(pop)

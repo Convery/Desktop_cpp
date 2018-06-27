@@ -1,0 +1,12 @@
+{
+	"gradients":
+	[
+		{ "name": "brass", 		"start": [ 166, 145, 112 ], "stop":  [ 202, 178, 147 ] },
+		{ "name": "brightgold", "start": [ 166, 145, 112 ], "stop":  [ 202, 178, 147 ] },
+		{ "name": "dirtygold", 	"start": [ 235, 196, 127 ], "stop":  [ 186, 158, 92  ] }
+	],
+	"elements":
+	[
+		{ "name": "defaultelement",	"margin": [0, 0, 0, 0], "onHoover": "", "onClick": "", "onFrame": "" }
+	]
+}
