@@ -11,26 +11,25 @@
 
 namespace Engine
 {
+    Element_t *gRootelement{};
+
     // Manage the compositions and assets.
     namespace Compositions
     {
-        namespace Internal
+        struct Asset_t
         {
-            struct Asset_t
+            enum
             {
-                enum
-                {
-                    eGradient,
-                    eColor,
-                    eArea,
-                    eView,
-                } Type;
-                std::string Content;
-            };
-        }
+                eGradient,
+                eColor,
+                eArea,
+                eView,
+            } Type;
+            std::string Content;
+        };
 
         // Track all our assets by name.
-        std::unordered_map<std::string, Internal::Asset_t> Assetmap;
+        std::unordered_map<std::string, Asset_t> Assetmap;
 
         // Read the layout from disk.
         void Parseblueprint()
@@ -95,13 +94,39 @@ namespace Engine
                 try
                 {
                     auto Object = nlohmann::json::parse(Entry->second.Content.c_str());
-                    Window::Resize({Object["width"].get<int16_t>(), Object["height"].get<int16_t>()});
+                    gWindowsize = { Object["width"].get<int16_t>(), Object["height"].get<int16_t>() };
+                    gWindowposition =
+                    {
+                        gDisplayrectangle.x0 + (gDisplayrectangle.x1 - gDisplayrectangle.x0 - gWindowsize.x) / 2,
+                        gDisplayrectangle.y0 + (gDisplayrectangle.y1 - gDisplayrectangle.y0 - gWindowsize.y) / 2
+                    };
+                    Window::Move(gWindowposition);
+                    Window::Resize(gWindowsize);
+
+                    auto Newroot = new Element_t(Name);
+                    Newroot->Worldbox = { gWindowposition.x, gWindowposition.y, gWindowposition.x + gWindowsize.x, gWindowposition.y + gWindowsize.y };
+                    Newroot->Localbox = { 0, 0, gRenderingresolution.x, gRenderingresolution.y };
+
+                    std::swap(gRootelement, Newroot);
+                    if (Newroot)
+                    {
+                        std::thread([](Element_t *Newroot) { std::this_thread::sleep_for(std::chrono::seconds(5)); delete Newroot; }, Newroot).detach();
+                    }
                 }
                 catch (std::exception &e)
                 {
                     Infoprint(e.what());
                 }
             }
+        }
+
+        // Dump an asset if available.
+        std::string *Findasset(const std::string &&Name)
+        {
+            if (auto Entry = Assetmap.find(Name); Entry != Assetmap.end())
+                return &Entry->second.Content;
+            else
+                return nullptr;
         }
     }
 }

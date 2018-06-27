@@ -7,10 +7,25 @@
 	],
 	"areas":
 	[
-		{ "name": "loginbackground", "margin": [0, 0, 0, 0], "onhoover": "", "onclick": "", "onframe": "", "subareas":[] }
+		{ 
+			"name": "loginbackground", 
+			"margin": [0, 0, 0, 0], 
+			"onhoover": "", 
+			"onclick": "", 
+			"onframe": "", 
+			"subareas":[] 
+		}
 	],
 	"views":
 	[
-		{ "name": "login", "width": 520, "height": 730, "areas": [ "loginbackground" ] }
+		{ 
+			"name": "login", 
+			"width": 520, 
+			"height": 730, 
+			"areas": 
+			[ 
+				"loginbackground" 
+			] 
+		}
 	]
 }

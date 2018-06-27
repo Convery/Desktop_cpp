@@ -10,7 +10,38 @@
 #include "../Stdinclude.hpp"
 
 // Will represent an object in the compositions.
-struct Element_t;
+#pragma pack(push, 1)
+struct Element_t
+{
+    // The dimensions of the element.
+    point4_t Localbox{};
+    point4_t Worldbox{};
+    vec4_t Margin{};
+
+    // State so we only update when needed.
+    struct
+    {
+        unsigned int Hoover : 1;
+        unsigned int Clicked : 1;
+        unsigned int Reserved : 6;
+    } State{};
+
+    // Children inherit the parents worldbox.
+    std::vector<Element_t *> Children{};
+
+    // Callbacks on user-interaction, returns if the event is handled.
+    std::function<void(Element_t *Caller, double Deltatime)> onFrame;
+    std::function<bool(Element_t *Caller, bool Released)> onHoover;
+    std::function<bool(Element_t *Caller, bool Released)> onClick;
+
+    #if !defined(NDEBUG)
+    std::string Identity;
+    Element_t(std::string ID) : Identity(ID) {}
+    #else
+    Element_t(std::string ID) {}
+    #endif
+};
+#pragma pack(pop)
 
 namespace Engine
 {
@@ -44,6 +75,9 @@ namespace Engine
 
         // Switch focus to another composition.
         void Switch(const std::string &&Name);
+
+        // Dump an asset if available.
+        std::string *Findasset(const std::string &&Name);
     }
 
     // Get the compositions to the screen.
