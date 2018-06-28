@@ -21,7 +21,7 @@
 		{ 
 			"name": "login", 
 			"width": 520, 
-			"height": 730, 
+			"height": 720, 
 			"areas": 
 			[ 
 				"loginbackground" 
