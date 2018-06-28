@@ -30,9 +30,9 @@ namespace Engine
 
             // Bitmap format, upside-down because Windows.
             Format.bmiHeader.biSize = sizeof(BITMAPINFO);
-            Format.bmiHeader.biHeight = -(Size.y + 1);
+            Format.bmiHeader.biHeight = -(Size.y + 2);
             Format.bmiHeader.biCompression = BI_RGB;
-            Format.bmiHeader.biWidth = Size.x;
+            Format.bmiHeader.biWidth = Size.x - 1;
             Format.bmiHeader.biBitCount = 24;
             Format.bmiHeader.biPlanes = 1;
 
@@ -77,10 +77,11 @@ namespace Engine
         // Callback on when to process elements.
         void onPresent(const void *Context)
         {
-            if(gWindowsize.x > gRenderingresolution.x && gWindowsize.y > gRenderingresolution.y)
-                StretchBlt(HDC(Context), 0, 0, gWindowsize.x, gWindowsize.y, Surfacecontext, 0, 0, gRenderingresolution.x, gRenderingresolution.y, SRCCOPY);
+            // Windows downscales in a strange way.
+            if(gWindowsize.x < gRenderingresolution.x || gWindowsize.y < gRenderingresolution.y)
+                StretchBlt(HDC(Context), 0, 0, gWindowsize.x - 1, gWindowsize.y - 1, Surfacecontext, 0, 1, gRenderingresolution.x, gRenderingresolution.y, SRCCOPY);
             else
-                BitBlt(HDC(Context), 0, 0, gWindowsize.x, gWindowsize.y, Surfacecontext, 0, 0, SRCCOPY);
+                StretchBlt(HDC(Context), 0, 0, gWindowsize.x, gWindowsize.y, Surfacecontext, 0, 1, gRenderingresolution.x, gRenderingresolution.y, SRCCOPY);
         }
         void onRender()
         {
@@ -94,6 +95,9 @@ namespace Engine
             // Set the clipping area before rendering.
             Currentclippingarea = *Clipped;
             delete Clipped;
+
+            // Clear the clippingarea.
+            Draw::Quad({ 0xFF, 0xFF, 0xFF, 1.0f }, Currentclippingarea);
         }
 
         // Primitives.
@@ -337,14 +341,14 @@ namespace Engine
             }
             ainline void setPixel(const point2_t Position, const pixel24_t Color)
             {
-                Canvas[Position.y * gRenderingresolution.x + Position.x] = Color;
+                Canvas[(Position.y + 1) * gRenderingresolution.x + Position.x] = Color;
             }
             ainline void setPixel(const point2_t Position, const pixel24_t Color, const float Alpha)
             {
                 if (Alpha == 1.0f) setPixel(Position, Color);
                 else
                 {
-                    auto Base{ Canvas[Position.y * gRenderingresolution.x + Position.x] };
+                    auto Base{ Canvas[(Position.y + 1) * gRenderingresolution.x + Position.x] };
                     Base.BGR.B = uint8_t(Base.BGR.B * (1.0f - Alpha) + Color.BGR.B * Alpha);
                     Base.BGR.G = uint8_t(Base.BGR.G * (1.0f - Alpha) + Color.BGR.G * Alpha);
                     Base.BGR.R = uint8_t(Base.BGR.R * (1.0f - Alpha) + Color.BGR.R * Alpha);
@@ -428,7 +432,7 @@ namespace Engine
             }
             template <bool Outline> void Quad(const texture_t Color, const point4_t Area)
             {
-                if (Color.A == 0.0f) return;
+                if (Color.Alpha == 0.0f) return;
                 const vec2_t Vertices[] = { {Area.x0, Area.y0}, {Area.x1, Area.y0}, {Area.x1, Area.y1}, {Area.x0, Area.y1} };
 
                 Internal::outlinePolygon(Vertices, 4, [&](const point2_t Position) -> void
@@ -479,6 +483,24 @@ namespace Engine
                     Internal::setPixel(Position, Pixel, Color.A);
                 });
             }
+        }
+
+        // CL refuses to instantiate our drawing functions so we need to reference them once.
+        void Microsofthackery()
+        {
+            Draw::Circle(texture_t(), point2_t(), float());
+            Draw::Circle(rgba_t(), point2_t(), float());
+            Draw::Polygon(texture_t(), std::vector<vec2_t>());
+            Draw::Polygon(rgba_t(), std::vector<vec2_t>());
+            Draw::Quad(texture_t(), point4_t());
+            Draw::Quad(rgba_t(), point4_t());
+
+            Draw::Circle<true>(texture_t(), point2_t(), float());
+            Draw::Circle<true>(rgba_t(), point2_t(), float());
+            Draw::Polygon<true>(texture_t(), std::vector<vec2_t>());
+            Draw::Polygon<true>(rgba_t(), std::vector<vec2_t>());
+            Draw::Quad<true>(texture_t(), point4_t());
+            Draw::Quad<true>(rgba_t(), point4_t());
         }
     }
 }
