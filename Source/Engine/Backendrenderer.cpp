@@ -30,9 +30,9 @@ namespace Engine
 
             // Bitmap format, upside-down because Windows.
             Format.bmiHeader.biSize = sizeof(BITMAPINFO);
-            Format.bmiHeader.biHeight = -(Size.y + 2);
+            Format.bmiHeader.biHeight = -(Size.y + 3);
             Format.bmiHeader.biCompression = BI_RGB;
-            Format.bmiHeader.biWidth = Size.x - 1;
+            Format.bmiHeader.biWidth = Size.x;
             Format.bmiHeader.biBitCount = 24;
             Format.bmiHeader.biPlanes = 1;
 
@@ -42,8 +42,8 @@ namespace Engine
 
             // Create the new surface.
             Surface = CreateDIBSection(Devicecontext, &Format, DIB_RGB_COLORS, (void **)&Canvas, NULL, 0);
+            std::memset(Canvas, 0xFF, Size.x * (Size.y + 3) * sizeof(pixel24_t));
             Surfacecontext = CreateCompatibleDC(Devicecontext);
-            std::memset(Canvas, 0xFF, Size.x * Size.y * 3);
             SetStretchBltMode(Surfacecontext, HALFTONE);
             SelectObject(Surfacecontext, Surface);
 
@@ -77,16 +77,14 @@ namespace Engine
         // Callback on when to process elements.
         void onPresent(const void *Context)
         {
-            // Windows downscales in a strange way.
-            if(gWindowsize.x < gRenderingresolution.x || gWindowsize.y < gRenderingresolution.y)
-                StretchBlt(HDC(Context), 0, 0, gWindowsize.x - 1, gWindowsize.y - 1, Surfacecontext, 0, 1, gRenderingresolution.x, gRenderingresolution.y, SRCCOPY);
-            else
-                StretchBlt(HDC(Context), 0, 0, gWindowsize.x, gWindowsize.y, Surfacecontext, 0, 1, gRenderingresolution.x, gRenderingresolution.y, SRCCOPY);
+            // Set the last line to be transparent or Windows wont draw it(?!?!).
+            std::memset(&Canvas[(gRenderingresolution.y + 2) * gRenderingresolution.x], 0xFF, gRenderingresolution.x * sizeof(pixel24_t));
+            StretchBlt(HDC(Context), 0, 0, gWindowsize.x, gWindowsize.y, Surfacecontext, 0, 1, gRenderingresolution.x, gRenderingresolution.y + 2, SRCCOPY);
         }
         void onRender()
         {
             // The 'clean' area is intentionally inverted.
-            point4_t *Clean = new point4_t{ gRenderingresolution.x, gRenderingresolution.y, 0, 0 };
+            point4_t *Clean = new point4_t{ gRenderingresolution.x + 5, gRenderingresolution.y + 5, 0, 0 };
             point4_t *Clipped;
 
             // Exchange the clipped area with a clean one.
@@ -433,9 +431,9 @@ namespace Engine
             template <bool Outline> void Quad(const texture_t Color, const point4_t Area)
             {
                 if (Color.Alpha == 0.0f) return;
-                const vec2_t Vertices[] = { {Area.x0, Area.y0}, {Area.x1, Area.y0}, {Area.x1, Area.y1}, {Area.x0, Area.y1} };
+                const vec2_t Vertices[] = { {Area.x0, Area.y0}, {Area.x1, Area.y0}, {Area.x1, Area.y1}, {Area.x0, Area.y1}, {Area.x0, Area.y0} };
 
-                Internal::outlinePolygon(Vertices, 4, [&](const point2_t Position) -> void
+                Internal::outlinePolygon(Vertices, 5, [&](const point2_t Position) -> void
                 {
                     Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x], Color.Alpha);
                 });
@@ -451,9 +449,9 @@ namespace Engine
             {
                 if (Color.A == 0.0f) return;
                 const auto Pixel{ Internal::fromRGBA(Color) };
-                const vec2_t Vertices[] = { {Area.x0, Area.y0}, {Area.x1, Area.y0}, {Area.x1, Area.y1}, {Area.x0, Area.y1} };
+                const vec2_t Vertices[] = { {Area.x0, Area.y0}, {Area.x1, Area.y0}, {Area.x1, Area.y1}, {Area.x0, Area.y1}, {Area.x0, Area.y0} };
 
-                Internal::outlinePolygon(Vertices, 4, [&](const point2_t Position) -> void
+                Internal::outlinePolygon(Vertices, 5, [&](const point2_t Position) -> void
                 {
                     Internal::setPixel(Position, Pixel, Color.A);
                 });
