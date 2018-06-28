@@ -77,9 +77,14 @@ namespace Engine
         // Callback on when to process elements.
         void onPresent(const void *Context)
         {
-            // Set the last line to be transparent or Windows wont draw it(?!?!).
+            // Set the last line to be transparent or Windows wont draw the one before(?!?!).
             std::memset(&Canvas[(gRenderingresolution.y + 2) * gRenderingresolution.x], 0xFF, gRenderingresolution.x * sizeof(pixel24_t));
-            StretchBlt(HDC(Context), 0, 0, gWindowsize.x, gWindowsize.y, Surfacecontext, 0, 1, gRenderingresolution.x, gRenderingresolution.y + 2, SRCCOPY);
+
+            // Seriously Windows?
+            if(gWindowsize.x < gRenderingresolution.x)
+                StretchBlt(HDC(Context), 0, 0, gWindowsize.x, gWindowsize.y, Surfacecontext, 0, 1, gRenderingresolution.x + 1, gRenderingresolution.y + 2, SRCCOPY);
+            else
+                StretchBlt(HDC(Context), 0, 0, gWindowsize.x, gWindowsize.y, Surfacecontext, 0, 1, gRenderingresolution.x, gRenderingresolution.y + 2, SRCCOPY);
         }
         void onRender()
         {
