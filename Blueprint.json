@@ -12,7 +12,7 @@
 			"margin": [0, 0, 0, 0], 
 			"onhoover": "", 
 			"onclick": "", 
-			"onframe": "", 
+			"onframe": "loginbackground.onframe", 
 			"subareas":[] 
 		}
 	],

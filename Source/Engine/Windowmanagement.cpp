@@ -71,11 +71,13 @@ namespace Engine
         {
             gWindowposition = Position;
             SetWindowPos((HWND)gWindowhandle, NULL, gWindowposition.x, gWindowposition.y, gWindowsize.x, gWindowsize.y, SWP_NOSENDCHANGING | SWP_NOACTIVATE | SWP_NOSIZE);
+            Compositions::onWindowchange();
         }
         void Resize(point2_t Size)
         {
             gWindowsize = Size;
             SetWindowPos((HWND)gWindowhandle, NULL, gWindowposition.x, gWindowposition.y, gWindowsize.x, gWindowsize.y, SWP_NOSENDCHANGING | SWP_NOACTIVATE | SWP_NOMOVE);
+            Compositions::onWindowchange();
         }
         void Togglevisibility()
         {

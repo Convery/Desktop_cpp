@@ -78,6 +78,14 @@ namespace Engine
 
         // Dump an asset if available.
         std::string *Findasset(const std::string &&Name);
+
+        // Register callbacks.
+        void addFrame(const std::string &&Name, std::function<void(Element_t *Caller, double Deltatime)> Callback);
+        void addHoover(const std::string &&Name, std::function<bool(Element_t *Caller, bool Released)> Callback);
+        void addClick(const std::string &&Name, std::function<bool(Element_t *Caller, bool Released)> Callback);
+
+        // We need to update all coordinates when the window changes.
+        void onWindowchange();
     }
 
     // Get the compositions to the screen.
