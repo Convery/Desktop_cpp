@@ -65,12 +65,12 @@ namespace Engine
             DispatchMessageA(&Event);
         }
 
+        // Start rendering the next frame.
+        Rendering::onRender();
+
         // Notify the elements about the new frame.
         for (const auto &Item : gRootelement->Children)
             if(Item->onFrame) Item->onFrame(Item, Deltatime);
-
-        // Start rendering the next frame.
-        Rendering::onRender();
 
         return false;
     }

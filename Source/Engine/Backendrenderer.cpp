@@ -94,10 +94,6 @@ namespace Engine
             // Set the clipping area before rendering.
             Currentclippingarea = *Clipped;
             delete Clipped;
-
-            /*
-                Do rendering.
-            */
         }
 
         // Primitives.
