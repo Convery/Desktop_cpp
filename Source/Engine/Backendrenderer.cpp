@@ -44,6 +44,7 @@ namespace Engine
             Surface = CreateDIBSection(Devicecontext, &Format, DIB_RGB_COLORS, (void **)&Canvas, NULL, 0);
             Surfacecontext = CreateCompatibleDC(Devicecontext);
             std::memset(Canvas, 0xFF, Size.x * Size.y * 3);
+            SetStretchBltMode(Surfacecontext, HALFTONE);
             SelectObject(Surfacecontext, Surface);
 
             // C-style cleanup needed.
