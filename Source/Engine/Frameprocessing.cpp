@@ -69,8 +69,12 @@ namespace Engine
         Rendering::onRender();
 
         // Notify the elements about the new frame.
-        for (const auto &Item : gRootelement->Children)
-            if(Item->onFrame) Item->onFrame(Item, Deltatime);
+        std::function<void(Element_t *)> Lambda = [&](Element_t *This)
+        {
+            if (This->onFrame) This->onFrame(This, Deltatime);
+            for (const auto &Item : This->Children) Lambda(Item);
+        };
+        Lambda(gRootelement);
 
         return false;
     }
