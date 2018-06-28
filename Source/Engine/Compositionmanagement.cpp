@@ -217,9 +217,12 @@ namespace Engine
                 for (const auto &Child : This->Children) Lambda(This, Child);
             };
 
-            gRootelement->Worldbox = { gWindowposition.x, gWindowposition.y, gWindowposition.x + gWindowsize.x, gWindowposition.y + gWindowsize.y };
-            gRootelement->Localbox = { 0, 0, gRenderingresolution.x, gRenderingresolution.y };
-            Lambda(gRootelement, gRootelement);
+            if (gRootelement)
+            {
+                gRootelement->Worldbox = { gWindowposition.x, gWindowposition.y, gWindowposition.x + gWindowsize.x, gWindowposition.y + gWindowsize.y };
+                gRootelement->Localbox = { 0, 0, gRenderingresolution.x, gRenderingresolution.y };
+                Lambda(gRootelement, gRootelement);
+            }
         }
     }
 }
