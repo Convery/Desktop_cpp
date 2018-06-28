@@ -49,12 +49,15 @@ namespace Engine
                 if (NULL == RegisterClassExA(&Windowclass)) break;
 
                 // Create a hidden window.
-                gWindowhandle = CreateWindowExA(WS_EX_APPWINDOW, "Desktop_cpp", "", WS_POPUP,
+                gWindowhandle = CreateWindowExA(WS_EX_LAYERED, "Desktop_cpp", "", WS_POPUP,
                     gWindowposition.x, gWindowposition.y, gWindowsize.x, gWindowsize.y, NULL, NULL, Windowclass.hInstance, NULL);
                 if (!gWindowhandle) break;
 
                 // Create the framebuffer we'll render into.
                 Rendering::Createframebuffer(gRenderingresolution);
+
+                // Use a pixel-value of 0 to mean transparent.
+                SetLayeredWindowAttributes((HWND)gWindowhandle, 0x00FFFFFF, 0, LWA_COLORKEY);
 
                 return true;
             }

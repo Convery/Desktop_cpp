@@ -9,9 +9,6 @@
 #include "../Stdinclude.hpp"
 
 #if defined(_WIN32)
-#include <dwmapi.h>
-#pragma comment(lib, "Dwmapi.lib")
-
 namespace Engine
 {
     // Get the compositions to the screen.
@@ -36,7 +33,7 @@ namespace Engine
             Format.bmiHeader.biHeight = -(Size.y + 1);
             Format.bmiHeader.biCompression = BI_RGB;
             Format.bmiHeader.biWidth = Size.x;
-            Format.bmiHeader.biBitCount = 32;
+            Format.bmiHeader.biBitCount = 24;
             Format.bmiHeader.biPlanes = 1;
 
             // Cleanup any old memory.
@@ -46,16 +43,8 @@ namespace Engine
             // Create the new surface.
             Surface = CreateDIBSection(Devicecontext, &Format, DIB_RGB_COLORS, (void **)&Canvas, NULL, 0);
             Surfacecontext = CreateCompatibleDC(Devicecontext);
+            std::memset(Canvas, 0xFF, Size.x * Size.y * 3);
             SelectObject(Surfacecontext, Surface);
-
-            // Make regions with alpha == 0 transparent.
-            {
-                DWM_BLURBEHIND bb = { 0 };
-                bb.fEnable = true;
-                bb.dwFlags = DWM_BB_ENABLE | DWM_BB_BLURREGION;
-                bb.hRgnBlur = CreateRectRgn(9000, 9000, 9001, 9001);
-                DwmEnableBlurBehindWindow((HWND)gWindowhandle, &bb);
-            }
 
             // C-style cleanup needed.
             DeleteDC(Devicecontext);
