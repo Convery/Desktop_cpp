@@ -49,9 +49,9 @@ namespace Engine
             }
 
             // When the timer hits 0, repaint.
-            if (Event.message == WM_TIMER)
+            if (Event.message == WM_TIMER && Event.wParam == REDRAW_EVENT)
             {
-                if(Event.wParam == REDRAW_EVENT) InvalidateRect(HWND(gWindowhandle), NULL, FALSE);
+                InvalidateRect(HWND(gWindowhandle), NULL, FALSE);
                 continue;
             }
 
@@ -64,6 +64,10 @@ namespace Engine
             // Let windows handle the event if we haven't.
             DispatchMessageA(&Event);
         }
+
+        // Notify the elements about the new frame.
+        for (const auto &Item : gRootelement->Children)
+            if(Item->onFrame) Item->onFrame(Item, Deltatime);
 
         // Start rendering the next frame.
         Rendering::onRender();
