@@ -20,7 +20,7 @@ namespace Engine
         static auto Lastframe{ std::chrono::high_resolution_clock::now() };
         static auto Lastpaint{ std::chrono::high_resolution_clock::now() };
         static bool Initialized = false;
-        static MSG Event;        
+        static MSG Event{};
         
         // Set up the system on the first pass.
         if (unlikely(!Initialized))
@@ -38,7 +38,7 @@ namespace Engine
         }
 
         // Process the window-events.
-        while (GetMessageA(&Event, HWND(gWindowhandle), NULL, NULL) > 0)
+        while (PeekMessageA(&Event, HWND(gWindowhandle), NULL, NULL, PM_REMOVE) > 0)
         {
             static uint32_t Keymodifiers{};
 
@@ -47,11 +47,9 @@ namespace Engine
             {
                 PAINTSTRUCT State;
                 auto Devicecontext = BeginPaint(HWND(gWindowhandle), &State);
-                
-                /*
-                    onRender(Devicecontext);
-                */
-
+                {
+                    Rendering::onRender(Devicecontext);
+                }
                 EndPaint(HWND(gWindowhandle), &State);
                 continue;
             }

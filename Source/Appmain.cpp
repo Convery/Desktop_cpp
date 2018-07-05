@@ -29,7 +29,7 @@ int main(int argc, char **argv)
     #endif
 
     // Process any and all events.
-    while (!Engine::doFrame());
+    while (!Engine::doFrame()) std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
     return 0;
 }

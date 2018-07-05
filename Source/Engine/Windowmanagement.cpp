@@ -54,7 +54,7 @@ namespace Engine
                 if (!gWindowhandle) break;
 
                 // Create the framebuffer we'll render into.
-                Rendering::Createframebuffer(gRenderingresolution);
+                Rendering::Createframebuffer();
 
                 // Use a pixel-value of 0 to mean transparent.
                 SetLayeredWindowAttributes((HWND)gWindowhandle, 0x00FFFFFF, 0, LWA_COLORKEY);

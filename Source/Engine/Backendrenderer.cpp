@@ -15,92 +15,84 @@ namespace Engine
     point2_t gRenderingresolution{1280, 720};
     namespace Rendering
     {
-        std::atomic<point4_t *> Clippingarea{};
-        point4_t Currentclippingarea;
-        HDC Surfacecontext{};
+        point4_t Currentclippingarea{};
+        point4_t Globalclippingarea{};
+        BITMAPINFO Format{};
         pixel24_t *Canvas{};
-        bool Presented{};
 
         // Create and invalidate part of a framebuffer.
-        void Createframebuffer(point2_t Size)
+        void Createframebuffer()
         {
-            BITMAPINFO Format{};
-            static HBITMAP Surface{};
             auto Devicecontext{ GetDC(NULL) };
 
             // Bitmap format, upside-down because Windows.
             Format.bmiHeader.biSize = sizeof(BITMAPINFO);
-            Format.bmiHeader.biHeight = -(Size.y + 3);
+            Format.bmiHeader.biHeight = -(gRenderingresolution.y / 4);
+            Format.bmiHeader.biWidth = (gRenderingresolution.x / 2);
             Format.bmiHeader.biCompression = BI_RGB;
-            Format.bmiHeader.biWidth = Size.x;
             Format.bmiHeader.biBitCount = 24;
             Format.bmiHeader.biPlanes = 1;
 
-            // Cleanup any old memory.
-            if (Surface) DeleteObject(Surface);
-            if (Surfacecontext) DeleteDC(Surfacecontext);
-
-            // Create the new surface.
-            Surface = CreateDIBSection(Devicecontext, &Format, DIB_RGB_COLORS, (void **)&Canvas, NULL, 0);
-            std::memset(Canvas, 0xFF, Size.x * (Size.y + 3) * sizeof(pixel24_t));
-            Surfacecontext = CreateCompatibleDC(Devicecontext);
-            SetStretchBltMode(Surfacecontext, HALFTONE);
-            SelectObject(Surfacecontext, Surface);
+            // Create the new canvas.
+            if (Canvas) HeapFree(GetProcessHeap(), NULL, Canvas);
+            Canvas = (pixel24_t *)HeapAlloc(GetProcessHeap(), NULL, (gRenderingresolution.y / 4) * (gRenderingresolution.x / 2) * sizeof(pixel24_t));
 
             // C-style cleanup needed.
             DeleteDC(Devicecontext);
-
-            // Invalidate the framebuffer.
-            Invalidatearea({ 0, 0, Size.x, Size.y });
         }
         void Invalidatearea(point4_t Area)
         {
-            point4_t *Currentarea;
-            point4_t *Newarea{ new point4_t };
-
-            do
-            {
-                Currentarea = Clippingarea.load();
-                if (!Currentarea) *Newarea = Area;
-                else
-                {
-                    Newarea->x0 = std::min(Currentarea->x0, Area.x0);
-                    Newarea->y0 = std::min(Currentarea->y0, Area.y0);
-                    Newarea->x1 = std::max(Currentarea->x1, Area.x1);
-                    Newarea->y1 = std::max(Currentarea->y1, Area.y1);
-                }
-            } while (!Clippingarea.compare_exchange_strong(Currentarea, Newarea));
-
-            delete Currentarea;
+            Globalclippingarea.x0 = std::min(Globalclippingarea.x0, Area.x0);
+            Globalclippingarea.y0 = std::min(Globalclippingarea.y0, Area.y0);
+            Globalclippingarea.x1 = std::max(Globalclippingarea.x1, Area.x1);
+            Globalclippingarea.y1 = std::max(Globalclippingarea.y1, Area.y1);
         }
 
         // Callback on when to process elements.
-        void onPresent(const void *Context)
+        void onRender(const void *Context)
         {
-            // Set the last line to be transparent or Windows wont draw the one before(?!?!).
-            std::memset(&Canvas[(gRenderingresolution.y + 2) * gRenderingresolution.x], 0xFF, gRenderingresolution.x * sizeof(pixel24_t));
+            auto doRender = [&](point4_t Clippingarea) -> void
+            {
+                std::function<void(Element_t *This)> Lambda = [&](Element_t *This) -> void
+                {
+                    if(This->onRender) This->onRender(This);
+                    for (const auto &Item : This->Children) Lambda(Item);
+                };
 
-            // Seriously Windows?
-            if(gWindowsize.x < gRenderingresolution.x)
-                StretchBlt(HDC(Context), 0, 0, gWindowsize.x, gWindowsize.y, Surfacecontext, 0, 1, gRenderingresolution.x + 1, gRenderingresolution.y + 2, SRCCOPY);
-            else
-                StretchBlt(HDC(Context), 0, 0, gWindowsize.x, gWindowsize.y, Surfacecontext, 0, 1, gRenderingresolution.x, gRenderingresolution.y + 2, SRCCOPY);
-        }
-        void onRender()
-        {
-            // The 'clean' area is intentionally inverted.
-            point4_t *Clean = new point4_t{ gRenderingresolution.x + 5, gRenderingresolution.y + 5, 0, 0 };
-            point4_t *Clipped;
+                // Clear the clippingarea.
+                Currentclippingarea = Clippingarea;
+                Draw::Quad({ 0xFF, 0xFF, 0xFF, 1.0f }, Currentclippingarea);
 
-            // Exchange the clipped area with a clean one.
-            do { Clipped = Clippingarea.load(); } while (!Clippingarea.compare_exchange_strong(Clipped, Clean));
+                // Render all elements.
+                assert(gRootelement);
+                Lambda(gRootelement);
+            };
 
-            // Set the clipping area before rendering.
-            Currentclippingarea = *Clipped;
-            delete Clipped;
+            // Present each quadrant.
+            for (int16_t i = 0; i < 4; ++i)
+            {
+                // Left.
+                doRender(
+                    {
+                        std::clamp(Globalclippingarea.x0, int16_t(0),                               int16_t(gRenderingresolution.x / 2)),
+                        std::clamp(Globalclippingarea.y0, int16_t(gRenderingresolution.y / 4 * i),  int16_t(gRenderingresolution.y / 4 * (i + 1))),
+                        std::clamp(Globalclippingarea.x1, int16_t(0),                               int16_t(gRenderingresolution.x / 2)),
+                        std::clamp(Globalclippingarea.y1, int16_t(gRenderingresolution.y / 4 * i),  int16_t(gRenderingresolution.y / 4 * (i + 1)))
+                    });
+                StretchDIBits(HDC(Context), 0, (gWindowsize.y / 4) * i, gWindowsize.x / 2, gWindowsize.y / 4,
+                    0, 0, gRenderingresolution.x / 2, gRenderingresolution.y / 4, Canvas, &Format, DIB_RGB_COLORS, SRCCOPY);
 
-            // Clear the clippingarea.
-            Draw::Quad({ 0xFF, 0xFF, 0xFF, 1.0f }, Currentclippingarea);
+                // Right.
+                doRender(
+                    {
+                        std::clamp(Globalclippingarea.x0, int16_t(gRenderingresolution.x / 2),      int16_t(gRenderingresolution.x)),
+                        std::clamp(Globalclippingarea.y0, int16_t(gRenderingresolution.y / 4 * i),  int16_t(gRenderingresolution.y / 4 * (i + 1))),
+                        std::clamp(Globalclippingarea.x1, int16_t(gRenderingresolution.x / 2),      int16_t(gRenderingresolution.x)),
+                        std::clamp(Globalclippingarea.y1, int16_t(gRenderingresolution.y / 4 * i),  int16_t(gRenderingresolution.y / 4 * (i + 1)))
+                    });
+                StretchDIBits(HDC(Context), gWindowsize.x / 2, (gWindowsize.y / 4) * i, gWindowsize.x / 2, gWindowsize.y / 4,
+                    0, 0, gRenderingresolution.x / 2, gRenderingresolution.y / 4, Canvas, &Format, DIB_RGB_COLORS, SRCCOPY);
+            }
         }
 
         // Primitives.
@@ -342,16 +334,20 @@ namespace Engine
                     uint8_t(Color.R <= 1 ? Color.R * 255 : Color.R)
                 };
             }
-            ainline void setPixel(const point2_t Position, const pixel24_t Color)
+            ainline void setPixel(point2_t Position, const pixel24_t Color)
             {
-                Canvas[(Position.y + 1) * gRenderingresolution.x + Position.x] = Color;
+                while (Position.y > gRenderingresolution.y / 4 - 1) Position.y -= gRenderingresolution.y / 4;
+                if (Position.x > gRenderingresolution.x / 2 - 1) Position.x -= gRenderingresolution.x / 2;
+                Canvas[Position.y * (gRenderingresolution.x / 2) + Position.x] = Color;
             }
-            ainline void setPixel(const point2_t Position, const pixel24_t Color, const float Alpha)
+            ainline void setPixel(point2_t Position, const pixel24_t Color, const float Alpha)
             {
                 if (Alpha == 1.0f) setPixel(Position, Color);
                 else
                 {
-                    auto Base{ Canvas[(Position.y + 1) * gRenderingresolution.x + Position.x] };
+                    while (Position.y > gRenderingresolution.y / 4) Position.y -= gRenderingresolution.y / 4;
+                    if (Position.x > gRenderingresolution.x / 2) Position.x -= gRenderingresolution.x / 2;
+                    auto Base{ Canvas[Position.y * (gRenderingresolution.x / 2) + Position.x] };
                     Base.BGR.B = uint8_t(Base.BGR.B * (1.0f - Alpha) + Color.BGR.B * Alpha);
                     Base.BGR.G = uint8_t(Base.BGR.G * (1.0f - Alpha) + Color.BGR.G * Alpha);
                     Base.BGR.R = uint8_t(Base.BGR.R * (1.0f - Alpha) + Color.BGR.R * Alpha);

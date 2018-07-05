@@ -93,12 +93,11 @@ namespace Engine
     namespace Rendering
     {
         // Create and invalidate part of a framebuffer.
-        void Createframebuffer(point2_t Size);
         void Invalidatearea(point4_t Area);
+        void Createframebuffer();
 
         // Callback on when to process elements.
-        void onPresent(const void *Context);
-        void onRender();
+        void onRender(const void *Context);
 
         // Basic drawing.
         namespace Draw
