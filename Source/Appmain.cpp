@@ -15,9 +15,6 @@ int main(int argc, char **argv)
     Engine::Compositions::Switch("login");
     Engine::Window::Togglevisibility();
 
-    auto Lastframe{ std::chrono::high_resolution_clock::now() };
-    constexpr std::chrono::microseconds Framedelay{ 1000000 / 60 };
-
     // If debugging, reload the blueprint all the time.
     #if !defined(NDEBUG)
     std::thread([]()
@@ -31,12 +28,8 @@ int main(int argc, char **argv)
     }).detach();
     #endif
 
-    while (!Engine::doFrame(std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - Lastframe).count()))
-    {
-        // Let the core rest a little.
-        Lastframe = std::chrono::high_resolution_clock::now();
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
+    // Process any and all events.
+    while (!Engine::doFrame());
 
     return 0;
 }

@@ -9,9 +9,6 @@ The bits should be heapallocated rather than virtualalloc.
 Invalidated areas don't need to be atomic.
 Assert on nullptr annoyance.
 
-WM_TIMER and WM_PAINT should track frametime and only paint every 16ms.
-WM_TIMER for onFrame().
-
 Texturemap:
 {
     uint16_t Width, Height, uint16_t Segmentcount;

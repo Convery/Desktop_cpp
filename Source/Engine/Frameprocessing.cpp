@@ -9,17 +9,21 @@
 #include "../Stdinclude.hpp"
 
 #if defined(_WIN32)
-#define REDRAW_EVENT 42
+#define FRAME_EVENT 42
 namespace Engine
 {
     TRACKMOUSEEVENT Track{};
 
     // Main-loop for the application, returns error.
-    bool doFrame(double Deltatime)
+    bool doFrame()
     {
-        static MSG Event;
+        static auto Lastframe{ std::chrono::high_resolution_clock::now() };
+        static auto Lastpaint{ std::chrono::high_resolution_clock::now() };
         static bool Initialized = false;
-        if (!Initialized)
+        static MSG Event;        
+        
+        // Set up the system on the first pass.
+        if (unlikely(!Initialized))
         {
             // Track mouse movement.
             Track.dwFlags = TME_LEAVE;
@@ -27,31 +31,50 @@ namespace Engine
             Track.cbSize = sizeof(TRACKMOUSEEVENT);
             TrackMouseEvent(&Track);
 
-            // Post a message every 30ms for frame redrawing.
-            SetTimer(HWND(gWindowhandle), REDRAW_EVENT, 1000 / 30, NULL);
+            // Post a message every 33ms for frame redrawing.
+            SetTimer(HWND(gWindowhandle), FRAME_EVENT, (1000 / 30), NULL);
 
             Initialized = true;
         }
 
         // Process the window-events.
-        while (PeekMessageA(&Event, HWND(gWindowhandle), NULL, NULL, PM_REMOVE) > 0)
+        while (GetMessageA(&Event, HWND(gWindowhandle), NULL, NULL) > 0)
         {
             static uint32_t Keymodifiers{};
-            static PAINTSTRUCT State{};
 
             // Present the next frame.
             if (Event.message == WM_PAINT)
             {
+                PAINTSTRUCT State;
                 auto Devicecontext = BeginPaint(HWND(gWindowhandle), &State);
-                Rendering::onPresent(Devicecontext);
+                
+                /*
+                    onRender(Devicecontext);
+                */
+
                 EndPaint(HWND(gWindowhandle), &State);
                 continue;
             }
 
             // When the timer hits 0, repaint.
-            if (Event.message == WM_TIMER && Event.wParam == REDRAW_EVENT)
+            if (Event.message == WM_TIMER && Event.wParam == FRAME_EVENT)
             {
-                InvalidateRect(HWND(gWindowhandle), NULL, FALSE);
+                // Trigger a redraw.
+                if (std::chrono::high_resolution_clock::now() - Lastpaint > std::chrono::milliseconds(1000 / 30))
+                    InvalidateRect(HWND(gWindowhandle), NULL, FALSE);
+
+                // Time between frames, ~33ms.
+                const auto Deltatime{ std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - Lastframe).count() };
+
+                // Notify the elements about the new frame.
+                std::function<void(Element_t *)> Lambda = [&](Element_t *This)
+                {
+                    if (This->onFrame) This->onFrame(This, Deltatime);
+                    for (const auto &Item : This->Children) Lambda(Item);
+                };
+                assert(gRootelement);
+                Lambda(gRootelement);
+
                 continue;
             }
 
@@ -64,17 +87,11 @@ namespace Engine
             // Let windows handle the event if we haven't.
             DispatchMessageA(&Event);
         }
-
-        // Start rendering the next frame.
-        Rendering::onRender();
-
-        // Notify the elements about the new frame.
-        std::function<void(Element_t *)> Lambda = [&](Element_t *This)
-        {
-            if (This->onFrame) This->onFrame(This, Deltatime);
-            for (const auto &Item : This->Children) Lambda(Item);
-        };
-        Lambda(gRootelement);
+        
+        /*
+            TODO(Convery):
+            Add some error-checking here.
+        */
 
         return false;
     }

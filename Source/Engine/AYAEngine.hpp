@@ -33,6 +33,7 @@ struct Element_t
     std::function<void(Element_t *Caller, double Deltatime)> onFrame;
     std::function<bool(Element_t *Caller, bool Released)> onHoover;
     std::function<bool(Element_t *Caller, bool Released)> onClick;
+    std::function<void(Element_t *Caller)> onRender;
 
     #if !defined(NDEBUG)
     std::string Identity;
@@ -53,7 +54,7 @@ namespace Engine
     extern void  *gWindowhandle;
 
     // Main-loop for the application, returns error.
-    bool doFrame(double Deltatime);
+    bool doFrame();
 
     // Manage the window area.
     namespace Window
