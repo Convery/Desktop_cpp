@@ -60,7 +60,7 @@ namespace Engine
 
                 // Clear the clippingarea.
                 Currentclippingarea = Clippingarea;
-                Draw::Quad({ 0xFF, 0xFF, 0xEE, 1.0f }, Currentclippingarea);
+                Draw::Quad({ 0xFF, 0xFF, 0xFF, 1.0f }, Currentclippingarea);
 
                 // Render all elements.
                 assert(gRootelement);
