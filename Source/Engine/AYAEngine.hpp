@@ -53,8 +53,8 @@ namespace Engine
     extern Element_t *gRootelement;
     extern void  *gWindowhandle;
 
-    // Main-loop for the application, returns error.
-    bool doFrame();
+    // Main-loop for the application.
+    void Run();
 
     // Manage the window area.
     namespace Window

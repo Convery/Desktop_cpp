@@ -220,7 +220,7 @@ namespace Engine
             if (gRootelement)
             {
                 gRootelement->Worldbox = { gWindowposition.x, gWindowposition.y, gWindowposition.x + gWindowsize.x, gWindowposition.y + gWindowsize.y };
-                gRootelement->Localbox = { 0, 0, gRenderingresolution.x - 1, gRenderingresolution.y };
+                gRootelement->Localbox = { 0, 0, gRenderingresolution.x, gRenderingresolution.y };
                 Lambda(gRootelement, gRootelement);
 
                 Rendering::Invalidatearea(gRootelement->Localbox);

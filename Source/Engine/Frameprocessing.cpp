@@ -14,16 +14,16 @@ namespace Engine
 {
     TRACKMOUSEEVENT Track{};
 
-    // Main-loop for the application, returns error.
-    bool doFrame()
+    // Main-loop for the application.
+    void Run()
     {
         static auto Lastframe{ std::chrono::high_resolution_clock::now() };
         static auto Lastpaint{ std::chrono::high_resolution_clock::now() };
         static bool Initialized = false;
         static MSG Event{};
-        
+
         // Set up the system on the first pass.
-        if (unlikely(!Initialized))
+        if (!Initialized)
         {
             // Track mouse movement.
             Track.dwFlags = TME_LEAVE;
@@ -38,9 +38,12 @@ namespace Engine
         }
 
         // Process the window-events.
-        while (PeekMessageA(&Event, HWND(gWindowhandle), NULL, NULL, PM_REMOVE) > 0)
+        while (GetMessageA(&Event, HWND(gWindowhandle), NULL, NULL) > 0)
         {
             static uint32_t Keymodifiers{};
+
+            // Virtual-keys to characters.
+            TranslateMessage(&Event);
 
             // Present the next frame.
             if (Event.message == WM_PAINT)
@@ -79,19 +82,14 @@ namespace Engine
             // If we should quit, break the loop early.
             if (Event.message == WM_QUIT || Event.message == WM_DESTROY || (Event.message == WM_SYSCOMMAND && Event.wParam == SC_CLOSE))
             {
-                return true;
+                return;
             }
+
+            if (Event.message == WM_MOUSELEAVE) continue;
 
             // Let windows handle the event if we haven't.
             DispatchMessageA(&Event);
         }
-        
-        /*
-            TODO(Convery):
-            Add some error-checking here.
-        */
-
-        return false;
     }
 }
 #else

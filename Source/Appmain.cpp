@@ -22,14 +22,14 @@ int main(int argc, char **argv)
         while (true)
         {
             std::this_thread::sleep_for(std::chrono::seconds(1));
-            Engine::Compositions::Parseblueprint();
-            Engine::Compositions::Switch("login");
+            //Engine::Compositions::Parseblueprint();
+            //Engine::Compositions::Switch("login");
         }
     }).detach();
     #endif
 
     // Process any and all events.
-    while (!Engine::doFrame()) std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    Engine::Run();
 
     return 0;
 }

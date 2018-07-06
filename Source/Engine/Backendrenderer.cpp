@@ -12,7 +12,7 @@
 namespace Engine
 {
     // Get the compositions to the screen.
-    point2_t gRenderingresolution{1280, 720};
+    point2_t gRenderingresolution{1920, 1080};
     namespace Rendering
     {
         point4_t Currentclippingarea{};
