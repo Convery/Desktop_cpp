@@ -12,7 +12,6 @@
 namespace Engine
 {
     // Get the compositions to the screen.
-    point2_t gRenderingresolution{1920, 1080};
     namespace Rendering
     {
         point4_t Currentclippingarea{};
@@ -61,7 +60,7 @@ namespace Engine
 
                 // Clear the clippingarea.
                 Currentclippingarea = Clippingarea;
-                Draw::Quad({ 0xFF, 0xFF, 0xFF, 1.0f }, Currentclippingarea);
+                Draw::Quad({ 0xFF, 0xFF, 0xEE, 1.0f }, Currentclippingarea);
 
                 // Render all elements.
                 assert(gRootelement);
@@ -336,18 +335,14 @@ namespace Engine
             }
             ainline void setPixel(point2_t Position, const pixel24_t Color)
             {
-                while (Position.y > gRenderingresolution.y / 4 - 1) Position.y -= gRenderingresolution.y / 4;
-                if (Position.x > gRenderingresolution.x / 2 - 1) Position.x -= gRenderingresolution.x / 2;
-                Canvas[Position.y * (gRenderingresolution.x / 2) + Position.x] = Color;
+                Canvas[(Position.y % (gRenderingresolution.y / 4 - 1)) * (gRenderingresolution.x / 2) + Position.x] = Color;
             }
             ainline void setPixel(point2_t Position, const pixel24_t Color, const float Alpha)
             {
                 if (Alpha == 1.0f) setPixel(Position, Color);
                 else
                 {
-                    while (Position.y > gRenderingresolution.y / 4) Position.y -= gRenderingresolution.y / 4;
-                    if (Position.x > gRenderingresolution.x / 2) Position.x -= gRenderingresolution.x / 2;
-                    auto Base{ Canvas[Position.y * (gRenderingresolution.x / 2) + Position.x] };
+                    auto Base{ Canvas[(Position.y % (gRenderingresolution.y / 4 - 1)) * (gRenderingresolution.x / 2) + Position.x] };
                     Base.BGR.B = uint8_t(Base.BGR.B * (1.0f - Alpha) + Color.BGR.B * Alpha);
                     Base.BGR.G = uint8_t(Base.BGR.G * (1.0f - Alpha) + Color.BGR.G * Alpha);
                     Base.BGR.R = uint8_t(Base.BGR.R * (1.0f - Alpha) + Color.BGR.R * Alpha);
