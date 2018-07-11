@@ -36,6 +36,8 @@ namespace Engine
             if (Canvas) HeapFree(GetProcessHeap(), NULL, Canvas);
             Canvas = (pixel24_t *)HeapAlloc(GetProcessHeap(), NULL, (gRenderingresolution.y / 4) * (gRenderingresolution.x / 2) * sizeof(pixel24_t));
 
+            std::memset(Canvas, 0xCC, (gRenderingresolution.y / 4) * (gRenderingresolution.x / 2) * sizeof(pixel24_t));
+
             // C-style cleanup needed.
             DeleteDC(Devicecontext);
         }
@@ -50,6 +52,8 @@ namespace Engine
         // Callback on when to process elements.
         void onRender(const void *Context)
         {
+            const float XMultiplier = gRenderingresolution.x / gWindowsize.x;
+            const float YMultiplier = gRenderingresolution.y / gWindowsize.y;
             auto doRender = [&](point4_t Clippingarea) -> void
             {
                 std::function<void(Element_t *This)> Lambda = [&](Element_t *This) -> void
@@ -60,7 +64,7 @@ namespace Engine
 
                 // Clear the clippingarea.
                 Currentclippingarea = Clippingarea;
-                Draw::Quad({ 0xFF, 0xFF, 0xFF, 1.0f }, Currentclippingarea);
+                Draw::Quad({ 0x00, std::sinf(rand()), 0x00, 1.0f }, Currentclippingarea);
 
                 // Render all elements.
                 assert(gRootelement);
@@ -70,28 +74,34 @@ namespace Engine
             // Present each quadrant.
             for (int16_t i = 0; i < 4; ++i)
             {
-                // Left.
-                doRender(
-                    {
-                        std::clamp(Globalclippingarea.x0, int16_t(0),                               int16_t(gRenderingresolution.x / 2)),
-                        std::clamp(Globalclippingarea.y0, int16_t(gRenderingresolution.y / 4 * i),  int16_t(gRenderingresolution.y / 4 * (i + 1))),
-                        std::clamp(Globalclippingarea.x1, int16_t(0),                               int16_t(gRenderingresolution.x / 2)),
-                        std::clamp(Globalclippingarea.y1, int16_t(gRenderingresolution.y / 4 * i),  int16_t(gRenderingresolution.y / 4 * (i + 1)))
-                    });
-                StretchDIBits(HDC(Context), 0, (gWindowsize.y / 4) * i, gWindowsize.x / 2, gWindowsize.y / 4,
-                    0, 0, gRenderingresolution.x / 2, gRenderingresolution.y / 4, Canvas, &Format, DIB_RGB_COLORS, SRCCOPY);
+                const point4_t Leftrect
+                {
+                    std::clamp(Globalclippingarea.x0, int16_t(0),                               int16_t(gRenderingresolution.x / 2)),
+                    std::clamp(Globalclippingarea.y0, int16_t(gRenderingresolution.y / 4 * i),  int16_t(gRenderingresolution.y / 4 * (i + 1))),
+                    std::clamp(Globalclippingarea.x1, int16_t(0),                               int16_t(gRenderingresolution.x / 2)),
+                    std::clamp(Globalclippingarea.y1, int16_t(gRenderingresolution.y / 4 * i),  int16_t(gRenderingresolution.y / 4 * (i + 1)))
+                };
+                const point4_t Rightrect
+                {
+                    std::clamp(Globalclippingarea.x0, int16_t(gRenderingresolution.x / 2),      int16_t(gRenderingresolution.x)),
+                    std::clamp(Globalclippingarea.y0, int16_t(gRenderingresolution.y / 4 * i),  int16_t(gRenderingresolution.y / 4 * (i + 1))),
+                    std::clamp(Globalclippingarea.x1, int16_t(gRenderingresolution.x / 2),      int16_t(gRenderingresolution.x)),
+                    std::clamp(Globalclippingarea.y1, int16_t(gRenderingresolution.y / 4 * i),  int16_t(gRenderingresolution.y / 4 * (i + 1)))
+                };
 
-                // Right.
-                doRender(
-                    {
-                        std::clamp(Globalclippingarea.x0, int16_t(gRenderingresolution.x / 2),      int16_t(gRenderingresolution.x)),
-                        std::clamp(Globalclippingarea.y0, int16_t(gRenderingresolution.y / 4 * i),  int16_t(gRenderingresolution.y / 4 * (i + 1))),
-                        std::clamp(Globalclippingarea.x1, int16_t(gRenderingresolution.x / 2),      int16_t(gRenderingresolution.x)),
-                        std::clamp(Globalclippingarea.y1, int16_t(gRenderingresolution.y / 4 * i),  int16_t(gRenderingresolution.y / 4 * (i + 1)))
-                    });
-                StretchDIBits(HDC(Context), gWindowsize.x / 2, (gWindowsize.y / 4) * i, gWindowsize.x / 2, gWindowsize.y / 4,
-                    0, 0, gRenderingresolution.x / 2, gRenderingresolution.y / 4, Canvas, &Format, DIB_RGB_COLORS, SRCCOPY);
+                doRender(Leftrect);
+                StretchDIBits(HDC(Context), Leftrect.x0 * XMultiplier, Leftrect.y0 * YMultiplier, (Leftrect.x1 - Leftrect.x0) * XMultiplier,
+                    (Leftrect.y1 - Leftrect.y0) * YMultiplier, Leftrect.x0, Leftrect.y0, Leftrect.x1 - Leftrect.x0, Leftrect.y1 - Leftrect.y0,
+                    Canvas, &Format, DIB_RGB_COLORS, SRCCOPY);
+
+                doRender(Rightrect);
+                StretchDIBits(HDC(Context), Rightrect.x0 * XMultiplier, Rightrect.y0 * YMultiplier, (Rightrect.x1 - Rightrect.x0) * XMultiplier,
+                    (Rightrect.y1 - Rightrect.y0) * YMultiplier, Rightrect.x0, Rightrect.y0, Rightrect.x1 - Rightrect.x0, Rightrect.y1 - Rightrect.y0,
+                    Canvas, &Format, DIB_RGB_COLORS, SRCCOPY);
             }
+
+            // Reset the dirty area.
+            //Globalclippingarea = {};
         }
 
         // Primitives.
