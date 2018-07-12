@@ -37,9 +37,23 @@ namespace Engine::Rendering
         const auto Deltatime{ std::chrono::duration<double>(Currentframe - Lastframe).count() };
         Lastframe = Currentframe;
 
+        // Helper to save my fingers.
+        std::function<void(Element_t *)> Tick = [&](Element_t *This) -> void
+        {
+            if (This->onFrame) This->onFrame(This, Deltatime);
+            for (const auto &Item : This->Childelements) Tick(Item);
+        };
+
+        // Update all elements.
+        //assert(gRootelement);
+        //Tick(gRootelement);
+
         // The scaling we need to do if the window isn't the same as the renderer.
         const float XMultiplier{ (float)gRenderingresolution.x / (float)gWindowsize.x };
         const float YMultiplier{ (float)gRenderingresolution.y / (float)gWindowsize.y };
+
+        // If the global area is unmodified, don't render anything.
+        if (0 == std::memcmp(Globalclippingarea.Raw, Defaultclippingarea.Raw, sizeof(point4_t))) return;
 
         // Render a part of the window.
         auto Renderquadrant = [&](point4_t Clippingarea) -> void
@@ -66,20 +80,6 @@ namespace Engine::Rendering
             //Render(gRootelement);
         };
 
-        // Helper to save my fingers.
-        std::function<void(Element_t *)> Tick = [&](Element_t *This) -> void
-        {
-            if (This->onFrame) This->onFrame(This, Deltatime);
-            for (const auto &Item : This->Childelements) Tick(Item);
-        };
-
-        // Update all elements.
-        //assert(gRootelement);
-        //Tick(gRootelement);
-
-        // If the global area is unmodified, don't render anything.
-        if (0 == std::memcmp(Globalclippingarea.Raw, Defaultclippingarea.Raw, sizeof(point4_t))) return;
-
         // Render each dirty quadrant.
         for (int16_t i = 0; i < 4; ++i)
         {
@@ -90,8 +90,8 @@ namespace Engine::Rendering
             const point4_t Rect { 0, int16_t(gRenderingresolution.y / 4 * i), int16_t(gRenderingresolution.x / 2 - 1), int16_t(gRenderingresolution.y / 4 * (i + 1) - 1) };
 
             Renderquadrant(Rect);
-            StretchDIBits(HDC(Context), Rect.x0 * XMultiplier, Rect.y0 * YMultiplier, gRenderingresolution.x / 2 * XMultiplier,
-                gRenderingresolution.y / 4 * YMultiplier, 0, 0, gRenderingresolution.x / 2, gRenderingresolution.y / 4,
+            StretchDIBits(HDC(Context), int(Rect.x0 * XMultiplier), int(Rect.y0 * YMultiplier), int(gRenderingresolution.x / 2 * XMultiplier),
+                int(gRenderingresolution.y / 4 * YMultiplier), 0, 0, gRenderingresolution.x / 2, gRenderingresolution.y / 4,
                 Canvas, &Format, DIB_RGB_COLORS, SRCCOPY);
         }
         for (int16_t i = 0; i < 4; ++i)
@@ -103,8 +103,8 @@ namespace Engine::Rendering
             const point4_t Rect { int16_t(gRenderingresolution.x / 2), int16_t(gRenderingresolution.y / 4 * i), int16_t(gRenderingresolution.x - 1), int16_t(gRenderingresolution.y / 4 * (i + 1) - 1) };
 
             Renderquadrant(Rect);
-            StretchDIBits(HDC(Context), Rect.x0 * XMultiplier, Rect.y0 * YMultiplier, gRenderingresolution.x / 2 * XMultiplier,
-                gRenderingresolution.y / 4 * YMultiplier, 0, 0, gRenderingresolution.x / 2, gRenderingresolution.y / 4,
+            StretchDIBits(HDC(Context), int(Rect.x0 * XMultiplier), int(Rect.y0 * YMultiplier), int(gRenderingresolution.x / 2 * XMultiplier),
+                int(gRenderingresolution.y / 4 * YMultiplier), 0, 0, gRenderingresolution.x / 2, gRenderingresolution.y / 4,
                 Canvas, &Format, DIB_RGB_COLORS, SRCCOPY);
         }
 
