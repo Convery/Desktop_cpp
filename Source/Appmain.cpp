@@ -11,9 +11,9 @@ namespace Engine { bool gShouldquit{ false }; uint32_t gErrno{}; }
 
 int main(int argc, char **argv)
 {
-    //Engine::Window::Createwindow();
-    //Engine::Window::Resize({ 1920, 1080 }); // Replace with Engine::Composition::Load("Blueprint.json");
-    //Engine::Window::Togglevisibility();
+    Engine::Window::Resize({ 1920, 1080 }); // Replace with Engine::Composition::Load("Blueprint.json");
+    Engine::Window::Centerwindow();         // Replace with Engine::Composition::Load("Blueprint.json");
+    Engine::Window::Togglevisibility();
 
     // Main application-loop.
     while (!Engine::gShouldquit)

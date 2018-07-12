@@ -59,13 +59,11 @@ namespace Engine
 // Window management.
 namespace Engine::Window
 {
-    // Create a new window and switch the focus to it, deletes any existing.
-    bool Createwindow();
-
-    // Modify the windows visible state.
-    void Move(point2_t Position);
-    void Resize(point2_t Size);
-    void Togglevisibility();
+    // Modify the windows visible state and notify the composition-manager.
+    void Move(point2_t Position, bool Deferupdate = false);
+    void Resize(point2_t Size, bool Deferupdate = false);
+    void Togglevisibility(bool Deferupdate = false);
+    void Centerwindow(bool Deferupdate = false);
 
     // Process any window-events.
     void onFrame();
