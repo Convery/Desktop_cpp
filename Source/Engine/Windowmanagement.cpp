@@ -3,7 +3,7 @@
     Started: 12-07-2018
     License: MIT
 
-    Provides the entrypoint for the application.
+    Provides an abstraction for the platforms windowing.
 */
 
 #include "../Stdinclude.hpp"

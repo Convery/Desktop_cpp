@@ -18,8 +18,9 @@ int main(int argc, char **argv)
     // Main application-loop.
     while (!Engine::gShouldquit)
     {
-        // Blocking call.
-        //Engine::Window::onFrame();
+        // Non-blocking call.
+        Engine::Window::onFrame();
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 60));
     }
 
     // Log the termination for tracing.
