@@ -22,13 +22,28 @@ namespace Engine::Window
     // Process the window-events.
     void onFrame()
     {
+        static bool Initialized{ false };
+        if (unlikely(!Initialized))
+        {
+            // Track mouse movement.
+            Track.dwFlags = TME_LEAVE;
+            Track.hwndTrack = HWND(gWindowhandle);
+            Track.cbSize = sizeof(TRACKMOUSEEVENT);
+            TrackMouseEvent(&Track);
+
+            // Post a message every 30ms for frame redrawing.
+            SetTimer(HWND(gWindowhandle), FRAMETIMER_ID, 1000 / 30, NULL);
+
+            Initialized = true;
+        }
+
         while (PeekMessageA(&Event, HWND(gWindowhandle), NULL, NULL, PM_REMOVE) > 0)
         {
             // Render the next frame.
             if (Event.message == WM_PAINT)
             {
                 auto Devicecontext = BeginPaint(HWND(gWindowhandle), &State);
-                //Rendering::onRender(Devicecontext);
+                Rendering::onRender(Devicecontext);
                 EndPaint(HWND(gWindowhandle), &State);
                 continue;
             }
@@ -51,22 +66,5 @@ namespace Engine::Window
             DispatchMessageA(&Event);
         }
     }
-
-    // Initialize the system on startup.
-    struct Initializer
-    {
-        Initializer()
-        {
-            // Track mouse movement.
-            Track.dwFlags = TME_LEAVE;
-            Track.hwndTrack = HWND(gWindowhandle);
-            Track.cbSize = sizeof(TRACKMOUSEEVENT);
-            TrackMouseEvent(&Track);
-
-            // Post a message every 30ms for frame redrawing.
-            SetTimer(HWND(gWindowhandle), FRAMETIMER_ID, 1000 / 30, NULL);
-        }
-    };
-    static Initializer Loader{};
 }
 #endif

@@ -13,6 +13,7 @@ int main(int argc, char **argv)
 {
     Engine::Window::Resize({ 1920, 1080 }); // Replace with Engine::Composition::Load("Blueprint.json");
     Engine::Window::Centerwindow();         // Replace with Engine::Composition::Load("Blueprint.json");
+    Engine::Rendering::Invalidatearea({ 0, 0, 1920, 1080 });
     Engine::Window::Togglevisibility();
 
     // Main application-loop.
