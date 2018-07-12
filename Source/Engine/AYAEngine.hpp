@@ -34,6 +34,7 @@ struct Element_t
 
     // Update the state and draw, the renderer will do any needed culling.
     std::function<void(Element_t *Caller, double Deltatime)> onFrame;
+    std::function<void(Element_t *Caller)> onRender;
 
     // Debugging helpers.
     #if !defined(NDEBUG)
