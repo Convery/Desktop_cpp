@@ -49,8 +49,8 @@ namespace Engine::Rendering
         //Tick(gRootelement);
 
         // The scaling we need to do if the window isn't the same as the renderer.
-        const float XMultiplier{ (float)gRenderingresolution.x / (float)gWindowsize.x };
-        const float YMultiplier{ (float)gRenderingresolution.y / (float)gWindowsize.y };
+        const float XMultiplier{ (float)gWindowsize.x / (float)gRenderingresolution.x };
+        const float YMultiplier{ (float)gWindowsize.y / (float)gRenderingresolution.y };
 
         // If the global area is unmodified, don't render anything.
         if (0 == std::memcmp(Globalclippingarea.Raw, Defaultclippingarea.Raw, sizeof(point4_t))) return;
