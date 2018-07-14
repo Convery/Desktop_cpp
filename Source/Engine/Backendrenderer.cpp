@@ -60,7 +60,7 @@ namespace Engine::Rendering
         {
             // Clear the buffer.
             Currentclippingarea = Clippingarea;
-            std::memset(Canvas, rand(), (gRenderingresolution.y / 4) * (gRenderingresolution.x / 2) * sizeof(pixel24_t));
+            std::memset(Canvas, 0xFF, (gRenderingresolution.y / 4) * (gRenderingresolution.x / 2) * sizeof(pixel24_t));
 
             // Debugging borders for the quadrants.
             if constexpr(Build::Debug::isDebugging)
@@ -282,7 +282,8 @@ namespace Engine::Rendering::Draw::Internal
     template <bool Fill = true, typename CB = std::function<void(const point2_t Position, const size_t Length)>>
     ainline void drawCircle(const point2_t Position, const float Radius, CB Callback)
     {
-        int16_t X{}, Y{ int16_t(Radius) }, R2{ int16_t(Radius * Radius) };
+        const double R2{ Radius * Radius };
+        int16_t X{}, Y{ int16_t(Radius) };
 
         // Pre-calculate the clipped area.
         const point4_t Area
@@ -298,8 +299,8 @@ namespace Engine::Rendering::Draw::Internal
         {
             // Outside of the clipping area.
             if (Position.y < Area.y0 || Position.y > Area.y1) return;
-            if (Position.x < Area.x0 || Position.x + Length > Area.x1) return;
-            Callback(Position, Length);
+            const point2_t Scanline{ std::max(Position.x, Area.x0), std::min(int16_t(Position.x + Length), Area.x1) };
+            if (Scanline.y - Scanline.x > 1) Callback({ Scanline.x, Position.y }, Scanline.y - Scanline.x);
         };
         auto doDrawing = [&](const point2_t Origin, const point2_t Size) -> void
         {
