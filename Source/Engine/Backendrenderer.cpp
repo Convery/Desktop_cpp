@@ -15,9 +15,11 @@ namespace Engine::Rendering
 {
     const point4_t Defaultclippingarea{ -1, -1, -1, -1 };
     point4_t Globalclippingarea{ Defaultclippingarea };
+    point2_t gRenderingresolution{};
     point4_t Currentclippingarea{};
     BITMAPINFO Format{};
     pixel24_t *Canvas{};
+    pixel24_t *Old{};
 
     // Invalidate the area that needs to be redrawn.
     void Invalidatearea(point4_t Area)
@@ -47,10 +49,6 @@ namespace Engine::Rendering
         // Update all elements.
         //assert(gRootelement);
         //Tick(gRootelement);
-
-        // The scaling we need to do if the window isn't the same as the renderer.
-        const float XMultiplier{ (float)gWindowsize.x / (float)gRenderingresolution.x };
-        const float YMultiplier{ (float)gWindowsize.y / (float)gRenderingresolution.y };
 
         // If the global area is unmodified, don't render anything.
         if (0 == std::memcmp(Globalclippingarea.Raw, Defaultclippingarea.Raw, sizeof(point4_t))) return;
@@ -90,9 +88,8 @@ namespace Engine::Rendering
             const point4_t Rect { 0, int16_t(gRenderingresolution.y / 4 * i), int16_t(gRenderingresolution.x / 2 - 1), int16_t(gRenderingresolution.y / 4 * (i + 1) - 1) };
 
             Renderquadrant(Rect);
-            StretchDIBits(HDC(Context), int(Rect.x0 * XMultiplier), int(Rect.y0 * YMultiplier), int(gRenderingresolution.x / 2 * XMultiplier),
-                int(gRenderingresolution.y / 4 * YMultiplier), 0, 0, gRenderingresolution.x / 2, gRenderingresolution.y / 4,
-                Canvas, &Format, DIB_RGB_COLORS, SRCCOPY);
+            StretchDIBits(HDC(Context), int(Rect.x0), int(Rect.y0), int(gRenderingresolution.x / 2), int(gRenderingresolution.y / 4),
+                0, 0, gRenderingresolution.x / 2, gRenderingresolution.y / 4, Canvas, &Format, DIB_RGB_COLORS, SRCCOPY);
         }
         for (int16_t i = 0; i < 4; ++i)
         {
@@ -103,39 +100,37 @@ namespace Engine::Rendering
             const point4_t Rect { int16_t(gRenderingresolution.x / 2), int16_t(gRenderingresolution.y / 4 * i), int16_t(gRenderingresolution.x - 1), int16_t(gRenderingresolution.y / 4 * (i + 1) - 1) };
 
             Renderquadrant(Rect);
-            StretchDIBits(HDC(Context), int(Rect.x0 * XMultiplier), int(Rect.y0 * YMultiplier), int(gRenderingresolution.x / 2 * XMultiplier),
-                int(gRenderingresolution.y / 4 * YMultiplier), 0, 0, gRenderingresolution.x / 2, gRenderingresolution.y / 4,
-                Canvas, &Format, DIB_RGB_COLORS, SRCCOPY);
+            StretchDIBits(HDC(Context), int(Rect.x0), int(Rect.y0), int(gRenderingresolution.x / 2), int(gRenderingresolution.y / 4),
+                0, 0, gRenderingresolution.x / 2, gRenderingresolution.y / 4, Canvas, &Format, DIB_RGB_COLORS, SRCCOPY);
         }
 
         // Reset the dirty area.
         Globalclippingarea = Defaultclippingarea;
     }
 
-    // Create the framebuffer on startup.
-    struct Initializer
+    // Create the framebuffer if needed.
+    void Createframebuffer(const point2_t Size)
     {
-        Initializer()
-        {
-            auto Devicecontext{ GetDC(NULL) };
+        auto Devicecontext{ GetDC(NULL) };
+        gRenderingresolution = Size;
 
-            // Bitmap format, upside-down because Windows.
-            Format.bmiHeader.biSize = sizeof(BITMAPINFO);
-            Format.bmiHeader.biHeight = -(gRenderingresolution.y / 4);
-            Format.bmiHeader.biWidth = (gRenderingresolution.x / 2);
-            Format.bmiHeader.biCompression = BI_RGB;
-            Format.bmiHeader.biBitCount = 24;
-            Format.bmiHeader.biPlanes = 1;
+        // Bitmap format, upside-down because Windows.
+        Format.bmiHeader.biSize = sizeof(BITMAPINFO);
+        Format.bmiHeader.biHeight = -(gRenderingresolution.y / 4);
+        Format.bmiHeader.biWidth = (gRenderingresolution.x / 2);
+        Format.bmiHeader.biCompression = BI_RGB;
+        Format.bmiHeader.biBitCount = 24;
+        Format.bmiHeader.biPlanes = 1;
 
-            // Create the new canvas.
-            if (Canvas) HeapFree(GetProcessHeap(), NULL, Canvas);
-            Canvas = (pixel24_t *)HeapAlloc(GetProcessHeap(), NULL, (gRenderingresolution.y / 4 + 1) * (gRenderingresolution.x / 2) * sizeof(pixel24_t));
+        // Create the new canvas.
+        if (Old) HeapFree(GetProcessHeap(), NULL, Old);
+        if (Canvas) Old = Canvas;
+        Canvas = (pixel24_t *)HeapAlloc(GetProcessHeap(), NULL, (gRenderingresolution.y / 4 + 1) * (gRenderingresolution.x / 2) * sizeof(pixel24_t));
+        std::thread([]() {std::this_thread::sleep_for(std::chrono::seconds(1)); if (Old) HeapFree(GetProcessHeap(), NULL, Old);  }).detach();
 
-            // C-style cleanup needed.
-            DeleteDC(Devicecontext);
-        }
-    };
-    static Initializer Loader{};
+        // C-style cleanup needed.
+        DeleteDC(Devicecontext);
+    }
 }
 #endif
 

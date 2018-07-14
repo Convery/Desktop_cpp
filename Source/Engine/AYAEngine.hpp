@@ -48,8 +48,8 @@ struct Element_t
 // Global engine-variables.
 namespace Engine
 {
-    constexpr point2_t gRenderingresolution{ 1920, 1080 };
     extern point2_t gWindowsize, gWindowposition;
+    extern point2_t gRenderingresolution;
     extern point4_t gDisplayrectangle;
     extern Element_t *gRootelement;
     extern void  *gWindowhandle;
@@ -78,6 +78,9 @@ namespace Engine::Rendering
 
     // Invalidate the area that needs to be redrawn.
     void Invalidatearea(point4_t Area);
+
+    // Create the framebuffer if needed.
+    void Createframebuffer(const point2_t Size);
 }
 
 // Draw calls for the elements that are called every frame.
