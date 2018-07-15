@@ -14,7 +14,7 @@ int main(int argc, char **argv)
     Engine::Rendering::Invalidatearea({ 0, 0, 520, 720 });
     Engine::Compositing::Switchscene("loginmenu");
     Engine::Window::Resize({ 520, 720 }, true);     // Replace with Engine::Composition::Load("Blueprint.json");
-    Engine::Window::Centerwindow();                 // Replace with Engine::Composition::Load("Blueprint.json");
+    Engine::Window::Centerwindow(false);            // Replace with Engine::Composition::Load("Blueprint.json");
     Engine::Window::Togglevisibility();
 
     // Main application-loop.
