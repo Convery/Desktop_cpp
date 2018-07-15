@@ -12,9 +12,8 @@
 // All components derive from the base element.
 struct Element_t
 {
-    // Dimensions relative to the renderer and screen.
-    point4_t Worldbox, Localbox;
-    vec4_t Bordermargin;
+    point4_t Dimensions;
+    vec4_t Margins;
 
     // State so callbacks only fire when changed.
     struct
@@ -24,7 +23,7 @@ struct Element_t
         unsigned int Reserved : 6;
     } Elementstate;
 
-    // The children inherit the parents Worldbox.
+    // The children inherit the parents dimensions - margins.
     std::vector<Element_t *> Childelements;
     void addChild(Element_t *Child);
 
@@ -86,6 +85,7 @@ namespace Engine::Rendering
 // Draw calls for the elements that are called every frame.
 namespace Engine::Rendering::Draw
 {
+    // Outline == if we should only draw the outermost pixels for the specified shape.
     template <bool Outline = false> void Circle(const texture_t Color, const point2_t Position, const float Radius);
     template <bool Outline = false> void Circle(const rgba_t Color, const point2_t Position, const float Radius);
     template <bool Outline = false> void Polygon(const texture_t Color, const std::vector<vec2_t> Vertices);
