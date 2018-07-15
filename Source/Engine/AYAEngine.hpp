@@ -25,7 +25,27 @@ struct Element_t
 
     // The children inherit the parents dimensions - margins.
     std::vector<Element_t *> Childelements;
-    void addChild(Element_t *Child);
+    void addChild(Element_t *Child)
+    {
+        std::function<void(Element_t *)> Recalc = [&Recalc](Element_t *Target) -> void
+        {
+            double DeltaX = std::abs(Target->Dimensions.x1 - Target->Dimensions.x0) / 2;
+            double DeltaY = std::abs(Target->Dimensions.y1 - Target->Dimensions.y0) / 2;
+
+            for (auto &Child : Target->Childelements)
+            {
+                Child->Dimensions.x0 = int16_t(std::round(Target->Dimensions.x0 + DeltaX * Target->Margins.x0));
+                Child->Dimensions.x1 = int16_t(std::round(Target->Dimensions.x1 - DeltaX * Target->Margins.x1));
+                Child->Dimensions.y0 = int16_t(std::round(Target->Dimensions.y0 + DeltaY * Target->Margins.y0));
+                Child->Dimensions.y1 = int16_t(std::round(Target->Dimensions.y1 - DeltaY * Target->Margins.y1));
+
+                Recalc(Child);
+            }
+        };
+
+        Childelements.push_back(Child);
+        Recalc(this);
+    }
 
     // Callbacks on user-interaction, returns if the event was consumed.
     std::function<bool(Element_t *Caller, bool Released)> onClicked;
@@ -96,3 +116,17 @@ namespace Engine::Rendering::Draw
     void Line(const rgba_t Color, const point2_t Start, const point2_t Stop);
 }
 namespace Draw = Engine::Rendering::Draw;
+
+// Manage the scenes and compositing.
+namespace Engine::Compositing
+{
+    // Recalculate all elements dimensions for when the window changes.
+    void Recalculateroot();
+
+    // Remove the old root and recreate.
+    void Switchscene(std::string &&Name);
+
+    // Register callbacks for scene-creation.
+    void Registercomposer(std::string &&Name, std::function<void(Element_t *Target)> Callback);
+}
+
