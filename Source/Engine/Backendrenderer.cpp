@@ -208,16 +208,16 @@ namespace Engine::Rendering::Draw::Internal
     }
 
     // The simplest drawing-call ever.
-    template<typename CB = std::function<void(const point2_t Position, const size_t Length)>>
+    template<typename CB = std::function<void(const point2_t Position, const int16_t Length)>>
     ainline void fillRect(const point4_t Area, CB Callback)
     {
-        const auto Width{ Area.x1 - Area.x0 };
-        const auto Height{ Area.y1 - Area.y0 };
+        const int16_t Width{ Area.x1 - Area.x0 };
+        const int16_t Height{ Area.y1 - Area.y0 };
         for (int16_t i = 0; i < Height; ++i) Callback({ Area.x0, Area.y0 + i }, Width);
     }
 
     // Outline and fill polygons.
-    template<typename CB = std::function<void(const point2_t Position, const size_t Length)>>
+    template<typename CB = std::function<void(const point2_t Position, const int16_t Length)>>
     ainline void fillPolygon(const vec2_t *Vertices, const size_t Verticecount, CB Callback)
     {
         auto Nodes{ std::make_unique<int16_t[]>(Verticecount + 1) };
@@ -274,7 +274,7 @@ namespace Engine::Rendering::Draw::Internal
     }
 
     // Outline and fill circles.
-    template <bool Fill = true, typename CB = std::function<void(const point2_t Position, const size_t Length)>>
+    template <bool Fill = true, typename CB = std::function<void(const point2_t Position, const int16_t Length)>>
     ainline void drawCircle(const point2_t Position, const float Radius, CB Callback)
     {
         const double R2{ Radius * Radius };
@@ -385,12 +385,12 @@ namespace Engine::Rendering::Draw::Internal
             doDrawing(Position, { X, Y });
         }
     }
-    template<typename CB = std::function<void(const point2_t Position, const size_t Length)>>
+    template<typename CB = std::function<void(const point2_t Position, const int16_t Length)>>
     ainline void fillCircle(const point2_t Position, const float Radius, CB Callback)
     {
         return drawCircle<true>(Position, Radius, Callback);
     }
-    template<typename CB = std::function<void(const point2_t Position, const size_t Length)>>
+    template<typename CB = std::function<void(const point2_t Position, const int16_t Length)>>
     ainline void outlineCircle(const point2_t Position, const float Radius, CB Callback)
     {
         return drawCircle<false>(Position, Radius, Callback);
@@ -405,7 +405,7 @@ namespace Engine::Rendering::Draw
         if (Color.Alpha == 0.0f) return;
         if (Outline)
         {
-            Internal::outlineCircle(Position, Radius, [&](const point2_t Position, const size_t Length) -> void
+            Internal::outlineCircle(Position, Radius, [&](const point2_t Position, const int16_t Length) -> void
             {
                 for (int16_t i = 0; i < Length; ++i)
                     Internal::setPixel({ Position.x + i, Position.y }, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x + i % Color.Size.x], Color.Alpha);
@@ -413,7 +413,7 @@ namespace Engine::Rendering::Draw
         }
         else
         {
-            Internal::fillCircle(Position, Radius, [&](const point2_t Position, const size_t Length) -> void
+            Internal::fillCircle(Position, Radius, [&](const point2_t Position, const int16_t Length) -> void
             {
                 for (int16_t i = 0; i < Length; ++i)
                     Internal::setPixel({ Position.x + i, Position.y }, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x + i % Color.Size.x], Color.Alpha);
@@ -427,14 +427,14 @@ namespace Engine::Rendering::Draw
 
         if (Outline)
         {
-            Internal::outlineCircle(Position, Radius, [&](const point2_t Position, const size_t Length) -> void
+            Internal::outlineCircle(Position, Radius, [&](const point2_t Position, const int16_t Length) -> void
             {
                 for (int16_t i = 0; i < Length; ++i) Internal::setPixel({ Position.x + i, Position.y }, Pixel, Color.A);
             });
         }
         else
         {
-            Internal::fillCircle(Position, Radius, [&](const point2_t Position, const size_t Length) -> void
+            Internal::fillCircle(Position, Radius, [&](const point2_t Position, const int16_t Length) -> void
             {
                 for (int16_t i = 0; i < Length; ++i) Internal::setPixel({ Position.x + i, Position.y }, Pixel, Color.A);
             });
@@ -449,7 +449,7 @@ namespace Engine::Rendering::Draw
         });
         if (!Outline)
         {
-            Internal::fillPolygon(Vertices.data(), Vertices.size(), [&](const point2_t Position, const size_t Length) -> void
+            Internal::fillPolygon(Vertices.data(), Vertices.size(), [&](const point2_t Position, const int16_t Length) -> void
             {
                 for (int16_t i = 0; i < Length; ++i)
                     Internal::setPixel({ Position.x + i, Position.y }, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x + i % Color.Size.x], Color.Alpha);
@@ -459,13 +459,15 @@ namespace Engine::Rendering::Draw
     template <bool Outline> void Polygon(const rgba_t Color, const std::vector<vec2_t> Vertices)
     {
         if (Color.A == 0.0f) return;
+        const auto Pixel{ Internal::fromRGBA(Color) };
+
         Internal::outlinePolygon(Vertices.data(), Vertices.size(), [&](const point2_t Position) -> void
         {
             Internal::setPixel(Position, Pixel, Color.A);
         });
         if (!Outline)
         {
-            Internal::fillPolygon(Vertices.data(), Vertices.size(), [&](const point2_t Position, const size_t Length) -> void
+            Internal::fillPolygon(Vertices.data(), Vertices.size(), [&](const point2_t Position, const int16_t Length) -> void
             {
                 for (int16_t i = 0; i < Length; ++i) Internal::setPixel({ Position.x + i, Position.y }, Pixel, Color.A);
             });
@@ -474,6 +476,7 @@ namespace Engine::Rendering::Draw
     template <bool Outline> void Quad(const texture_t Color, const point4_t Area)
     {
         if (Color.Alpha == 0.0f) return;
+        #pragma warning(suppress: 4838)
         const vec2_t Vertices[] = { {Area.x0, Area.y0}, {Area.x1, Area.y0}, {Area.x1, Area.y1}, {Area.x0, Area.y1}, {Area.x0, Area.y0} };
 
         Internal::outlinePolygon(Vertices, 5, [&](const point2_t Position) -> void
@@ -482,7 +485,7 @@ namespace Engine::Rendering::Draw
         });
         if (!Outline)
         {
-            Internal::fillRect(Area, [&](const point2_t Position, const size_t Length) -> void
+            Internal::fillRect(Area, [&](const point2_t Position, const int16_t Length) -> void
             {
                 for (int16_t i = 0; i < Length; ++i)
                     Internal::setPixel({ Position.x + i, Position.y }, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x + i % Color.Size.x], Color.Alpha);
@@ -493,6 +496,7 @@ namespace Engine::Rendering::Draw
     {
         if (Color.A == 0.0f) return;
         const auto Pixel{ Internal::fromRGBA(Color) };
+        #pragma warning(suppress: 4838)
         const vec2_t Vertices[] = { {Area.x0, Area.y0}, {Area.x1, Area.y0}, {Area.x1, Area.y1}, {Area.x0, Area.y1}, {Area.x0, Area.y0} };
 
         Internal::outlinePolygon(Vertices, 5, [&](const point2_t Position) -> void
@@ -501,7 +505,7 @@ namespace Engine::Rendering::Draw
         });
         if (!Outline)
         {
-            Internal::fillRect(Area, [&](const point2_t Position, const size_t Length) -> void
+            Internal::fillRect(Area, [&](const point2_t Position, const int16_t Length) -> void
             {
                 for (int16_t i = 0; i < Length; ++i) Internal::setPixel({ Position.x + i, Position.y }, Pixel, Color.A);
             });
@@ -525,4 +529,29 @@ namespace Engine::Rendering::Draw
             Internal::setPixel(Position, Pixel, Color.A);
         });
     }
+}
+
+/*
+    NOTE(Convery):
+
+    So apparently CL refuses to instantiate our templates if they are created in other objects.
+    So we need to touch them once in this object so that the linker has something to poke at.
+    Don't ask me why, just roll with it.
+*/
+
+void Microsoft_hackery_do_not_call_this()
+{
+    Draw::Circle(texture_t(), point2_t(), float());
+    Draw::Circle(rgba_t(), point2_t(), float());
+    Draw::Polygon(texture_t(), std::vector<vec2_t>());
+    Draw::Polygon(rgba_t(), std::vector<vec2_t>());
+    Draw::Quad(texture_t(), point4_t());
+    Draw::Quad(rgba_t(), point4_t());
+
+    Draw::Circle<true>(texture_t(), point2_t(), float());
+    Draw::Circle<true>(rgba_t(), point2_t(), float());
+    Draw::Polygon<true>(texture_t(), std::vector<vec2_t>());
+    Draw::Polygon<true>(rgba_t(), std::vector<vec2_t>());
+    Draw::Quad<true>(texture_t(), point4_t());
+    Draw::Quad<true>(rgba_t(), point4_t());
 }

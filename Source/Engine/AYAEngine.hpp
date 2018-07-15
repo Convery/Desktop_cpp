@@ -12,9 +12,6 @@
 // All components derive from the base element.
 struct Element_t
 {
-    point4_t Dimensions;
-    vec4_t Margins;
-
     // State so callbacks only fire when changed.
     struct
     {
@@ -22,6 +19,8 @@ struct Element_t
         unsigned int Clicked : 1;
         unsigned int Reserved : 6;
     } Elementstate;
+    point4_t Dimensions;
+    vec4_t Margins;
 
     // The children inherit the parents dimensions - margins.
     std::vector<Element_t *> Childelements;
@@ -129,4 +128,3 @@ namespace Engine::Compositing
     // Register callbacks for scene-creation.
     void Registercomposer(std::string &&Name, std::function<void(Element_t *Target)> Callback);
 }
-
