@@ -35,6 +35,7 @@ namespace Engine::Compositing
     {
         if (oldRootelement) delete oldRootelement;
         auto newRootelement = new Element_t("Root");
+        if (!Composers) Composers = new std::unordered_map<std::string, std::function<void(Element_t *)>>();
 
         // Return a new composition.
         if (const auto Result = Composers->find(Name); Result != Composers->end())

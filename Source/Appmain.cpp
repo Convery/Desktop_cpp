@@ -11,9 +11,10 @@ namespace Engine { bool gShouldquit{ false }; uint32_t gErrno{}; }
 
 int main(int argc, char **argv)
 {
-    Engine::Window::Resize({ 1920, 1080 }); // Replace with Engine::Composition::Load("Blueprint.json");
-    Engine::Window::Centerwindow();         // Replace with Engine::Composition::Load("Blueprint.json");
-    Engine::Rendering::Invalidatearea({ 0, 0, 1920, 1080 });
+    Engine::Rendering::Invalidatearea({ 0, 0, 520, 720 });
+    Engine::Compositing::Switchscene("loginmenu");
+    Engine::Window::Resize({ 520, 720 }, true);     // Replace with Engine::Composition::Load("Blueprint.json");
+    Engine::Window::Centerwindow();                 // Replace with Engine::Composition::Load("Blueprint.json");
     Engine::Window::Togglevisibility();
 
     // Main application-loop.

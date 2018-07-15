@@ -47,8 +47,8 @@ namespace Engine::Rendering
         };
 
         // Update all elements.
-        //assert(gRootelement);
-        //Tick(gRootelement);
+        assert(gRootelement);
+        Tick(gRootelement);
 
         // If the global area is unmodified, don't render anything.
         if (0 == std::memcmp(Globalclippingarea.Raw, Defaultclippingarea.Raw, sizeof(point4_t))) return;
@@ -69,13 +69,13 @@ namespace Engine::Rendering
             // Helper to save my fingers.
             std::function<void(Element_t *)> Render = [&](Element_t *This) -> void
             {
-                if (This->onFrame) This->onRender(This);
+                if (This->onRender) This->onRender(This);
                 for (const auto &Item : This->Childelements) Render(Item);
             };
 
             // Render all elements.
-            //assert(gRootelement);
-            //Render(gRootelement);
+            assert(gRootelement);
+            Render(gRootelement);
         };
 
         // Render each dirty quadrant.
@@ -105,7 +105,7 @@ namespace Engine::Rendering
         }
 
         // Reset the dirty area.
-        Globalclippingarea = Defaultclippingarea;
+        //Globalclippingarea = Defaultclippingarea;
     }
 
     // Create the framebuffer if needed.

@@ -18,12 +18,12 @@ struct Element_t
         unsigned int Hoover : 1;
         unsigned int Clicked : 1;
         unsigned int Reserved : 6;
-    } Elementstate;
-    point4_t Dimensions;
-    vec4_t Margins;
+    } Elementstate{};
+    point4_t Dimensions{};
+    vec4_t Margins{};
 
     // The children inherit the parents dimensions - margins.
-    std::vector<Element_t *> Childelements;
+    std::vector<Element_t *> Childelements{};
     void addChild(Element_t *Child)
     {
         std::function<void(Element_t *)> Recalc = [&Recalc](Element_t *Target) -> void
@@ -81,8 +81,8 @@ namespace Engine::Window
     // Modify the windows visible state and notify the composition-manager.
     void Move(point2_t Position, bool Deferupdate = false);
     void Resize(point2_t Size, bool Deferupdate = false);
-    void Togglevisibility(bool Deferupdate = false);
     void Centerwindow(bool Deferupdate = false);
+    void Togglevisibility();
 
     // Process any window-events.
     void onFrame();

@@ -29,18 +29,18 @@ namespace Engine::Window
     {
         gWindowposition = Position;
         SetWindowPos((HWND)gWindowhandle, NULL, gWindowposition.x, gWindowposition.y, gWindowsize.x, gWindowsize.y, SWP_NOSENDCHANGING | SWP_NOACTIVATE | SWP_NOSIZE);
-        // if(!Deferupdate) Compositions::onWindowchange();
+        if (!Deferupdate) Compositing::Recalculateroot();
     }
     void Resize(point2_t Size, bool Deferupdate)
     {
         gWindowsize = Size;
         SetWindowPos((HWND)gWindowhandle, NULL, gWindowposition.x, gWindowposition.y, gWindowsize.x, gWindowsize.y, SWP_NOSENDCHANGING | SWP_NOACTIVATE | SWP_NOMOVE);
-        // if(!Deferupdate) Compositions::onWindowchange();
+        if (!Deferupdate) Compositing::Recalculateroot();
 
         // Recreate the framebuffer.
         Rendering::Createframebuffer(gWindowsize);
     }
-    void Togglevisibility(bool Deferupdate)
+    void Togglevisibility()
     {
         Visible = !Visible;
         ShowWindow(HWND(gWindowhandle), BOOL(Visible));
