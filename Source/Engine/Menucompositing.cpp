@@ -30,7 +30,7 @@ namespace Engine::Compositing
         gRootelement = newRootelement;
     }
 
-    // Remove the old root and recreate.
+    // Remove the old root and recreate, or just append.
     void Switchscene(std::string &&Name)
     {
         if (oldRootelement) delete oldRootelement;
@@ -41,11 +41,6 @@ namespace Engine::Compositing
         if (const auto Result = Composers->find(Name); Result != Composers->end())
         {
             Result->second(newRootelement);
-
-            /*
-                TODO(Convery):
-                Some recursive lookup to do more composing to the element.
-            */
         }
         else
         {
@@ -56,6 +51,23 @@ namespace Engine::Compositing
 
         oldRootelement = gRootelement;
         gRootelement = newRootelement;
+    }
+    void Appendscene(std::string &&Name)
+    {
+        assert(gRootelement);
+        if (!Composers) Composers = new std::unordered_map<std::string, std::function<void(Element_t *)>>();
+
+        // Append a new composition element.
+        if (const auto Result = Composers->find(Name); Result != Composers->end())
+        {
+            Result->second(gRootelement);
+        }
+        else
+        {
+            auto Errorelement = new Element_t(va("Append_error_%s", Name.c_str()));
+            Errorelement->onRender = [](Element_t *Caller) { Draw::Quad({ 0xFF, 0, 0, 1 }, Caller->Dimensions); };
+            gRootelement->addChild(Errorelement);
+        }
     }
 
     // Register callbacks for scene-creation.

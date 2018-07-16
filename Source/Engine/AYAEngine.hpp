@@ -122,8 +122,9 @@ namespace Engine::Compositing
     // Recalculate all elements dimensions for when the window changes.
     void Recalculateroot();
 
-    // Remove the old root and recreate.
+    // Remove the old root and recreate, or just append.
     void Switchscene(std::string &&Name);
+    void Appendscene(std::string &&Name);
 
     // Register callbacks for scene-creation.
     void Registercomposer(std::string &&Name, std::function<void(Element_t *Target)> Callback);
