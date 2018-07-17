@@ -56,15 +56,18 @@ namespace Engine::Rendering
         // Render a part of the window.
         auto Renderquadrant = [&](point4_t Clippingarea) -> void
         {
-            // Clear the buffer.
             Currentclippingarea = Clippingarea;
-            std::memset(Canvas, 0xFF, (gRenderingresolution.y / 4) * (gRenderingresolution.x / 2) * sizeof(pixel24_t));
-
-            // Debugging borders for the quadrants.
-            if constexpr(Build::Debug::isDebugging)
+            /*
             {
-                Draw::Quad<true>({ 0xFF, 0, 0xFF, 1 }, Clippingarea);
-            }
+                std::max(Clippingarea.x0, int16_t(0)),
+                std::max(Clippingarea.y0, int16_t(0)),
+                std::min(Clippingarea.x1, int16_t(gRenderingresolution.x - 1)),
+                std::min(Clippingarea.y1, int16_t(gRenderingresolution.y - 1))
+            };
+            */
+
+            // Clear the buffer.
+            std::memset(Canvas, 0xFF, (gRenderingresolution.y / 4) * gRenderingresolution.x * sizeof(pixel24_t));
 
             // Helper to save my fingers.
             std::function<void(Element_t *)> Render = [&](Element_t *This) -> void
@@ -76,32 +79,26 @@ namespace Engine::Rendering
             // Render all elements.
             assert(gRootelement);
             Render(gRootelement);
+
+            // Debugging borders for the quadrants.
+            if constexpr(Build::Debug::isDebugging)
+            {
+                Draw::Quad<true>({ 0xFF, 0, 0xFF, 1 }, Clippingarea);
+            }
         };
 
         // Render each dirty quadrant.
         for (int16_t i = 0; i < 4; ++i)
         {
             // Out of bounds.
-            if (Globalclippingarea.x0 > int16_t(gRenderingresolution.x / 2)) continue;
+            if (Globalclippingarea.x0 > int16_t(gRenderingresolution.x)) continue;
             if (Globalclippingarea.y1 < int16_t(gRenderingresolution.y / 4 * i)) continue;
             if (Globalclippingarea.y0 > int16_t(gRenderingresolution.y / 4 * (i + 1))) continue;
-            const point4_t Rect { 0, int16_t(gRenderingresolution.y / 4 * i), int16_t(gRenderingresolution.x / 2 - 1), int16_t(gRenderingresolution.y / 4 * (i + 1) - 1) };
+            const point4_t Rect { 0, int16_t(gRenderingresolution.y / 4 * i), int16_t(gRenderingresolution.x), int16_t(gRenderingresolution.y / 4 * (i + 1)) };
 
             Renderquadrant(Rect);
-            StretchDIBits(HDC(Context), int(Rect.x0), int(Rect.y0), int(gRenderingresolution.x / 2), int(gRenderingresolution.y / 4),
-                0, 0, gRenderingresolution.x / 2, gRenderingresolution.y / 4, Canvas, &Format, DIB_RGB_COLORS, SRCCOPY);
-        }
-        for (int16_t i = 0; i < 4; ++i)
-        {
-            // Out of bounds.
-            if (Globalclippingarea.x1 < int16_t(gRenderingresolution.x / 2)) continue;
-            if (Globalclippingarea.y1 < int16_t(gRenderingresolution.y / 4 * i)) continue;
-            if (Globalclippingarea.y0 > int16_t(gRenderingresolution.y / 4 * (i + 1))) continue;
-            const point4_t Rect { int16_t(gRenderingresolution.x / 2), int16_t(gRenderingresolution.y / 4 * i), int16_t(gRenderingresolution.x - 1), int16_t(gRenderingresolution.y / 4 * (i + 1) - 1) };
-
-            Renderquadrant(Rect);
-            StretchDIBits(HDC(Context), int(Rect.x0), int(Rect.y0), int(gRenderingresolution.x / 2), int(gRenderingresolution.y / 4),
-                0, 0, gRenderingresolution.x / 2, gRenderingresolution.y / 4, Canvas, &Format, DIB_RGB_COLORS, SRCCOPY);
+            StretchDIBits(HDC(Context), int(Rect.x0), int(Rect.y0), int(gRenderingresolution.x), int(gRenderingresolution.y / 4),
+                0, 0, gRenderingresolution.x, gRenderingresolution.y / 4, Canvas, &Format, DIB_RGB_COLORS, SRCCOPY);
         }
 
         // Reset the dirty area.
@@ -117,7 +114,7 @@ namespace Engine::Rendering
         // Bitmap format, upside-down because Windows.
         Format.bmiHeader.biSize = sizeof(BITMAPINFO);
         Format.bmiHeader.biHeight = -(gRenderingresolution.y / 4);
-        Format.bmiHeader.biWidth = (gRenderingresolution.x / 2);
+        Format.bmiHeader.biWidth = gRenderingresolution.x;
         Format.bmiHeader.biCompression = BI_RGB;
         Format.bmiHeader.biBitCount = 24;
         Format.bmiHeader.biPlanes = 1;
@@ -125,7 +122,7 @@ namespace Engine::Rendering
         // Create the new canvas.
         if (Old) HeapFree(GetProcessHeap(), NULL, Old);
         if (Canvas) Old = Canvas;
-        Canvas = (pixel24_t *)HeapAlloc(GetProcessHeap(), NULL, (gRenderingresolution.y / 4 + 1) * (gRenderingresolution.x / 2) * sizeof(pixel24_t));
+        Canvas = (pixel24_t *)HeapAlloc(GetProcessHeap(), NULL, (gRenderingresolution.y / 4 + 1) * (gRenderingresolution.x) * sizeof(pixel24_t));
         std::thread([]() {std::this_thread::sleep_for(std::chrono::seconds(1)); if (Old) HeapFree(GetProcessHeap(), NULL, Old);  }).detach();
 
         // C-style cleanup needed.
@@ -149,14 +146,14 @@ namespace Engine::Rendering::Draw::Internal
     }
     ainline void setPixel(point2_t Position, const pixel24_t Color)
     {
-        Canvas[(Position.y % (gRenderingresolution.y / 4)) * (gRenderingresolution.x / 2) + Position.x % (gRenderingresolution.x / 2)] = Color;
+        Canvas[Position.y * gRenderingresolution.x + Position.x] = Color;
     }
     ainline void setPixel(point2_t Position, const pixel24_t Color, const float Alpha)
     {
         if (Alpha == 1.0f) setPixel(Position, Color);
         else
         {
-            auto Base{ Canvas[(Position.y % (gRenderingresolution.y / 4)) * (gRenderingresolution.x / 2) + Position.x % (gRenderingresolution.x / 2)] };
+            auto Base{ Canvas[Position.y * gRenderingresolution.x + Position.x] };
             Base.BGR.B = uint8_t(Base.BGR.B * (1.0f - Alpha) + Color.BGR.B * Alpha);
             Base.BGR.G = uint8_t(Base.BGR.G * (1.0f - Alpha) + Color.BGR.G * Alpha);
             Base.BGR.R = uint8_t(Base.BGR.R * (1.0f - Alpha) + Color.BGR.R * Alpha);
@@ -190,9 +187,12 @@ namespace Engine::Rendering::Draw::Internal
         const auto Deltaerror{ int16_t(std::abs(DeltaY) * 2) };
         for (int16_t X = std::max(Start.x, Localarea.x0); X <= std::min(Stop.x, Localarea.x1); ++X)
         {
+            // Out of bounds.
+            if (Y < Localarea.y0 || Y > Localarea.y1) break;
+
             // Invert the coordinates if too steep.
-            if (Steep) Callback({ Y, X });
-            else Callback({ X, Y });
+            if (Steep) Callback({ Y, X % (gRenderingresolution.y / 4) });
+            else Callback({ X, Y % (gRenderingresolution.y / 4) });
 
             // Update the error offset.
             Error += Deltaerror;
@@ -200,9 +200,6 @@ namespace Engine::Rendering::Draw::Internal
             {
                 Y += Stop.y > Start.y ? 1 : -1;
                 Error -= DeltaX * 2;
-
-                // out of bounds.
-                if (Y < Localarea.y0 || Y > Localarea.y1) break;
             }
         }
     }
@@ -211,9 +208,9 @@ namespace Engine::Rendering::Draw::Internal
     template<typename CB = std::function<void(const point2_t Position, const int16_t Length)>>
     ainline void fillRect(const point4_t Area, CB Callback)
     {
-        const int16_t Width{ Area.x1 - Area.x0 };
-        const int16_t Height{ Area.y1 - Area.y0 };
-        for (int16_t i = 0; i < Height; ++i) Callback({ Area.x0, Area.y0 + i }, Width);
+        const int16_t Width{ std::min(Area.x1, Currentclippingarea.x1) - std::max(Area.x0, Currentclippingarea.x0) };
+        for (int16_t Y = std::max(Area.y0, Currentclippingarea.y0); Y < std::min(Area.y1, Currentclippingarea.y1); ++Y)
+            Callback({ std::max(Area.x0, Currentclippingarea.x0), Y % (gRenderingresolution.y / 4) }, Width);
     }
 
     // Outline and fill polygons.
@@ -259,7 +256,7 @@ namespace Engine::Rendering::Draw::Internal
                     if (Nodes[i] < std::max(Currentclippingarea.x0, {})) Nodes[i] = std::max(Currentclippingarea.x0, {});
                     if (Nodes[i + 1] > std::min(Currentclippingarea.x1, gRenderingresolution.x)) Nodes[i + 1] = std::min(Currentclippingarea.x1, gRenderingresolution.x);
 
-                    Callback({ Nodes[i], Y }, Nodes[i + 1] - Nodes[i] + 1);
+                    Callback({ Nodes[i], Y % (gRenderingresolution.y / 4) }, Nodes[i + 1] - Nodes[i] + 1);
                 }
             }
         }
@@ -295,7 +292,7 @@ namespace Engine::Rendering::Draw::Internal
             // Outside of the clipping area.
             if (Position.y < Area.y0 || Position.y > Area.y1) return;
             const point2_t Scanline{ std::max(Position.x, Area.x0), std::min(int16_t(Position.x + Length), Area.x1) };
-            if (Scanline.y - Scanline.x > 1) Callback({ Scanline.x, Position.y }, Scanline.y - Scanline.x);
+            Callback({ Scanline.x, Position.y % (gRenderingresolution.y / 4) }, std::max(int16_t(Scanline.y - Scanline.x), int16_t(1)));
         };
         auto doDrawing = [&](const point2_t Origin, const point2_t Size) -> void
         {
@@ -477,7 +474,14 @@ namespace Engine::Rendering::Draw
     {
         if (Color.Alpha == 0.0f) return;
         #pragma warning(suppress: 4838)
-        const vec2_t Vertices[] = { {Area.x0, Area.y0}, {Area.x1, Area.y0}, {Area.x1, Area.y1}, {Area.x0, Area.y1}, {Area.x0, Area.y0} };
+        const vec2_t Vertices[] =
+        {
+            {std::max(Area.x0, Currentclippingarea.x0), std::max(Area.y0, Currentclippingarea.y0)},
+            {std::min(Area.x1, int16_t(Currentclippingarea.x1 - 1)), std::max(Area.y0, Currentclippingarea.y0)},
+            {std::min(Area.x1, int16_t(Currentclippingarea.x1 - 1)), std::min(Area.y1, int16_t(Currentclippingarea.y1 - 1))},
+            {std::max(Area.x0, Currentclippingarea.x0), std::min(Area.y1, int16_t(Currentclippingarea.y1 - 1))},
+            {std::max(Area.x0, Currentclippingarea.x0), std::max(Area.y0, Currentclippingarea.y0)}
+        };
 
         Internal::outlinePolygon(Vertices, 5, [&](const point2_t Position) -> void
         {
@@ -497,7 +501,14 @@ namespace Engine::Rendering::Draw
         if (Color.A == 0.0f) return;
         const auto Pixel{ Internal::fromRGBA(Color) };
         #pragma warning(suppress: 4838)
-        const vec2_t Vertices[] = { {Area.x0, Area.y0}, {Area.x1, Area.y0}, {Area.x1, Area.y1}, {Area.x0, Area.y1}, {Area.x0, Area.y0} };
+        const vec2_t Vertices[] =
+        {
+            {std::max(Area.x0, Currentclippingarea.x0), std::max(Area.y0, Currentclippingarea.y0)},
+            {std::min(Area.x1, int16_t(Currentclippingarea.x1 - 1)), std::max(Area.y0, Currentclippingarea.y0)},
+            {std::min(Area.x1, int16_t(Currentclippingarea.x1 - 1)), std::min(Area.y1, int16_t(Currentclippingarea.y1 - 1))},
+            {std::max(Area.x0, Currentclippingarea.x0), std::min(Area.y1, int16_t(Currentclippingarea.y1 - 1))},
+            {std::max(Area.x0, Currentclippingarea.x0), std::max(Area.y0, Currentclippingarea.y0)}
+        };
 
         Internal::outlinePolygon(Vertices, 5, [&](const point2_t Position) -> void
         {

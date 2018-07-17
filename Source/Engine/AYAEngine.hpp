@@ -33,10 +33,10 @@ struct Element_t
 
             for (auto &Child : Target->Childelements)
             {
-                Child->Dimensions.x0 = int16_t(std::round(Target->Dimensions.x0 + DeltaX * Target->Margins.x0));
-                Child->Dimensions.x1 = int16_t(std::round(Target->Dimensions.x1 - DeltaX * Target->Margins.x1));
-                Child->Dimensions.y0 = int16_t(std::round(Target->Dimensions.y0 + DeltaY * Target->Margins.y0));
-                Child->Dimensions.y1 = int16_t(std::round(Target->Dimensions.y1 - DeltaY * Target->Margins.y1));
+                Child->Dimensions.x0 = int16_t(std::round(Target->Dimensions.x0 + DeltaX * Child->Margins.x0));
+                Child->Dimensions.x1 = int16_t(std::round(Target->Dimensions.x1 - DeltaX * Child->Margins.x1));
+                Child->Dimensions.y0 = int16_t(std::round(Target->Dimensions.y0 + DeltaY * Child->Margins.y0));
+                Child->Dimensions.y1 = int16_t(std::round(Target->Dimensions.y1 - DeltaY * Child->Margins.y1));
 
                 Recalc(Child);
             }
