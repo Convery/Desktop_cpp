@@ -28,4 +28,15 @@ using rgba_t = struct { union { struct { float R, G, B, A; }; float Raw[4]; }; }
 
 using texture_t = struct { point2_t Size; float Alpha; const void *Data; };
 
+namespace Pixelmask
+{
+    using segment_t = struct { uint8_t Data[3]; };
+    inline uint16_t Filled(segment_t Segment) { return ((Segment.Data[1] & 0x000F) << 8) | Segment.Data[2];  };
+    inline uint16_t Blank(segment_t Segment) { return (Segment.Data[0] << 4) | ((Segment.Data[1] & 0x00F0) >> 4);  };
+    inline segment_t toSegment(uint16_t Blank, uint16_t Filled)
+    {
+        return { uint8_t((Blank >> 4)), uint8_t((Blank | 0x00F0) << 4 | (Filled | 0x000F) >> 8), uint8_t(Filled) };
+    }
+};
+
 #pragma pack(pop)

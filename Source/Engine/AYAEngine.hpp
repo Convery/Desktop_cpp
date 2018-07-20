@@ -113,6 +113,9 @@ namespace Engine::Rendering::Draw
     template <bool Outline = false> void Quad(const rgba_t Color, const point4_t Area);
     void Line(const texture_t Color, const point2_t Start, const point2_t Stop);
     void Line(const rgba_t Color, const point2_t Start, const point2_t Stop);
+
+    // Special drawing.
+    void Pixelmask(const rgba_t Color, const point2_t Size, const size_t Segmentcount, const Pixelmask::segment_t *Segments);
 }
 namespace Draw = Engine::Rendering::Draw;
 

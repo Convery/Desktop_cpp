@@ -2,17 +2,7 @@
 SystemParametersInfoA allocates memory when getting the work-area.
 We need to free this somehow.
 
-The framebuffer should be { Renderres.x / 2, Renderres.y / 4 }
-Rather than BitBlt we should use StretchDIBits.
-The bits should be heapallocated rather than virtualalloc.
+Pixelmasking should take an area to draw in.
+Masking needs an AA layer.
 
-Invalidated areas don't need to be atomic.
-Assert on nullptr annoyance.
-
-Texturemap:
-{
-    uint16_t Width, Height, uint16_t Segmentcount;
-    struct Segment { int Blank : 12; int Filled : 12 } *Segments;
-    // N skipped pixels, N filled pixels.
-}
 

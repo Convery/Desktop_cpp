@@ -83,7 +83,7 @@ namespace Engine::Rendering
             // Debugging borders for the quadrants.
             if constexpr(Build::Debug::isDebugging)
             {
-                Draw::Quad<true>({ 0xFF, 0, 0xFF, 1 }, Clippingarea);
+                //Draw::Quad<true>({ 0xFF, 0, 0xFF, 1 }, Clippingarea);
             }
         };
 
@@ -144,11 +144,11 @@ namespace Engine::Rendering::Draw::Internal
             uint8_t(Color.R <= 1 ? Color.R * 255 : Color.R)
         };
     }
-    ainline void setPixel(point2_t Position, const pixel24_t Color)
+    ainline void setPixel(const point2_t Position, const pixel24_t Color)
     {
         Canvas[Position.y * gRenderingresolution.x + Position.x] = Color;
     }
-    ainline void setPixel(point2_t Position, const pixel24_t Color, const float Alpha)
+    ainline void setPixel(const point2_t Position, const pixel24_t Color, const float Alpha)
     {
         if (Alpha == 1.0f) setPixel(Position, Color);
         else
@@ -185,14 +185,18 @@ namespace Engine::Rendering::Draw::Internal
         // For each X coordinate.
         int16_t Y{ Start.y }, Error{};
         const auto Deltaerror{ int16_t(std::abs(DeltaY) * 2) };
-        for (int16_t X = std::max(Start.x, Localarea.x0); X <= std::min(Stop.x, Localarea.x1); ++X)
+        for (int16_t X = Start.x; X < std::min(Stop.x, Localarea.x1); X++)
         {
-            // Out of bounds.
-            if (Y < Localarea.y0 || Y > Localarea.y1) break;
+            // End of line.
+            if (Y > Localarea.y1) break;
 
-            // Invert the coordinates if too steep.
-            if (Steep) Callback({ Y, X % (gRenderingresolution.y / 4) });
-            else Callback({ X, Y % (gRenderingresolution.y / 4) });
+            // Inside the clipping area.
+            if (Y >= Localarea.y0 && X >= Localarea.x0)
+            {
+                // Invert the coordinates if too steep.
+                if (Steep) Callback({ Y, X % (gRenderingresolution.y / 4) });
+                else Callback({ X, Y % (gRenderingresolution.y / 4) });
+            }
 
             // Update the error offset.
             Error += Deltaerror;
@@ -290,7 +294,7 @@ namespace Engine::Rendering::Draw::Internal
         auto doCallback = [&Area, &Callback](const point2_t Position, const size_t Length = 1) -> void
         {
             // Outside of the clipping area.
-            if (Position.y < Area.y0 || Position.y > Area.y1) return;
+            if (Position.y < Area.y0 || Position.y >= Area.y1) return;
             const point2_t Scanline{ std::max(Position.x, Area.x0), std::min(int16_t(Position.x + Length), Area.x1) };
             Callback({ Scanline.x, Position.y % (gRenderingresolution.y / 4) }, std::max(int16_t(Scanline.y - Scanline.x), int16_t(1)));
         };
@@ -539,6 +543,40 @@ namespace Engine::Rendering::Draw
         {
             Internal::setPixel(Position, Pixel, Color.A);
         });
+    }
+
+    // Special drawing.
+    void Pixelmask(const rgba_t Color, const point2_t Size, const size_t Segmentcount, const Pixelmask::segment_t *Segments)
+    {
+        const auto Pixel{ Internal::fromRGBA(Color) };
+        size_t Iterator = 0;
+
+        for (size_t i = 0; i < Segmentcount; ++i)
+        {
+            auto Filled{ Pixelmask::Filled(Segments[i]) };
+            auto Blank{ Pixelmask::Blank(Segments[i]) };
+
+            Iterator += Blank;
+            for (size_t c = 0; c < Filled; c++)
+            {
+                const auto Y = Iterator / Size.x;
+                const auto X = Iterator % Size.x;
+
+                if (Y >= Currentclippingarea.y0 && Y <= Currentclippingarea.y1)
+                {
+                    if (X >= Currentclippingarea.x0 && X <= Currentclippingarea.x1)
+                    {
+                        Internal::setPixel(
+                            {
+                                int16_t(X % gRenderingresolution.x),
+                                int16_t(Y % (gRenderingresolution.y / 4))
+                            }, Pixel);
+                    }
+                }
+
+                Iterator++;
+            }
+        }
     }
 }
 
