@@ -7,19 +7,29 @@
 */
 
 #include "../Stdinclude.hpp"
+#define STBI_ONLY_PNG
+//#define STBI_NO_STDIO
+#define STB_IMAGE_IMPLEMENTATION
+#include "../Utility/stb_image.h"
+#include <emmintrin.h>
 
 #if !defined(_WIN32)
     #error Non-windows abstraction is not implemented (yet!)
 #else
 namespace Engine::Rendering
 {
+    namespace Canvas
+    {
+        constexpr size_t Segments{ 5 };
+        pixel24_t *Framebuffer{};
+        BITMAPINFO Format{};
+        size_t Buffersize{};
+    }
+
     const point4_t Defaultclippingarea{ -1, -1, -1, -1 };
     point4_t Globalclippingarea{ Defaultclippingarea };
-    point2_t gRenderingresolution{};
+    point2_t gRenderingresolution{100, 100};
     point4_t Currentclippingarea{};
-    BITMAPINFO Format{};
-    pixel24_t *Canvas{};
-    pixel24_t *Old{};
 
     // Invalidate the area that needs to be redrawn.
     void Invalidatearea(point4_t Area)
@@ -54,20 +64,12 @@ namespace Engine::Rendering
         if (0 == std::memcmp(Globalclippingarea.Raw, Defaultclippingarea.Raw, sizeof(point4_t))) return;
 
         // Render a part of the window.
-        auto Renderquadrant = [&](point4_t Clippingarea) -> void
+        auto Rendersegment = [&](point4_t Clippingarea) -> void
         {
             Currentclippingarea = Clippingarea;
-            /*
-            {
-                std::max(Clippingarea.x0, int16_t(0)),
-                std::max(Clippingarea.y0, int16_t(0)),
-                std::min(Clippingarea.x1, int16_t(gRenderingresolution.x - 1)),
-                std::min(Clippingarea.y1, int16_t(gRenderingresolution.y - 1))
-            };
-            */
 
             // Clear the buffer.
-            std::memset(Canvas, 0xFF, (gRenderingresolution.y / 4) * gRenderingresolution.x * sizeof(pixel24_t));
+            std::memset(Canvas::Framebuffer, 0xFF, Canvas::Buffersize);
 
             // Helper to save my fingers.
             std::function<void(Element_t *)> Render = [&](Element_t *This) -> void
@@ -83,22 +85,25 @@ namespace Engine::Rendering
             // Debugging borders for the quadrants.
             if constexpr(Build::Debug::isDebugging)
             {
-                //Draw::Quad<true>({ 0xFF, 0, 0xFF, 1 }, Clippingarea);
+                Draw::Quad<true>({ 0xFF, 0x00, 0xFF, 1 }, Clippingarea);
             }
         };
 
-        // Render each dirty quadrant.
-        for (int16_t i = 0; i < 4; ++i)
+        // Don't render off-screen.
+        Globalclippingarea.x1 = std::clamp(Globalclippingarea.x1, {}, int16_t(gRenderingresolution.x));
+        Globalclippingarea.y1 = std::clamp(Globalclippingarea.y1, {}, int16_t(gRenderingresolution.y));
+
+        // Render each dirty segment.
+        for (int16_t i = 0; i < Canvas::Segments; ++i)
         {
             // Out of bounds.
             if (Globalclippingarea.x0 > int16_t(gRenderingresolution.x)) continue;
-            if (Globalclippingarea.y1 < int16_t(gRenderingresolution.y / 4 * i)) continue;
-            if (Globalclippingarea.y0 > int16_t(gRenderingresolution.y / 4 * (i + 1))) continue;
-            const point4_t Rect { 0, int16_t(gRenderingresolution.y / 4 * i), int16_t(gRenderingresolution.x), int16_t(gRenderingresolution.y / 4 * (i + 1)) };
+            if (Globalclippingarea.y1 < int16_t(gRenderingresolution.y / Canvas::Segments * i)) continue;
+            if (Globalclippingarea.y0 > int16_t(gRenderingresolution.y / Canvas::Segments * (i + 1))) continue;
 
-            Renderquadrant(Rect);
-            StretchDIBits(HDC(Context), int(Rect.x0), int(Rect.y0), int(gRenderingresolution.x), int(gRenderingresolution.y / 4),
-                0, 0, gRenderingresolution.x, gRenderingresolution.y / 4, Canvas, &Format, DIB_RGB_COLORS, SRCCOPY);
+            Rendersegment({ 0, int16_t(gRenderingresolution.y / Canvas::Segments * i), int16_t(gRenderingresolution.x - 1), int16_t(gRenderingresolution.y / Canvas::Segments * (i + 1) - 1) });
+            StretchDIBits(HDC(Context), 0, int(gRenderingresolution.y / Canvas::Segments) * i, gRenderingresolution.x, int(gRenderingresolution.y / Canvas::Segments), 0, 0,
+                gRenderingresolution.x, gRenderingresolution.y / Canvas::Segments, Canvas::Framebuffer, &Canvas::Format, DIB_RGB_COLORS, SRCCOPY);
         }
 
         // Reset the dirty area.
@@ -112,18 +117,18 @@ namespace Engine::Rendering
         gRenderingresolution = Size;
 
         // Bitmap format, upside-down because Windows.
-        Format.bmiHeader.biSize = sizeof(BITMAPINFO);
-        Format.bmiHeader.biHeight = -(gRenderingresolution.y / 4);
-        Format.bmiHeader.biWidth = gRenderingresolution.x;
-        Format.bmiHeader.biCompression = BI_RGB;
-        Format.bmiHeader.biBitCount = 24;
-        Format.bmiHeader.biPlanes = 1;
+        Canvas::Format.bmiHeader.biHeight = -(gRenderingresolution.y / Canvas::Segments);
+        Canvas::Format.bmiHeader.biWidth = gRenderingresolution.x;
+        Canvas::Format.bmiHeader.biSize = sizeof(BITMAPINFO);
+        Canvas::Format.bmiHeader.biCompression = BI_RGB;
+        Canvas::Format.bmiHeader.biBitCount = 24;
+        Canvas::Format.bmiHeader.biPlanes = 1;
 
-        // Create the new canvas.
-        if (Old) HeapFree(GetProcessHeap(), NULL, Old);
-        if (Canvas) Old = Canvas;
-        Canvas = (pixel24_t *)HeapAlloc(GetProcessHeap(), NULL, (gRenderingresolution.y / 4 + 1) * (gRenderingresolution.x) * sizeof(pixel24_t));
-        std::thread([]() {std::this_thread::sleep_for(std::chrono::seconds(1)); if (Old) HeapFree(GetProcessHeap(), NULL, Old);  }).detach();
+        // Create the new buffer padded to a multiple of 128bit.
+        if (Canvas::Framebuffer) std::thread([=]() { std::this_thread::sleep_for(std::chrono::seconds(1)); HeapFree(GetProcessHeap(), NULL, Canvas::Framebuffer); }).detach();
+        Canvas::Buffersize = gRenderingresolution.y / Canvas::Segments * gRenderingresolution.x * sizeof(pixel24_t);
+        Canvas::Buffersize += 16 + (Canvas::Buffersize % 16) ? (16 - (Canvas::Buffersize % 16)) : 0;
+        Canvas::Framebuffer = (pixel24_t *)HeapAlloc(GetProcessHeap(), NULL, Canvas::Buffersize);
 
         // C-style cleanup needed.
         DeleteDC(Devicecontext);
@@ -134,77 +139,105 @@ namespace Engine::Rendering
 // Drawing primitives.
 namespace Engine::Rendering::Draw::Internal
 {
-    // Helpers to place all writes in a single place.
-    ainline pixel24_t fromRGBA(const rgba_t Color)
+    // Core components.
+    ainline pixel32_t fromRGBA(const rgba_t Color)
     {
         return
         {
             uint8_t(Color.B <= 1 ? Color.B * 255 : Color.B),
             uint8_t(Color.G <= 1 ? Color.G * 255 : Color.G),
-            uint8_t(Color.R <= 1 ? Color.R * 255 : Color.R)
+            uint8_t(Color.R <= 1 ? Color.R * 255 : Color.R),
+            uint8_t(Color.A <= 1 ? Color.A * 255 : Color.A)
         };
+    }
+    ainline void setPixel(point2_t Position, const pixel32_t Color)
+    {
+        Position.y %= gRenderingresolution.y / Canvas::Segments;
+        // Position.x %= gRenderingresolution.x;
+
+        if (Color.BGRA.A == 0xFF)
+        {
+            std::memcpy(Canvas::Framebuffer[Position.y * gRenderingresolution.x + Position.x].Raw, Color.Raw, sizeof(pixel24_t));
+        }
+        else
+        {
+            const float Normal = ((Color.Raw[3]) >> 7) + (Color.Raw[3]);
+            #define BLEND(A, B) A += int32_t((((A - B) * Normal))) >> 8;
+            BLEND(Canvas::Framebuffer[Position.y * gRenderingresolution.x + Position.x].Raw[0], Color.Raw[0]);
+            BLEND(Canvas::Framebuffer[Position.y * gRenderingresolution.x + Position.x].Raw[1], Color.Raw[1]);
+            BLEND(Canvas::Framebuffer[Position.y * gRenderingresolution.x + Position.x].Raw[2], Color.Raw[2]);
+        }
     }
     ainline void setPixel(const point2_t Position, const pixel24_t Color)
     {
-        Canvas[Position.y * gRenderingresolution.x + Position.x] = Color;
-    }
-    ainline void setPixel(const point2_t Position, const pixel24_t Color, const float Alpha)
-    {
-        if (Alpha == 1.0f) setPixel(Position, Color);
-        else
-        {
-            auto Base{ Canvas[Position.y * gRenderingresolution.x + Position.x] };
-            Base.BGR.B = uint8_t(Base.BGR.B * (1.0f - Alpha) + Color.BGR.B * Alpha);
-            Base.BGR.G = uint8_t(Base.BGR.G * (1.0f - Alpha) + Color.BGR.G * Alpha);
-            Base.BGR.R = uint8_t(Base.BGR.R * (1.0f - Alpha) + Color.BGR.R * Alpha);
-            setPixel(Position, Base);
-        }
+        return setPixel(Position, { Color.Raw[0], Color.Raw[1], Color.Raw[2], 0xFF });
     }
 
     // Draw a simple line, should add some anti-aliasing later.
     template<typename CB = std::function<void(const point2_t Position)>>
     ainline void drawLine(point2_t Start, point2_t Stop, CB Callback)
     {
-        auto Localarea{ Currentclippingarea };
+        int16_t X, Y, Error{};
 
-        // Check if we should invert the line so we always draw left to right.
-        const bool Steep{ std::abs(Start.x - Stop.x) < std::abs(Start.y - Stop.y) };
-        if (Steep)
+        // Something went really wrong.
+        assert(!(Start.x == Stop.x && Start.y == Stop.y));
+
+        // Always draw left to right, top to bottom.
+        if (Start.x > Stop.x) std::swap(Start.x, Stop.x);
+        if (Start.y > Stop.y) std::swap(Start.y, Stop.y);
+
+        // Straight line case.
+        if (Start.x == Stop.x)
         {
-            std::swap(Start.x, Start.y);
-            std::swap(Stop.x, Stop.y);
-            std::swap(Localarea.x0, Localarea.y0);
-            std::swap(Localarea.x1, Localarea.y1);
+            for (Y = Start.y; Y != Stop.y; Y += Start.y <= Stop.y ? 1 : -1)
+            {
+                Callback({ Start.x, Y });
+            }
+            Callback(Stop);
+            return;
         }
-        if (Start.x > Stop.x || Start.y > Stop.y) std::swap(Start, Stop);
+        if (Start.y == Stop.y)
+        {
+            for (X = Start.x; X != Stop.x; X += Start.x <= Stop.x ? 1 : -1)
+            {
+                Callback({ X, Start.y });
+            }
+            Callback(Stop);
+            return;
+        }
 
         // How much to move per iteration.
         const auto DeltaX{ int16_t(Stop.x - Start.x) };
         const auto DeltaY{ int16_t(Stop.y - Start.y) };
 
-        // For each X coordinate.
-        int16_t Y{ Start.y }, Error{};
-        const auto Deltaerror{ int16_t(std::abs(DeltaY) * 2) };
-        for (int16_t X = Start.x; X < std::min(Stop.x, Localarea.x1); X++)
+        // If the line is steep.
+        if (DeltaX >= DeltaY)
         {
-            // End of line.
-            if (Y > Localarea.y1) break;
-
-            // Inside the clipping area.
-            if (Y >= Localarea.y0 && X >= Localarea.x0)
+            for (X = Start.x, Y = Start.y; X <= Stop.x; ++X)
             {
-                // Invert the coordinates if too steep.
-                if (Steep) Callback({ Y, X % (gRenderingresolution.y / 4) });
-                else Callback({ X, Y % (gRenderingresolution.y / 4) });
+                Callback({ X, Y });
+                Error += DeltaY;
+                if (Error >= DeltaX)
+                {
+                    Error -= DeltaX; Y++;
+                    Callback({ X, Y });
+                }
             }
-
-            // Update the error offset.
-            Error += Deltaerror;
-            if (Error > DeltaX)
+            Callback(Stop);
+        }
+        else
+        {
+            for (X = Start.x, Y = Start.y; Y <= Stop.y; ++Y)
             {
-                Y += Stop.y > Start.y ? 1 : -1;
-                Error -= DeltaX * 2;
+                Callback({ X, Y });
+                Error += DeltaX;
+                if (Error >= DeltaY)
+                {
+                    Error -= DeltaY; Y++;
+                    Callback({ X, Y });
+                }
             }
+            Callback(Stop);
         }
     }
 
@@ -214,7 +247,7 @@ namespace Engine::Rendering::Draw::Internal
     {
         const int16_t Width{ std::min(Area.x1, Currentclippingarea.x1) - std::max(Area.x0, Currentclippingarea.x0) };
         for (int16_t Y = std::max(Area.y0, Currentclippingarea.y0); Y < std::min(Area.y1, Currentclippingarea.y1); ++Y)
-            Callback({ std::max(Area.x0, Currentclippingarea.x0), Y % (gRenderingresolution.y / 4) }, Width);
+            Callback({ std::max(Area.x0, Currentclippingarea.x0), Y }, Width);
     }
 
     // Outline and fill polygons.
@@ -260,7 +293,7 @@ namespace Engine::Rendering::Draw::Internal
                     if (Nodes[i] < std::max(Currentclippingarea.x0, {})) Nodes[i] = std::max(Currentclippingarea.x0, {});
                     if (Nodes[i + 1] > std::min(Currentclippingarea.x1, gRenderingresolution.x)) Nodes[i + 1] = std::min(Currentclippingarea.x1, gRenderingresolution.x);
 
-                    Callback({ Nodes[i], Y % (gRenderingresolution.y / 4) }, Nodes[i + 1] - Nodes[i] + 1);
+                    Callback({ Nodes[i], Y }, Nodes[i + 1] - Nodes[i] + 1);
                 }
             }
         }
@@ -296,7 +329,7 @@ namespace Engine::Rendering::Draw::Internal
             // Outside of the clipping area.
             if (Position.y < Area.y0 || Position.y >= Area.y1) return;
             const point2_t Scanline{ std::max(Position.x, Area.x0), std::min(int16_t(Position.x + Length), Area.x1) };
-            Callback({ Scanline.x, Position.y % (gRenderingresolution.y / 4) }, std::max(int16_t(Scanline.y - Scanline.x), int16_t(1)));
+            Callback({ Scanline.x, Position.y }, std::max(int16_t(Scanline.y - Scanline.x), int16_t(1)));
         };
         auto doDrawing = [&](const point2_t Origin, const point2_t Size) -> void
         {
@@ -373,7 +406,7 @@ namespace Engine::Rendering::Draw::Internal
         doDrawing(Position, { X, Y });
 
         // Draw the rest of the owl..
-        X++; Y = int16_t(std::sqrt(R2 - int16_t(1)) + 0.5f);
+        Y = int16_t(std::sqrt(R2 - int16_t(1)) + 0.5f); X++;
         while (X < Y)
         {
             doDrawing(Position, { X, Y });
@@ -403,13 +436,14 @@ namespace Engine::Rendering::Draw
 {
     template <bool Outline> void Circle(const texture_t Color, const point2_t Position, const float Radius)
     {
-        if (Color.Alpha == 0.0f) return;
         if (Outline)
         {
             Internal::outlineCircle(Position, Radius, [&](const point2_t Position, const int16_t Length) -> void
             {
                 for (int16_t i = 0; i < Length; ++i)
-                    Internal::setPixel({ Position.x + i, Position.y }, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x + i % Color.Size.x], Color.Alpha);
+                {
+                    Internal::setPixel({ Position.x + i, Position.y }, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x + i % Color.Size.x]);
+                }
             });
         }
         else
@@ -417,166 +451,215 @@ namespace Engine::Rendering::Draw
             Internal::fillCircle(Position, Radius, [&](const point2_t Position, const int16_t Length) -> void
             {
                 for (int16_t i = 0; i < Length; ++i)
-                    Internal::setPixel({ Position.x + i, Position.y }, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x + i % Color.Size.x], Color.Alpha);
+                {
+                    Internal::setPixel({ Position.x + i, Position.y }, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x + i % Color.Size.x]);
+                }
             });
         }
     }
     template <bool Outline> void Circle(const rgba_t Color, const point2_t Position, const float Radius)
     {
-        if (Color.A == 0.0f) return;
         const auto Pixel{ Internal::fromRGBA(Color) };
+        if (Pixel.Raw[3] == 0) return;
 
         if (Outline)
         {
             Internal::outlineCircle(Position, Radius, [&](const point2_t Position, const int16_t Length) -> void
             {
-                for (int16_t i = 0; i < Length; ++i) Internal::setPixel({ Position.x + i, Position.y }, Pixel, Color.A);
+                for (int16_t i = 0; i < Length; ++i) Internal::setPixel({ Position.x + i, Position.y }, Pixel);
             });
         }
         else
         {
             Internal::fillCircle(Position, Radius, [&](const point2_t Position, const int16_t Length) -> void
             {
-                for (int16_t i = 0; i < Length; ++i) Internal::setPixel({ Position.x + i, Position.y }, Pixel, Color.A);
+                for (int16_t i = 0; i < Length; ++i) Internal::setPixel({ Position.x + i, Position.y }, Pixel);
             });
         }
     }
     template <bool Outline> void Polygon(const texture_t Color, const std::vector<vec2_t> Vertices)
     {
-        if (Color.Alpha == 0.0f) return;
         Internal::outlinePolygon(Vertices.data(), Vertices.size(), [&](const point2_t Position) -> void
         {
-            Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x], Color.Alpha);
+            Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x]);
         });
         if (!Outline)
         {
             Internal::fillPolygon(Vertices.data(), Vertices.size(), [&](const point2_t Position, const int16_t Length) -> void
             {
                 for (int16_t i = 0; i < Length; ++i)
-                    Internal::setPixel({ Position.x + i, Position.y }, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x + i % Color.Size.x], Color.Alpha);
+                {
+                    Internal::setPixel({ Position.x + i, Position.y }, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x + i % Color.Size.x]);
+                }
             });
         }
     }
     template <bool Outline> void Polygon(const rgba_t Color, const std::vector<vec2_t> Vertices)
     {
-        if (Color.A == 0.0f) return;
         const auto Pixel{ Internal::fromRGBA(Color) };
+        if (Pixel.Raw[3] == 0) return;
 
         Internal::outlinePolygon(Vertices.data(), Vertices.size(), [&](const point2_t Position) -> void
         {
-            Internal::setPixel(Position, Pixel, Color.A);
+            Internal::setPixel(Position, Pixel);
         });
         if (!Outline)
         {
             Internal::fillPolygon(Vertices.data(), Vertices.size(), [&](const point2_t Position, const int16_t Length) -> void
             {
-                for (int16_t i = 0; i < Length; ++i) Internal::setPixel({ Position.x + i, Position.y }, Pixel, Color.A);
+                for (int16_t i = 0; i < Length; ++i) Internal::setPixel({ Position.x + i, Position.y }, Pixel);
             });
         }
     }
     template <bool Outline> void Quad(const texture_t Color, const point4_t Area)
     {
-        if (Color.Alpha == 0.0f) return;
         #pragma warning(suppress: 4838)
         const vec2_t Vertices[] =
         {
-            {std::max(Area.x0, Currentclippingarea.x0), std::max(Area.y0, Currentclippingarea.y0)},
-            {std::min(Area.x1, int16_t(Currentclippingarea.x1 - 1)), std::max(Area.y0, Currentclippingarea.y0)},
-            {std::min(Area.x1, int16_t(Currentclippingarea.x1 - 1)), std::min(Area.y1, int16_t(Currentclippingarea.y1 - 1))},
-            {std::max(Area.x0, Currentclippingarea.x0), std::min(Area.y1, int16_t(Currentclippingarea.y1 - 1))},
-            {std::max(Area.x0, Currentclippingarea.x0), std::max(Area.y0, Currentclippingarea.y0)}
+            { std::max(Area.x0, Currentclippingarea.x0), std::max(Area.y0, Currentclippingarea.y0) },
+            { std::min(Area.x1, Currentclippingarea.x1), std::max(Area.y0, Currentclippingarea.y0) },
+            { std::min(Area.x1, Currentclippingarea.x1), std::min(Area.y1, Currentclippingarea.y1) },
+            { std::max(Area.x0, Currentclippingarea.x0), std::min(Area.y1, Currentclippingarea.y1) },
+            { std::max(Area.x0, Currentclippingarea.x0), std::max(Area.y0, Currentclippingarea.y0) }
         };
 
         Internal::outlinePolygon(Vertices, 5, [&](const point2_t Position) -> void
         {
-            Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x], Color.Alpha);
+            Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x]);
         });
         if (!Outline)
         {
             Internal::fillRect(Area, [&](const point2_t Position, const int16_t Length) -> void
             {
                 for (int16_t i = 0; i < Length; ++i)
-                    Internal::setPixel({ Position.x + i, Position.y }, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x + i % Color.Size.x], Color.Alpha);
+                {
+                    Internal::setPixel({ Position.x + i, Position.y }, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x + i % Color.Size.x]);
+                }
             });
         }
     }
     template <bool Outline> void Quad(const rgba_t Color, const point4_t Area)
     {
-        if (Color.A == 0.0f) return;
-        const auto Pixel{ Internal::fromRGBA(Color) };
         #pragma warning(suppress: 4838)
         const vec2_t Vertices[] =
         {
-            {std::max(Area.x0, Currentclippingarea.x0), std::max(Area.y0, Currentclippingarea.y0)},
-            {std::min(Area.x1, int16_t(Currentclippingarea.x1 - 1)), std::max(Area.y0, Currentclippingarea.y0)},
-            {std::min(Area.x1, int16_t(Currentclippingarea.x1 - 1)), std::min(Area.y1, int16_t(Currentclippingarea.y1 - 1))},
-            {std::max(Area.x0, Currentclippingarea.x0), std::min(Area.y1, int16_t(Currentclippingarea.y1 - 1))},
-            {std::max(Area.x0, Currentclippingarea.x0), std::max(Area.y0, Currentclippingarea.y0)}
+            { std::max(Area.x0, Currentclippingarea.x0), std::max(Area.y0, Currentclippingarea.y0) },
+            { std::min(Area.x1, Currentclippingarea.x1), std::max(Area.y0, Currentclippingarea.y0) },
+            { std::min(Area.x1, Currentclippingarea.x1), std::min(Area.y1, Currentclippingarea.y1) },
+            { std::max(Area.x0, Currentclippingarea.x0), std::min(Area.y1, Currentclippingarea.y1) },
+            { std::max(Area.x0, Currentclippingarea.x0), std::max(Area.y0, Currentclippingarea.y0) }
         };
+        const auto Pixel{ Internal::fromRGBA(Color) };
+        if (Pixel.Raw[3] == 0) return;
 
         Internal::outlinePolygon(Vertices, 5, [&](const point2_t Position) -> void
         {
-            Internal::setPixel(Position, Pixel, Color.A);
+            Internal::setPixel(Position, Pixel);
         });
         if (!Outline)
         {
             Internal::fillRect(Area, [&](const point2_t Position, const int16_t Length) -> void
             {
-                for (int16_t i = 0; i < Length; ++i) Internal::setPixel({ Position.x + i, Position.y }, Pixel, Color.A);
+                for (int16_t i = 0; i < Length; ++i) Internal::setPixel({ Position.x + i, Position.y }, Pixel);
             });
         }
     }
     void Line(const texture_t Color, const point2_t Start, const point2_t Stop)
     {
-        if (Color.Alpha == 0.0f) return;
         Internal::drawLine(Start, Stop, [&](const point2_t Position) -> void
         {
-            Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x], Color.Alpha);
+            Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x]);
         });
     }
     void Line(const rgba_t Color, const point2_t Start, const point2_t Stop)
     {
-        if (Color.A == 0.0f) return;
         const auto Pixel{ Internal::fromRGBA(Color) };
+        if (Pixel.Raw[3] == 0) return;
 
         Internal::drawLine(Start, Stop, [&](const point2_t Position) -> void
         {
-            Internal::setPixel(Position, Pixel, Color.A);
+            Internal::setPixel(Position, Pixel);
         });
     }
 
     // Special drawing.
-    void Pixelmask(const rgba_t Color, const point2_t Size, const size_t Segmentcount, const Pixelmask::segment_t *Segments)
+    void PNG(const unsigned char *Data, const size_t Size, const point4_t Area)
     {
-        const auto Pixel{ Internal::fromRGBA(Color) };
-        size_t Iterator = 0;
+        int Width, Height, Channels;
+        const auto Image = stbi_load_from_memory(Data, Size, &Width, &Height, &Channels, 0);
 
-        for (size_t i = 0; i < Segmentcount; ++i)
+        if (Channels == 3)
         {
-            auto Filled{ Pixelmask::Filled(Segments[i]) };
-            auto Blank{ Pixelmask::Blank(Segments[i]) };
+            const auto Pixels = (pixel24_t *)Image;
 
-            Iterator += Blank;
-            for (size_t c = 0; c < Filled; c++)
+            for (int16_t Y = std::max(Area.y0, Currentclippingarea.y0); Y < std::min(int16_t(Y + Height), Currentclippingarea.y1); ++Y)
             {
-                const auto Y = Iterator / Size.x;
-                const auto X = Iterator % Size.x;
-
-                if (Y >= Currentclippingarea.y0 && Y <= Currentclippingarea.y1)
+                for (int16_t X = std::max(Area.x0, Currentclippingarea.x0); X < std::min(int16_t(X + Width), Currentclippingarea.x1); ++X)
                 {
-                    if (X >= Currentclippingarea.x0 && X <= Currentclippingarea.x1)
-                    {
-                        Internal::setPixel(
-                            {
-                                int16_t(X % gRenderingresolution.x),
-                                int16_t(Y % (gRenderingresolution.y / 4))
-                            }, Pixel);
-                    }
-                }
+                    const auto Offset{ (Y % Height) * Width + (X % Width) };
 
-                Iterator++;
+                    // Windows expects BGR.
+                    std::swap(Pixels[Offset].Raw[0], Pixels[Offset].Raw[2]);
+                    Internal::setPixel({ X, Y }, Pixels[Offset]);
+                }
             }
         }
+        else if (Channels == 4)
+        {
+            const auto Pixels = (pixel32_t *)Image;
+
+            for (int16_t Y = std::max(Area.y0, Currentclippingarea.y0); Y < std::min(int16_t(Y + Height), Currentclippingarea.y1); ++Y)
+            {
+                for (int16_t X = std::max(Area.x0, Currentclippingarea.x0); X < std::min(int16_t(X + Width), Currentclippingarea.x1); ++X)
+                {
+                    const auto Offset{ (Y % Height) * Width + (X % Width) };
+
+                    // Windows expects BGR.
+                    std::swap(Pixels[Offset].Raw[0], Pixels[Offset].Raw[2]);
+                    Internal::setPixel({ X, Y }, Pixels[Offset]);
+                }
+            }
+        }
+    }
+    void PNGFile(const std::string &&Filename, const point4_t Area)
+    {
+        int Width, Height, Channels;
+        const auto Image = stbi_load(Filename.c_str(), &Width, &Height, &Channels, 0);
+
+        if (Channels == 3)
+        {
+            const auto Pixels = (pixel24_t *)Image;
+
+            for (int16_t Y = std::max(Area.y0, Currentclippingarea.y0); Y < std::min(int16_t(Y + Height), Currentclippingarea.y1); ++Y)
+            {
+                for (int16_t X = std::max(Area.x0, Currentclippingarea.x0); X < std::min(int16_t(X + Width), Currentclippingarea.x1); ++X)
+                {
+                    const auto Offset{ (Y % Height) * Width + (X % Width) };
+
+                    // Windows expects BGR.
+                    std::swap(Pixels[Offset].Raw[0], Pixels[Offset].Raw[2]);
+                    Internal::setPixel({ X, Y }, Pixels[Offset]);
+                }
+            }
+        }
+        else if (Channels == 4)
+        {
+            const auto Pixels = (pixel32_t *)Image;
+
+            for (int16_t Y = std::max(Area.y0, Currentclippingarea.y0); Y < std::min(int16_t(Y + Height), Currentclippingarea.y1); ++Y)
+            {
+                for (int16_t X = std::max(Area.x0, Currentclippingarea.x0); X < std::min(int16_t(X + Width), Currentclippingarea.x1); ++X)
+                {
+                    const auto Offset{ (Y % Height) * Width + (X % Width) };
+
+                    // Windows expects BGR.
+                    std::swap(Pixels[Offset].Raw[0], Pixels[Offset].Raw[2]);
+                    Internal::setPixel({ X, Y }, Pixels[Offset]);
+                }
+            }
+        }
+
+        stbi_image_free(Image);
     }
 }
 

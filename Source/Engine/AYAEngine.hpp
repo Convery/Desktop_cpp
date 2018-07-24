@@ -70,7 +70,7 @@ namespace Engine
     extern point2_t gRenderingresolution;
     extern point4_t gDisplayrectangle;
     extern Element_t *gRootelement;
-    extern void  *gWindowhandle;
+    extern void *gWindowhandle;
     extern bool gShouldquit;
     extern uint32_t gErrno;
 }
@@ -115,7 +115,8 @@ namespace Engine::Rendering::Draw
     void Line(const rgba_t Color, const point2_t Start, const point2_t Stop);
 
     // Special drawing.
-    void Pixelmask(const rgba_t Color, const point2_t Size, const size_t Segmentcount, const Pixelmask::segment_t *Segments);
+    void PNG(const unsigned char *Data, const size_t Size, const point4_t Area);
+    void PNGFile(const std::string &&Filename, const point4_t Area);
 }
 namespace Draw = Engine::Rendering::Draw;
 

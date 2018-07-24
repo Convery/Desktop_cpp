@@ -11,7 +11,7 @@ namespace Engine { bool gShouldquit{ false }; uint32_t gErrno{}; }
 
 int main(int argc, char **argv)
 {
-    Engine::Rendering::Invalidatearea({ 0, 0, 520, 720 });
+    Engine::Rendering::Invalidatearea({ 0, 0, 1920, 1080 });
     Engine::Compositing::Switchscene("loginmenu");
     Engine::Window::Centerwindow(false);            // Replace with Engine::Composition::Load("Blueprint.json");
     Engine::Window::Togglevisibility();
