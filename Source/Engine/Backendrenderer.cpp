@@ -152,17 +152,18 @@ namespace Engine::Rendering::Draw::Internal
     }
     ainline void setPixel(point2_t Position, const pixel32_t Color)
     {
+        // Buffer-width is currently equal to the rendering-resolution.
         Position.y %= gRenderingresolution.y / Canvas::Segments;
         // Position.x %= gRenderingresolution.x;
 
-        if (Color.BGRA.A == 0xFF)
+        // Alpha is always the last entry.
+        if (Color.Raw[3] == 0xFF)
         {
             std::memcpy(Canvas::Framebuffer[Position.y * gRenderingresolution.x + Position.x].Raw, Color.Raw, sizeof(pixel24_t));
         }
         else
         {
-            const float Normal = ((Color.Raw[3]) >> 7) + (Color.Raw[3]);
-            #define BLEND(A, B) A += int32_t((((A - B) * Normal))) >> 8;
+            #define BLEND(A, B) A += int32_t((((B - A) * Color.Raw[3]))) >> 8;
             BLEND(Canvas::Framebuffer[Position.y * gRenderingresolution.x + Position.x].Raw[0], Color.Raw[0]);
             BLEND(Canvas::Framebuffer[Position.y * gRenderingresolution.x + Position.x].Raw[1], Color.Raw[1]);
             BLEND(Canvas::Framebuffer[Position.y * gRenderingresolution.x + Position.x].Raw[2], Color.Raw[2]);
@@ -178,9 +179,6 @@ namespace Engine::Rendering::Draw::Internal
     ainline void drawLine(point2_t Start, point2_t Stop, CB Callback)
     {
         int16_t X, Y, Error{};
-
-        // Something went really wrong.
-        assert(!(Start.x == Stop.x && Start.y == Stop.y));
 
         // Always draw left to right, top to bottom.
         if (Start.x > Stop.x) std::swap(Start.x, Stop.x);
@@ -442,7 +440,8 @@ namespace Engine::Rendering::Draw
             {
                 for (int16_t i = 0; i < Length; ++i)
                 {
-                    Internal::setPixel({ Position.x + i, Position.y }, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x + i % Color.Size.x]);
+                    if (Color.Pixelsize == sizeof(pixel32_t)) Internal::setPixel({ Position.x + i, Position.y }, ((pixel32_t *)Color.Data)[(Position.y % Color.Dimensions.y) * Color.Dimensions.x + Position.x + i % Color.Dimensions.x]);
+                    else Internal::setPixel({ Position.x + i, Position.y }, ((pixel24_t *)Color.Data)[(Position.y % Color.Dimensions.y) * Color.Dimensions.x + Position.x + i % Color.Dimensions.x]);
                 }
             });
         }
@@ -452,7 +451,8 @@ namespace Engine::Rendering::Draw
             {
                 for (int16_t i = 0; i < Length; ++i)
                 {
-                    Internal::setPixel({ Position.x + i, Position.y }, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x + i % Color.Size.x]);
+                    if (Color.Pixelsize == sizeof(pixel32_t)) Internal::setPixel({ Position.x + i, Position.y }, ((pixel32_t *)Color.Data)[(Position.y % Color.Dimensions.y) * Color.Dimensions.x + Position.x + i % Color.Dimensions.x]);
+                    else Internal::setPixel({ Position.x + i, Position.y }, ((pixel24_t *)Color.Data)[(Position.y % Color.Dimensions.y) * Color.Dimensions.x + Position.x + i % Color.Dimensions.x]);
                 }
             });
         }
@@ -481,7 +481,8 @@ namespace Engine::Rendering::Draw
     {
         Internal::outlinePolygon(Vertices.data(), Vertices.size(), [&](const point2_t Position) -> void
         {
-            Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x]);
+            if (Color.Pixelsize == sizeof(pixel32_t)) Internal::setPixel({ Position.x, Position.y }, ((pixel32_t *)Color.Data)[(Position.y % Color.Dimensions.y) * Color.Dimensions.x + Position.x % Color.Dimensions.x]);
+            else Internal::setPixel({ Position.x, Position.y }, ((pixel24_t *)Color.Data)[(Position.y % Color.Dimensions.y) * Color.Dimensions.x + Position.x % Color.Dimensions.x]);
         });
         if (!Outline)
         {
@@ -489,7 +490,8 @@ namespace Engine::Rendering::Draw
             {
                 for (int16_t i = 0; i < Length; ++i)
                 {
-                    Internal::setPixel({ Position.x + i, Position.y }, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x + i % Color.Size.x]);
+                    if (Color.Pixelsize == sizeof(pixel32_t)) Internal::setPixel({ Position.x + i, Position.y }, ((pixel32_t *)Color.Data)[(Position.y % Color.Dimensions.y) * Color.Dimensions.x + Position.x + i % Color.Dimensions.x]);
+                    else Internal::setPixel({ Position.x + i, Position.y }, ((pixel24_t *)Color.Data)[(Position.y % Color.Dimensions.y) * Color.Dimensions.x + Position.x + i % Color.Dimensions.x]);
                 }
             });
         }
@@ -513,19 +515,26 @@ namespace Engine::Rendering::Draw
     }
     template <bool Outline> void Quad(const texture_t Color, const point4_t Area)
     {
+        // Check if the area is even valid.
+        if (Currentclippingarea.x0 > Area.x1 || Currentclippingarea.x1 < Area.x0 || Currentclippingarea.y0 > Area.y1 || Currentclippingarea.y1 < Area.y0)
+        {
+            return;
+        }
+
         #pragma warning(suppress: 4838)
         const vec2_t Vertices[] =
         {
-            { std::max(Area.x0, Currentclippingarea.x0), std::max(Area.y0, Currentclippingarea.y0) },
-            { std::min(Area.x1, Currentclippingarea.x1), std::max(Area.y0, Currentclippingarea.y0) },
-            { std::min(Area.x1, Currentclippingarea.x1), std::min(Area.y1, Currentclippingarea.y1) },
-            { std::max(Area.x0, Currentclippingarea.x0), std::min(Area.y1, Currentclippingarea.y1) },
-            { std::max(Area.x0, Currentclippingarea.x0), std::max(Area.y0, Currentclippingarea.y0) }
+            { std::clamp(Area.x0, Currentclippingarea.x0, Currentclippingarea.x1), std::clamp(Area.y0, Currentclippingarea.y0, Currentclippingarea.y1) },
+            { std::clamp(Area.x1, Currentclippingarea.x0, Currentclippingarea.x1), std::clamp(Area.y0, Currentclippingarea.y0, Currentclippingarea.y1) },
+            { std::clamp(Area.x1, Currentclippingarea.x0, Currentclippingarea.x1), std::clamp(Area.y1, Currentclippingarea.y0, Currentclippingarea.y1) },
+            { std::clamp(Area.x0, Currentclippingarea.x0, Currentclippingarea.x1), std::clamp(Area.y1, Currentclippingarea.y0, Currentclippingarea.y1) },
+            { std::clamp(Area.x0, Currentclippingarea.x0, Currentclippingarea.x1), std::clamp(Area.y0, Currentclippingarea.y0, Currentclippingarea.y1) }
         };
 
         Internal::outlinePolygon(Vertices, 5, [&](const point2_t Position) -> void
         {
-            Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x]);
+            if (Color.Pixelsize == sizeof(pixel32_t)) Internal::setPixel({ Position.x, Position.y }, ((pixel32_t *)Color.Data)[(Position.y % Color.Dimensions.y) * Color.Dimensions.x + Position.x % Color.Dimensions.x]);
+                    else Internal::setPixel({ Position.x, Position.y }, ((pixel24_t *)Color.Data)[(Position.y % Color.Dimensions.y) * Color.Dimensions.x + Position.x % Color.Dimensions.x]);
         });
         if (!Outline)
         {
@@ -533,21 +542,28 @@ namespace Engine::Rendering::Draw
             {
                 for (int16_t i = 0; i < Length; ++i)
                 {
-                    Internal::setPixel({ Position.x + i, Position.y }, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x + i % Color.Size.x]);
+                    if (Color.Pixelsize == sizeof(pixel32_t)) Internal::setPixel({ Position.x + i, Position.y }, ((pixel32_t *)Color.Data)[(Position.y % Color.Dimensions.y) * Color.Dimensions.x + Position.x + i % Color.Dimensions.x]);
+                    else Internal::setPixel({ Position.x + i, Position.y }, ((pixel24_t *)Color.Data)[(Position.y % Color.Dimensions.y) * Color.Dimensions.x + Position.x + i % Color.Dimensions.x]);
                 }
             });
         }
     }
     template <bool Outline> void Quad(const rgba_t Color, const point4_t Area)
     {
+        // Check if the area is even valid.
+        if (Currentclippingarea.x0 > Area.x1 || Currentclippingarea.x1 < Area.x0 || Currentclippingarea.y0 > Area.y1 || Currentclippingarea.y1 < Area.y0)
+        {
+            return;
+        }
+
         #pragma warning(suppress: 4838)
         const vec2_t Vertices[] =
         {
-            { std::max(Area.x0, Currentclippingarea.x0), std::max(Area.y0, Currentclippingarea.y0) },
-            { std::min(Area.x1, Currentclippingarea.x1), std::max(Area.y0, Currentclippingarea.y0) },
-            { std::min(Area.x1, Currentclippingarea.x1), std::min(Area.y1, Currentclippingarea.y1) },
-            { std::max(Area.x0, Currentclippingarea.x0), std::min(Area.y1, Currentclippingarea.y1) },
-            { std::max(Area.x0, Currentclippingarea.x0), std::max(Area.y0, Currentclippingarea.y0) }
+            { std::clamp(Area.x0, Currentclippingarea.x0, Currentclippingarea.x1), std::clamp(Area.y0, Currentclippingarea.y0, Currentclippingarea.y1) },
+            { std::clamp(Area.x1, Currentclippingarea.x0, Currentclippingarea.x1), std::clamp(Area.y0, Currentclippingarea.y0, Currentclippingarea.y1) },
+            { std::clamp(Area.x1, Currentclippingarea.x0, Currentclippingarea.x1), std::clamp(Area.y1, Currentclippingarea.y0, Currentclippingarea.y1) },
+            { std::clamp(Area.x0, Currentclippingarea.x0, Currentclippingarea.x1), std::clamp(Area.y1, Currentclippingarea.y0, Currentclippingarea.y1) },
+            { std::clamp(Area.x0, Currentclippingarea.x0, Currentclippingarea.x1), std::clamp(Area.y0, Currentclippingarea.y0, Currentclippingarea.y1) }
         };
         const auto Pixel{ Internal::fromRGBA(Color) };
         if (Pixel.Raw[3] == 0) return;
@@ -568,7 +584,8 @@ namespace Engine::Rendering::Draw
     {
         Internal::drawLine(Start, Stop, [&](const point2_t Position) -> void
         {
-            Internal::setPixel(Position, ((pixel24_t *)Color.Data)[(Position.y % Color.Size.y) * Color.Size.x + Position.x % Color.Size.x]);
+            if (Color.Pixelsize == sizeof(pixel32_t)) Internal::setPixel({ Position.x, Position.y }, ((pixel32_t *)Color.Data)[(Position.y % Color.Dimensions.y) * Color.Dimensions.x + Position.x % Color.Dimensions.x]);
+            else Internal::setPixel({ Position.x, Position.y }, ((pixel24_t *)Color.Data)[(Position.y % Color.Dimensions.y) * Color.Dimensions.x + Position.x % Color.Dimensions.x]);
         });
     }
     void Line(const rgba_t Color, const point2_t Start, const point2_t Stop)
@@ -623,38 +640,48 @@ namespace Engine::Rendering::Draw
     }
     void PNGFile(const std::string &&Filename, const point4_t Area)
     {
-        int Width, Height, Channels;
-        const auto Image = stbi_load(Filename.c_str(), &Width, &Height, &Channels, 0);
+        // Check if the area is even valid.
+        if (Currentclippingarea.x0 > Area.x1 || Currentclippingarea.x1 < Area.x0 || Currentclippingarea.y0 > Area.y1 || Currentclippingarea.y1 < Area.y0)
+        {
+            return;
+        }
 
-        if (Channels == 3)
+        // Load the image into memory.
+        int Imagewidth, Imageheight, Imagechannels;
+        const auto Image = stbi_load(Filename.c_str(), &Imagewidth, &Imageheight, &Imagechannels, 0);
+
+        // Set up the constraints.
+        point2_t Height{ std::max(Area.y0, Currentclippingarea.y0), std::min(int16_t(std::max(Area.y0, Currentclippingarea.y0) + Imageheight), Currentclippingarea.y1) };
+        point2_t Width{ std::max(Area.x0, Currentclippingarea.x0), std::min(int16_t(std::max(Area.x0, Currentclippingarea.x0) + Imagewidth), Currentclippingarea.x1) };
+
+        // No alpha channel.
+        if (Imagechannels == 3)
         {
             const auto Pixels = (pixel24_t *)Image;
 
-            for (int16_t Y = std::max(Area.y0, Currentclippingarea.y0); Y < std::min(int16_t(Y + Height), Currentclippingarea.y1); ++Y)
+            for (int16_t Y = Height.x; Y < Height.y; ++Y)
             {
-                for (int16_t X = std::max(Area.x0, Currentclippingarea.x0); X < std::min(int16_t(X + Width), Currentclippingarea.x1); ++X)
+                for (int16_t X = Width.x; X < Width.y; ++X)
                 {
-                    const auto Offset{ (Y % Height) * Width + (X % Width) };
-
                     // Windows expects BGR.
-                    std::swap(Pixels[Offset].Raw[0], Pixels[Offset].Raw[2]);
-                    Internal::setPixel({ X, Y }, Pixels[Offset]);
+                    const auto Offset{ (Y - Area.y0) * Imagewidth + (X - Area.x0) };
+                    Internal::setPixel({ X, Y }, { Pixels[Offset].RGB.B, Pixels[Offset].RGB.G, Pixels[Offset].RGB.R, 0xFF });
                 }
             }
         }
-        else if (Channels == 4)
+
+        // With alpha channel.
+        else if (Imagechannels == 4)
         {
             const auto Pixels = (pixel32_t *)Image;
 
-            for (int16_t Y = std::max(Area.y0, Currentclippingarea.y0); Y < std::min(int16_t(Y + Height), Currentclippingarea.y1); ++Y)
+            for (int16_t Y = Height.x; Y < Height.y; ++Y)
             {
-                for (int16_t X = std::max(Area.x0, Currentclippingarea.x0); X < std::min(int16_t(X + Width), Currentclippingarea.x1); ++X)
+                for (int16_t X = Width.x; X < Width.y; ++X)
                 {
-                    const auto Offset{ (Y % Height) * Width + (X % Width) };
-
                     // Windows expects BGR.
-                    std::swap(Pixels[Offset].Raw[0], Pixels[Offset].Raw[2]);
-                    Internal::setPixel({ X, Y }, Pixels[Offset]);
+                    const auto Offset{ (Y - Area.y0) % Imageheight * Imagewidth + (X - Area.x0) };
+                    Internal::setPixel({ X, Y }, { Pixels[Offset].RGBA.B, Pixels[Offset].RGBA.G, Pixels[Offset].RGBA.R, Pixels[Offset].RGBA.A });
                 }
             }
         }
@@ -666,8 +693,8 @@ namespace Engine::Rendering::Draw
 /*
     NOTE(Convery):
 
-    So apparently CL refuses to instantiate our templates if they are created in other objects.
-    So we need to touch them once in this object so that the linker has something to poke at.
+    So apparently CL refuses to instantiate our templates if they are created in other modules.
+    So we need to touch them once in this module so that the linker has something to poke at.
     Don't ask me why, just roll with it.
 */
 
