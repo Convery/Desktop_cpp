@@ -21,18 +21,28 @@ void Composeloginmenu(Element_t *Target)
     Target->addChild(Boundingbox);
 
     auto Loginarea = new Element_t("loginarea");
-    Loginarea->Margins = { 0.3f, 0.6f, 0.3f, 1.0f };
+    Loginarea->Margins = { 0.25f, 0.6f, 0.25f, 1.0f };
+    Loginarea->onRender = [](Element_t *Caller)
+    {
+        //Draw::Quad<true>({ 0, 0xFF, 0, 0xFF }, Caller->Dimensions);
+    };
     Boundingbox->addChild(Loginarea);
 
     auto Message = new Element_t("loginmessage");
-    Message->Margins = { 0, 0, 0, 1.0f };
+    Message->Margins = { 0.1f, 0.09f, 0, 1.5f };
     Message->onRender = [](Element_t *Caller)
     {
-        //Draw::PNGFile("../Assets/Logintext.png", Caller->Dimensions);
+        Draw::PNGFile("../Assets/Logintext.png", Caller->Dimensions);
     };
     Loginarea->addChild(Message);
 
-
+    auto Emailbox = new Element_t("emailbox");
+    Emailbox->Margins = { 0.025f, 0.5f, 0.025f, 1.0f };
+    Emailbox->onRender = [](Element_t *Caller)
+    {
+        Draw::PNGFile("../Assets/Emailbox.png", Caller->Dimensions);
+    };
+    Loginarea->addChild(Emailbox);
 
 
     auto Child = new Element_t("Test");

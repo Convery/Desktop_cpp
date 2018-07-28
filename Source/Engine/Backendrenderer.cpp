@@ -85,7 +85,7 @@ namespace Engine::Rendering
             // Debugging borders for the quadrants.
             if constexpr(Build::Debug::isDebugging)
             {
-                Draw::Quad<true>({ 0xFF, 0x00, 0xFF, 1 }, Clippingarea);
+                //Draw::Quad<true>({ 0xFF, 0x00, 0xFF, 1 }, Clippingarea);
             }
         };
 
@@ -659,7 +659,7 @@ namespace Engine::Rendering::Draw
         {
             const auto Pixels = (pixel24_t *)Image;
 
-            for (int16_t Y = Height.x; Y < Height.y; ++Y)
+            for (int16_t Y = Height.x; Y <= Height.y; ++Y)
             {
                 for (int16_t X = Width.x; X < Width.y; ++X)
                 {
@@ -675,7 +675,7 @@ namespace Engine::Rendering::Draw
         {
             const auto Pixels = (pixel32_t *)Image;
 
-            for (int16_t Y = Height.x; Y < Height.y; ++Y)
+            for (int16_t Y = Height.x; Y <= Height.y; ++Y)
             {
                 for (int16_t X = Width.x; X < Width.y; ++X)
                 {
