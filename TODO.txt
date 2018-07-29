@@ -5,4 +5,14 @@ We need to free this somehow.
 Pixelmasking should take an area to draw in.
 Masking needs an AA layer.
 
-PNGDrawing needs some rework when it goes into another render-area.
+After 30 sec of runtime NtTraceEvent is called which heapallocs.
+We need to stop this or free it..
+
+
+New renderingsystem idea:
+1. Everything is a quad, fuck lines.
+2. Move scanline by scanline and check if clipx < area x.
+3. Bitblt the scanline.
+
+
+
