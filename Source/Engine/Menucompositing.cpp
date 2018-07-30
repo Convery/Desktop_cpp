@@ -45,7 +45,7 @@ namespace Engine::Compositing
         else
         {
             auto Errorelement = new Element_t("I_am_error");
-            Errorelement->onRender = [](Element_t *Caller) { Draw::Quad({ 0xFF, 0, 0, 1 }, Caller->Dimensions); };
+            //Errorelement->onRender = [](Element_t *Caller) { Draw::Quad({ 0xFF, 0, 0, 1 }, Caller->Dimensions); };
             newRootelement->addChild(Errorelement);
         }
 
@@ -65,7 +65,7 @@ namespace Engine::Compositing
         else
         {
             auto Errorelement = new Element_t(va("Append_error_%s", Name.c_str()));
-            Errorelement->onRender = [](Element_t *Caller) { Draw::Quad({ 0xFF, 0, 0, 1 }, Caller->Dimensions); };
+            //Errorelement->onRender = [](Element_t *Caller) { Draw::Quad({ 0xFF, 0, 0, 1 }, Caller->Dimensions); };
             gRootelement->addChild(Errorelement);
         }
     }

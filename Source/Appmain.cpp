@@ -11,15 +11,17 @@ namespace Engine { bool gShouldquit{ false }; uint32_t gErrno{}; }
 
 int main(int argc, char **argv)
 {
-    Engine::Rendering::Invalidatearea({ 0, 0, 1920, 1080 });
+    // Have the window rendering in the highest allowed state.
+    SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
+
+    // Create the scene.
     Engine::Compositing::Switchscene("loginmenu");
-    Engine::Window::Centerwindow(false);            // Replace with Engine::Composition::Load("Blueprint.json");
+    Engine::Window::Centerwindow(false);
     Engine::Window::Togglevisibility();
 
     // Main application-loop.
-    while (!Engine::gShouldquit)
+    while (Engine::gErrno == 0)
     {
-        // Non-blocking call.
         Engine::Window::onFrame();
         std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 60));
     }

@@ -51,8 +51,9 @@ struct Element_t
     std::function<bool(Element_t *Caller, bool Released)> onHoover;
 
     // Update the state and draw, the renderer will do any needed culling.
+
+    std::function<void(Element_t *Caller, const int16_t Lineposition, uint8_t *Buffer)> onRender;
     std::function<void(Element_t *Caller, double Deltatime)> onFrame;
-    std::function<void(Element_t *Caller)> onRender;
 
     // Debugging helpers.
     #if !defined(NDEBUG)
@@ -67,11 +68,9 @@ struct Element_t
 namespace Engine
 {
     extern point2_t gWindowsize, gWindowposition;
-    extern point2_t gRenderingresolution;
     extern point4_t gDisplayrectangle;
     extern Element_t *gRootelement;
     extern void *gWindowhandle;
-    extern bool gShouldquit;
     extern uint32_t gErrno;
 }
 
@@ -93,17 +92,13 @@ namespace Engine::Rendering
 {
     // Process elements, render, and present to the context.
     void onRender(const void *Context);
-
-    // Invalidate the area that needs to be redrawn.
-    void Invalidatearea(point4_t Area);
-
-    // Create the framebuffer if needed.
-    void Createframebuffer(const point2_t Size);
 }
 
 // Draw calls for the elements that are called every frame.
 namespace Engine::Rendering::Draw
 {
+    #if 0
+
     // Outline == if we should only draw the outermost pixels for the specified shape.
     template <bool Outline = false> void Circle(const texture_t Color, const point2_t Position, const float Radius);
     template <bool Outline = false> void Circle(const rgba_t Color, const point2_t Position, const float Radius);
@@ -117,12 +112,19 @@ namespace Engine::Rendering::Draw
     // Special drawing.
     void PNG(const unsigned char *Data, const size_t Size, const point4_t Area);
     void PNGFile(const std::string &&Filename, const point4_t Area);
+
+    #endif
 }
 namespace Draw = Engine::Rendering::Draw;
 
 // Manage the scenes and compositing.
 namespace Engine::Compositing
 {
+
+
+
+
+
     // Recalculate all elements dimensions for when the window changes.
     void Recalculateroot();
 

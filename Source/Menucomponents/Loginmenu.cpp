@@ -10,13 +10,15 @@
 
 void Composeloginmenu(Element_t *Target)
 {
+    #if 0
+
     auto Boundingbox = new Element_t("loginmenu");
     Boundingbox->onRender = [](Element_t *Caller)
     {
         auto Localbox{ Caller->Dimensions };
         Localbox.x0 += 4;
         Localbox.x1 -= 4;
-        Draw::PNGFile("../Assets/Menubackground.png", Localbox);
+        //Draw::PNGFile("../Assets/Menubackground.png", Localbox);
     };
     Target->addChild(Boundingbox);
 
@@ -32,7 +34,7 @@ void Composeloginmenu(Element_t *Target)
     Message->Margins = { 0.1f, 0.09f, 0, 1.5f };
     Message->onRender = [](Element_t *Caller)
     {
-        Draw::PNGFile("../Assets/Logintext.png", Caller->Dimensions);
+        //Draw::PNGFile("../Assets/Logintext.png", Caller->Dimensions);
     };
     Loginarea->addChild(Message);
 
@@ -40,7 +42,7 @@ void Composeloginmenu(Element_t *Target)
     Emailbox->Margins = { 0.025f, 0.5f, 0.025f, 1.0f };
     Emailbox->onRender = [](Element_t *Caller)
     {
-        Draw::PNGFile("../Assets/Emailbox.png", Caller->Dimensions);
+        //Draw::PNGFile("../Assets/Emailbox.png", Caller->Dimensions);
     };
     Loginarea->addChild(Emailbox);
 
@@ -57,6 +59,8 @@ void Composeloginmenu(Element_t *Target)
 
     };
     //Boundingbox->addChild(Child);
+
+    #endif
 
     // A more manageable buffer-size.
     Engine::Window::Resize({ 520, 720 }, true);

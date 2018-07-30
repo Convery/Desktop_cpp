@@ -58,7 +58,7 @@ namespace Engine::Window
             // If we should quit, break the loop early.
             if (Event.message == WM_QUIT || Event.message == WM_DESTROY || (Event.message == WM_SYSCOMMAND && Event.wParam == SC_CLOSE))
             {
-                gShouldquit = true;
+                gErrno = Hash::FNV1a_32("VM_QUIT");
                 return;
             }
 

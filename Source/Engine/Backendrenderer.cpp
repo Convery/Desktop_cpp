@@ -11,33 +11,46 @@
 //#define STBI_NO_STDIO
 #define STB_IMAGE_IMPLEMENTATION
 #include "../Utility/stb_image.h"
-#include <emmintrin.h>
+#include <future>
 
 #if !defined(_WIN32)
     #error Non-windows abstraction is not implemented (yet!)
 #else
 namespace Engine::Rendering
 {
-    namespace Canvas
+    // Render a scanline to the screen.
+    void Renderline(const void *Context, const int16_t Lineposition)
     {
-        constexpr size_t Segments{ 5 };
-        pixel24_t *Framebuffer{};
-        BITMAPINFO Format{};
-        size_t Buffersize{};
-    }
+        static BITMAPINFO Lineformat{ { sizeof(BITMAPINFO), 1, 1, 1, 24 } };
+        const uint32_t Width{ uint32_t(gWindowsize.x * 3) };
+        Lineformat.bmiHeader.biWidth = gWindowsize.x;
+        uint8_t *Scanline;
 
-    const point4_t Defaultclippingarea{ -1, -1, -1, -1 };
-    point4_t Globalclippingarea{ Defaultclippingarea };
-    point2_t gRenderingresolution{100, 100};
-    point4_t Currentclippingarea{};
+        // Create a nice little buffer on the stack.
+        __asm sub esp, Width;
+        __asm mov edi, esp;
+        __asm mov Scanline, esp;
+        std::memset(Scanline, 0xFF, Width);
 
-    // Invalidate the area that needs to be redrawn.
-    void Invalidatearea(point4_t Area)
-    {
-        Globalclippingarea.x0 = std::max(Globalclippingarea.x0, Area.x0);
-        Globalclippingarea.y0 = std::max(Globalclippingarea.y0, Area.y0);
-        Globalclippingarea.x1 = std::max(Globalclippingarea.x1, Area.x1);
-        Globalclippingarea.y1 = std::max(Globalclippingarea.y1, Area.y1);
+        // Helper to save my fingers.
+        std::function<void(Element_t *)> Render = [&](Element_t *This) -> void
+        {
+            if (This->Dimensions.y0 > Lineposition || This->Dimensions.y1 < Lineposition)
+                return;
+
+            if (This->onRender) This->onRender(This, Lineposition, Scanline);
+            for (const auto &Item : This->Childelements) Render(Item);
+        };
+
+        // Render all elements.
+        assert(gRootelement);
+        Render(gRootelement);
+
+        // Bitblt to screen.
+        SetDIBitsToDevice((HDC)Context, 0, Lineposition, gWindowsize.x, 1, 0, 0, 0, 1, Scanline, &Lineformat, DIB_RGB_COLORS);
+
+        // Delete our buffer.
+        __asm add esp, Width;
     }
 
     // Process elements, render, and present to the context.
@@ -60,78 +73,8 @@ namespace Engine::Rendering
         assert(gRootelement);
         Tick(gRootelement);
 
-        // If the global area is unmodified, don't render anything.
-        if (0 == std::memcmp(Globalclippingarea.Raw, Defaultclippingarea.Raw, sizeof(point4_t))) return;
-
-        // Render a part of the window.
-        auto Rendersegment = [&](point4_t Clippingarea) -> void
-        {
-            Currentclippingarea = Clippingarea;
-
-            // Clear the buffer.
-            std::memset(Canvas::Framebuffer, 0xFF, Canvas::Buffersize);
-
-            // Helper to save my fingers.
-            std::function<void(Element_t *)> Render = [&](Element_t *This) -> void
-            {
-                if (This->onRender) This->onRender(This);
-                for (const auto &Item : This->Childelements) Render(Item);
-            };
-
-            // Render all elements.
-            assert(gRootelement);
-            Render(gRootelement);
-
-            // Debugging borders for the quadrants.
-            if constexpr(Build::Debug::isDebugging)
-            {
-                //Draw::Quad<true>({ 0xFF, 0x00, 0xFF, 1 }, Clippingarea);
-            }
-        };
-
-        // Don't render off-screen.
-        Globalclippingarea.x1 = std::clamp(Globalclippingarea.x1, {}, int16_t(gRenderingresolution.x));
-        Globalclippingarea.y1 = std::clamp(Globalclippingarea.y1, {}, int16_t(gRenderingresolution.y));
-
-        // Render each dirty segment.
-        for (int16_t i = 0; i < Canvas::Segments; ++i)
-        {
-            // Out of bounds.
-            if (Globalclippingarea.x0 > int16_t(gRenderingresolution.x)) continue;
-            if (Globalclippingarea.y1 < int16_t(gRenderingresolution.y / Canvas::Segments * i)) continue;
-            if (Globalclippingarea.y0 > int16_t(gRenderingresolution.y / Canvas::Segments * (i + 1))) continue;
-
-            Rendersegment({ 0, int16_t(gRenderingresolution.y / Canvas::Segments * i), int16_t(gRenderingresolution.x - 1), int16_t(gRenderingresolution.y / Canvas::Segments * (i + 1) - 1) });
-            StretchDIBits(HDC(Context), 0, int(gRenderingresolution.y / Canvas::Segments) * i, gRenderingresolution.x, int(gRenderingresolution.y / Canvas::Segments), 0, 0,
-                gRenderingresolution.x, gRenderingresolution.y / Canvas::Segments, Canvas::Framebuffer, &Canvas::Format, DIB_RGB_COLORS, SRCCOPY);
-        }
-
-        // Reset the dirty area.
-        //Globalclippingarea = Defaultclippingarea;
-    }
-
-    // Create the framebuffer if needed.
-    void Createframebuffer(const point2_t Size)
-    {
-        auto Devicecontext{ GetDC(NULL) };
-        gRenderingresolution = Size;
-
-        // Bitmap format, upside-down because Windows.
-        Canvas::Format.bmiHeader.biHeight = -(gRenderingresolution.y / Canvas::Segments);
-        Canvas::Format.bmiHeader.biWidth = gRenderingresolution.x;
-        Canvas::Format.bmiHeader.biSize = sizeof(BITMAPINFO);
-        Canvas::Format.bmiHeader.biCompression = BI_RGB;
-        Canvas::Format.bmiHeader.biBitCount = 24;
-        Canvas::Format.bmiHeader.biPlanes = 1;
-
-        // Create the new buffer padded to a multiple of 128bit.
-        if (Canvas::Framebuffer) std::thread([=]() { std::this_thread::sleep_for(std::chrono::seconds(1)); HeapFree(GetProcessHeap(), NULL, Canvas::Framebuffer); }).detach();
-        Canvas::Buffersize = gRenderingresolution.y / Canvas::Segments * gRenderingresolution.x * sizeof(pixel24_t);
-        Canvas::Buffersize += 16 + (Canvas::Buffersize % 16) ? (16 - (Canvas::Buffersize % 16)) : 0;
-        Canvas::Framebuffer = (pixel24_t *)HeapAlloc(GetProcessHeap(), NULL, Canvas::Buffersize);
-
-        // C-style cleanup needed.
-        DeleteDC(Devicecontext);
+        // Render all the scanlines in the main thread.
+        for (uint32_t i = 0; i < gWindowsize.y; ++i) Renderline(Context, i);
     }
 }
 #endif
@@ -150,29 +93,28 @@ namespace Engine::Rendering::Draw::Internal
             uint8_t(Color.A <= 1 ? Color.A * 255 : Color.A)
         };
     }
-    ainline void setPixel(point2_t Position, const pixel32_t Color)
+    ainline void setPixel(const size_t Offset, const pixel32_t Color, pixel24_t *Scanline)
     {
-        // Buffer-width is currently equal to the rendering-resolution.
-        Position.y %= gRenderingresolution.y / Canvas::Segments;
-        // Position.x %= gRenderingresolution.x;
-
         // Alpha is always the last entry.
         if (Color.Raw[3] == 0xFF)
         {
-            std::memcpy(Canvas::Framebuffer[Position.y * gRenderingresolution.x + Position.x].Raw, Color.Raw, sizeof(pixel24_t));
+            std::memcpy(Scanline[Offset].Raw, Color.Raw, sizeof(pixel24_t));
         }
         else
         {
             #define BLEND(A, B) A += int32_t((((B - A) * Color.Raw[3]))) >> 8;
-            BLEND(Canvas::Framebuffer[Position.y * gRenderingresolution.x + Position.x].Raw[0], Color.Raw[0]);
-            BLEND(Canvas::Framebuffer[Position.y * gRenderingresolution.x + Position.x].Raw[1], Color.Raw[1]);
-            BLEND(Canvas::Framebuffer[Position.y * gRenderingresolution.x + Position.x].Raw[2], Color.Raw[2]);
+            BLEND(Scanline[Offset].Raw[0], Color.Raw[0]);
+            BLEND(Scanline[Offset].Raw[1], Color.Raw[1]);
+            BLEND(Scanline[Offset].Raw[2], Color.Raw[2]);
         }
     }
-    ainline void setPixel(const point2_t Position, const pixel24_t Color)
+    ainline void setPixel(const size_t Offset, const pixel24_t Color, pixel24_t *Scanline)
     {
-        return setPixel(Position, { Color.Raw[0], Color.Raw[1], Color.Raw[2], 0xFF });
+        return setPixel(Offset, { Color.Raw[0], Color.Raw[1], Color.Raw[2], 0xFF }, Scanline);
     }
+
+
+    #if 0
 
     // Draw a simple line, should add some anti-aliasing later.
     template<typename CB = std::function<void(const point2_t Position)>>
@@ -427,6 +369,7 @@ namespace Engine::Rendering::Draw::Internal
     {
         return drawCircle<false>(Position, Radius, Callback);
     }
+
 }
 
 // Draw-calls for the elements that are called every frame.
@@ -688,6 +631,8 @@ namespace Engine::Rendering::Draw
 
         stbi_image_free(Image);
     }
+
+    #endif
 }
 
 /*
@@ -700,6 +645,7 @@ namespace Engine::Rendering::Draw
 
 void Microsoft_hackery_do_not_call_this()
 {
+    #if 0
     Draw::Circle(texture_t(), point2_t(), float());
     Draw::Circle(rgba_t(), point2_t(), float());
     Draw::Polygon(texture_t(), std::vector<vec2_t>());
@@ -713,4 +659,5 @@ void Microsoft_hackery_do_not_call_this()
     Draw::Polygon<true>(rgba_t(), std::vector<vec2_t>());
     Draw::Quad<true>(texture_t(), point4_t());
     Draw::Quad<true>(rgba_t(), point4_t());
+    #endif
 }
