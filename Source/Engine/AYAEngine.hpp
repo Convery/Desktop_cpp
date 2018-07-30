@@ -51,9 +51,8 @@ struct Element_t
     std::function<bool(Element_t *Caller, bool Released)> onHoover;
 
     // Update the state and draw, the renderer will do any needed culling.
-
-    std::function<void(Element_t *Caller, const int16_t Lineposition, uint8_t *Buffer)> onRender;
     std::function<void(Element_t *Caller, double Deltatime)> onFrame;
+    std::function<void(Element_t *Caller)> onRender;
 
     // Debugging helpers.
     #if !defined(NDEBUG)
@@ -90,6 +89,9 @@ namespace Engine::Window
 // Render into a framebuffer and present.
 namespace Engine::Rendering
 {
+    extern int16_t Currentline;
+    extern uint8_t *Scanline;
+
     // Process elements, render, and present to the context.
     void onRender(const void *Context);
 }

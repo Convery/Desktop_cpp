@@ -13,71 +13,7 @@
 #include "../Utility/stb_image.h"
 #include <future>
 
-#if !defined(_WIN32)
-    #error Non-windows abstraction is not implemented (yet!)
-#else
-namespace Engine::Rendering
-{
-    // Render a scanline to the screen.
-    void Renderline(const void *Context, const int16_t Lineposition)
-    {
-        static BITMAPINFO Lineformat{ { sizeof(BITMAPINFO), 1, 1, 1, 24 } };
-        const uint32_t Width{ uint32_t(gWindowsize.x * 3) };
-        Lineformat.bmiHeader.biWidth = gWindowsize.x;
-        uint8_t *Scanline;
 
-        // Create a nice little buffer on the stack.
-        __asm sub esp, Width;
-        __asm mov edi, esp;
-        __asm mov Scanline, esp;
-        std::memset(Scanline, 0xFF, Width);
-
-        // Helper to save my fingers.
-        std::function<void(Element_t *)> Render = [&](Element_t *This) -> void
-        {
-            if (This->Dimensions.y0 > Lineposition || This->Dimensions.y1 < Lineposition)
-                return;
-
-            if (This->onRender) This->onRender(This, Lineposition, Scanline);
-            for (const auto &Item : This->Childelements) Render(Item);
-        };
-
-        // Render all elements.
-        assert(gRootelement);
-        Render(gRootelement);
-
-        // Bitblt to screen.
-        SetDIBitsToDevice((HDC)Context, 0, Lineposition, gWindowsize.x, 1, 0, 0, 0, 1, Scanline, &Lineformat, DIB_RGB_COLORS);
-
-        // Delete our buffer.
-        __asm add esp, Width;
-    }
-
-    // Process elements, render, and present to the context.
-    void onRender(const void *Context)
-    {
-        // Track the frame-time, should be less than 33ms.
-        static auto Lastframe{ std::chrono::high_resolution_clock::now() };
-        const auto Currentframe{ std::chrono::high_resolution_clock::now() };
-        const auto Deltatime{ std::chrono::duration<double>(Currentframe - Lastframe).count() };
-        Lastframe = Currentframe;
-
-        // Helper to save my fingers.
-        std::function<void(Element_t *)> Tick = [&](Element_t *This) -> void
-        {
-            if (This->onFrame) This->onFrame(This, Deltatime);
-            for (const auto &Item : This->Childelements) Tick(Item);
-        };
-
-        // Update all elements.
-        assert(gRootelement);
-        Tick(gRootelement);
-
-        // Render all the scanlines in the main thread.
-        for (uint32_t i = 0; i < gWindowsize.y; ++i) Renderline(Context, i);
-    }
-}
-#endif
 
 // Drawing primitives.
 namespace Engine::Rendering::Draw::Internal
@@ -93,24 +29,139 @@ namespace Engine::Rendering::Draw::Internal
             uint8_t(Color.A <= 1 ? Color.A * 255 : Color.A)
         };
     }
-    ainline void setPixel(const size_t Offset, const pixel32_t Color, pixel24_t *Scanline)
+    ainline void setPixel(const size_t Offset, const pixel32_t Color)
     {
         // Alpha is always the last entry.
         if (Color.Raw[3] == 0xFF)
         {
-            std::memcpy(Scanline[Offset].Raw, Color.Raw, sizeof(pixel24_t));
+            std::memcpy(((pixel24_t *)Scanline)[Offset].Raw, Color.Raw, sizeof(pixel24_t));
         }
         else
         {
             #define BLEND(A, B) A += int32_t((((B - A) * Color.Raw[3]))) >> 8;
-            BLEND(Scanline[Offset].Raw[0], Color.Raw[0]);
-            BLEND(Scanline[Offset].Raw[1], Color.Raw[1]);
-            BLEND(Scanline[Offset].Raw[2], Color.Raw[2]);
+            BLEND(((pixel24_t *)Scanline)[Offset].Raw[0], Color.Raw[0]);
+            BLEND(((pixel24_t *)Scanline)[Offset].Raw[1], Color.Raw[1]);
+            BLEND(((pixel24_t *)Scanline)[Offset].Raw[2], Color.Raw[2]);
         }
     }
-    ainline void setPixel(const size_t Offset, const pixel24_t Color, pixel24_t *Scanline)
+    ainline void setPixel(const size_t Offset, const pixel24_t Color)
     {
-        return setPixel(Offset, { Color.Raw[0], Color.Raw[1], Color.Raw[2], 0xFF }, Scanline);
+        return setPixel(Offset, { Color.Raw[0], Color.Raw[1], Color.Raw[2], 0xFF });
+    }
+
+    // Outline and fill circles.
+    template <bool Fill = true, typename CB = std::function<void(const point2_t Position, const int16_t Length)>>
+    ainline void drawCircle(const point2_t Position, const float Radius, CB Callback)
+    {
+        const double R2{ Radius * Radius };
+        int16_t X{}, Y{ int16_t(Radius) };
+
+        // Helpers to keep the algorithm cleaner.
+        auto doCallback = [&Callback](const point2_t Position, const size_t Length = 1) -> void
+        {
+            if (Position.y == Currentline)
+            {
+                const point2_t Scanline{ Position.x, std::min(int16_t(Position.x + Length), gWindowsize.x) };
+                Callback({ Scanline.x, Position.y }, std::max(int16_t(Scanline.y - Scanline.x), int16_t(1)));
+            }
+        };
+        auto doDrawing = [&](const point2_t Origin, const point2_t Size) -> void
+        {
+            if (Size.x == 0)
+            {
+                doCallback({ Origin.x, int16_t(Origin.y + Size.y) });
+                doCallback({ Origin.x, int16_t(Origin.y - Size.y) });
+
+                if (Fill)
+                {
+                    doCallback({ int16_t(Origin.x - Size.y), Origin.y }, Size.y * 2);
+                }
+                else
+                {
+                    doCallback({ int16_t(Origin.x + Size.y), Origin.y });
+                    doCallback({ int16_t(Origin.x - Size.y), Origin.y });
+                }
+                return;
+            }
+
+            if (Size.x == Size.y)
+            {
+                if (Fill)
+                {
+                    doCallback({ int16_t(Origin.x - Size.x), int16_t(Origin.y + Size.y) }, Size.x * 2);
+                    doCallback({ int16_t(Origin.x - Size.x), int16_t(Origin.y - Size.y) }, Size.x * 2);
+                }
+                else
+                {
+                    doCallback({ int16_t(Origin.x + Size.x), int16_t(Origin.y + Size.y) });
+                    doCallback({ int16_t(Origin.x - Size.x), int16_t(Origin.y + Size.y) });
+                    doCallback({ int16_t(Origin.x + Size.x), int16_t(Origin.y - Size.y) });
+                    doCallback({ int16_t(Origin.x - Size.x), int16_t(Origin.y - Size.y) });
+                }
+                return;
+            }
+
+            if (Size.x < Size.y)
+            {
+                if (Fill)
+                {
+                    /*
+                        HACK(Convery):
+                        We can not draw multiple lines with the same Y coord
+                        because it messes up the alpha-blending and creates
+                        an orb-like effect. https://i.imgur.com/AhdOsqp.png
+                    */
+                    thread_local int16_t PreviousY = -1;
+                    if (PreviousY != Size.y)
+                    {
+                        doCallback({ int16_t(Origin.x - Size.x), int16_t(Origin.y + Size.y) }, Size.x * 2);
+                        doCallback({ int16_t(Origin.x - Size.x), int16_t(Origin.y - Size.y) }, Size.x * 2);
+                        PreviousY = Size.y;
+                    }
+                    doCallback({ int16_t(Origin.x - Size.y), int16_t(Origin.y + Size.x) }, Size.y * 2);
+                    doCallback({ int16_t(Origin.x - Size.y), int16_t(Origin.y - Size.x) }, Size.y * 2);
+                }
+                else
+                {
+                    doCallback({ int16_t(Origin.x + Size.x), int16_t(Origin.y + Size.y) });
+                    doCallback({ int16_t(Origin.x - Size.x), int16_t(Origin.y + Size.y) });
+                    doCallback({ int16_t(Origin.x + Size.x), int16_t(Origin.y - Size.y) });
+                    doCallback({ int16_t(Origin.x - Size.x), int16_t(Origin.y - Size.y) });
+                    doCallback({ int16_t(Origin.x + Size.y), int16_t(Origin.y + Size.x) });
+                    doCallback({ int16_t(Origin.x - Size.y), int16_t(Origin.y + Size.x) });
+                    doCallback({ int16_t(Origin.x + Size.y), int16_t(Origin.y - Size.x) });
+                    doCallback({ int16_t(Origin.x - Size.y), int16_t(Origin.y - Size.x) });
+                }
+                return;
+            }
+        };
+
+        // Draw the cardinals..
+        doDrawing(Position, { X, Y });
+
+        // Draw the rest of the owl..
+        Y = int16_t(std::sqrt(R2 - int16_t(1)) + 0.5f); X++;
+        while (X < Y)
+        {
+            doDrawing(Position, { X, Y });
+            X++; Y = int16_t(std::sqrt(R2 - X * X) + 0.5f);
+        }
+
+        // Precision..
+        if (X == Y)
+        {
+            doDrawing(Position, { X, Y });
+        }
+    }
+    template<typename CB = std::function<void(const point2_t Position, const int16_t Length)>>
+    ainline void fillCircle(const point2_t Position, const float Radius, CB Callback)
+    {
+        return drawCircle<true>(Position, Radius, Callback);
+    }
+    template<typename CB = std::function<void(const point2_t Position, const int16_t Length)>>
+    ainline void outlineCircle(const point2_t Position, const float Radius, CB Callback)
+    {
+        return drawCircle<false>(Position, Radius, Callback);
     }
 
 
@@ -634,6 +685,77 @@ namespace Engine::Rendering::Draw
 
     #endif
 }
+
+#if !defined(_WIN32)
+    #error Non-windows abstraction is not implemented (yet!)
+#else
+namespace Engine::Rendering
+{
+    int16_t Currentline;
+    uint8_t *Scanline;
+
+    // Process elements, render, and present to the context.
+    void onRender(const void *Context)
+    {
+        // Track the frame-time, should be less than 33ms.
+        static auto Lastframe{ std::chrono::high_resolution_clock::now() };
+        const auto Currentframe{ std::chrono::high_resolution_clock::now() };
+        const auto Deltatime{ std::chrono::duration<double>(Currentframe - Lastframe).count() };
+        Lastframe = Currentframe;
+
+        // Helper to save my fingers.
+        std::function<void(Element_t *)> Tick = [&](Element_t *This) -> void
+        {
+            if (This->onFrame) This->onFrame(This, Deltatime);
+            for (const auto &Item : This->Childelements) Tick(Item);
+        };
+
+        // Update all elements.
+        assert(gRootelement);
+        Tick(gRootelement);
+
+        // Initialize the scanline info for this pass.
+        static BITMAPINFO Lineformat{ { sizeof(BITMAPINFO), 1, 1, 1, 24 } };
+        const uint32_t Width{ uint32_t(gWindowsize.x * 3) };
+        Lineformat.bmiHeader.biWidth = gWindowsize.x;
+
+        // Create a nice little buffer on the stack.
+        __asm
+        {
+            sub esp, Width;
+            mov edi, esp;
+            mov Scanline, esp;
+        }
+
+        // Render all the scanlines in the main thread.
+        for (int16_t i = 0; i < gWindowsize.y; ++i)
+        {
+            Currentline = i;
+            std::memset(Scanline, 0xFF, Width);
+
+            // Helper to save my fingers.
+            std::function<void(Element_t *)> Render = [&](Element_t *This) -> void
+            {
+                if (This->Dimensions.y0 > Currentline || This->Dimensions.y1 < Currentline)
+                    return;
+
+                if (This->onRender) This->onRender(This);
+                for (const auto &Item : This->Childelements) Render(Item);
+            };
+
+            // Render all elements.
+            assert(gRootelement);
+            Render(gRootelement);
+
+            // Bitblt to screen.
+            SetDIBitsToDevice((HDC)Context, 0, i, gWindowsize.x, 1, 0, 0, 0, 1, Scanline, &Lineformat, DIB_RGB_COLORS);
+        }
+
+        // Delete our buffer.
+        __asm add esp, Width;
+    }
+}
+#endif
 
 /*
     NOTE(Convery):
