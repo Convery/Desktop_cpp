@@ -10,6 +10,89 @@
 
 void Composeloginmenu(Element_t *Target)
 {
+    auto Boundingbox = new Element_t("Content.Login");
+    auto Loginbox = new Element_t("Login.Wrap");
+    auto Titlebox = new Element_t("Wrap.Title");
+    auto Emailbox = new Element_t("Wrap.Email");
+    auto SSOBox = new Element_t("Wrap.SSO");
+    auto Github = new Element_t("SSO.Github");
+    auto Twitter = new Element_t("SSO.Twitter");       
+    auto Google = new Element_t("SSO.Googleplus");
+
+    // Set up the background.
+    Boundingbox->Margins = { 50, 20, 539, 720 };
+    Boundingbox->Properties.Fixedwidth = true;
+    Boundingbox->Properties.Fixedheight = true;
+    Boundingbox->onRender = [](Element_t *Caller)
+    {
+        auto Localbox{ Caller->Dimensions };
+        Localbox.x0 -= 11;
+        Draw::Quad(Assets::Menubackground, Localbox);
+    };
+    Target->addChild(Boundingbox);
+    
+    // Limit the login-area.
+    Loginbox->Margins = { 0.2f, 0.6f, 0.2f, 0.8f };
+    Loginbox->onRender = [](Element_t *Caller)
+    {
+        //Draw::Quad<true>({ 0, 0xFF, 0, 0xFF }, Caller->Dimensions);
+    };
+    Boundingbox->addChild(Loginbox);
+
+    // Notify the user what to do.
+    Titlebox->Margins = { 22, 3, 368, 26 };
+    Titlebox->Properties.Fixedheight = true;
+    Titlebox->Properties.Fixedwidth = true;
+    Titlebox->onRender = [](Element_t *Caller)
+    {
+        Draw::Quad(Assets::Logintext, Caller->Dimensions);
+    };
+    Loginbox->addChild(Titlebox);
+
+    // Give the user the option to use an email.
+    Emailbox->Margins = { 6, 36, 384, 75 };
+    Emailbox->Properties.Fixedheight = true;
+    Emailbox->Properties.Fixedwidth = true;
+    Emailbox->onRender = [](Element_t *Caller)
+    {
+        Draw::Quad(Assets::Emailbox, Caller->Dimensions);
+    };
+    Loginbox->addChild(Emailbox);
+
+    // Or to use another site.
+    SSOBox->Margins = { 0, 81, 0, 120 };
+    SSOBox->Properties.Fixedheight = true;
+    Loginbox->addChild(SSOBox);
+
+    // Like github.
+    Github->Margins = { 6, 0, 130, 0 };
+    Github->Properties.Fixedwidth = true;
+    Github->onRender = [](Element_t *Caller)
+    {
+        Draw::Quad(Assets::Github, Caller->Dimensions);
+    };
+    SSOBox->addChild(Github);
+    
+    // Or twitter.
+    Twitter->Margins = { 136, 0, 256, 0 };
+    Twitter->Properties.Fixedwidth = true;
+    Twitter->onRender = [](Element_t *Caller)
+    {
+        Draw::Quad(Assets::Twitter, Caller->Dimensions);
+    };
+    SSOBox->addChild(Twitter);
+
+    // Or google.
+    Google->Margins = { 262, 0, 385, 0 };
+    Google->Properties.Fixedwidth = true;
+    Google->onRender = [](Element_t *Caller)
+    {
+        Draw::Quad(Assets::Google, Caller->Dimensions);
+    };
+    SSOBox->addChild(Google);
+
+#if 0
+
     auto Boundingbox = new Element_t("loginmenu");
     Boundingbox->Margins = { 50, 20, 539, 720 };
     Boundingbox->Properties.Fixedwidth = true;
@@ -19,12 +102,11 @@ void Composeloginmenu(Element_t *Target)
         auto Localbox{ Caller->Dimensions };
         Localbox.x0 -= 11;
         Draw::Quad(Assets::Menubackground, Localbox);
-        //Draw::Quad({ 0, 0xFF, 0xFF, 0xFF }, Caller->Dimensions);
     };
     Target->addChild(Boundingbox);
 
     auto Loginarea = new Element_t("loginarea");
-    Loginarea->Margins = { 0.25f, 0.6f, 0.25f, 1.0f };
+    Loginarea->Margins = { 0.2f, 0.6f, 0.2f, 1.0f };
     Loginarea->onRender = [](Element_t *Caller)
     {
         Draw::Quad<true>({ 0, 0xFF, 0, 0xFF }, Caller->Dimensions);
@@ -32,12 +114,12 @@ void Composeloginmenu(Element_t *Target)
     Boundingbox->addChild(Loginarea);
 
     auto Message = new Element_t("loginmessage");
-    Message->Margins = { 0.1f, 0.09f };
+    Message->Margins = { 0, 0, 0, 24 };
+    Message->Properties.Fixedheight = true;
+    Message->Properties.Fixedwidth = true;
     Message->onRender = [](Element_t *Caller)
     {
         auto Localbox{ Caller->Dimensions };
-        Localbox.x1 = Localbox.x0 + Assets::Logintext.Dimensions.x;
-        Localbox.y1 = Localbox.y0 + Assets::Logintext.Dimensions.y;
         Draw::Quad(Assets::Logintext, Localbox);
     };
     Loginarea->addChild(Message);
@@ -53,7 +135,6 @@ void Composeloginmenu(Element_t *Target)
     };
     Loginarea->addChild(Emailbox);
 
-#if 0
     auto Child = new Element_t("Test");
     Child->Margins = { 0.1f, 0.0f, 0.1f, 0.05f };
     Child->onRender = [](Element_t *Caller) {
