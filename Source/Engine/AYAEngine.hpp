@@ -12,15 +12,15 @@
 // All components derive from the base element.
 struct Element_t
 {
-    // State so callbacks only fire when changed.
-    struct
-    {
-        unsigned int Hoover : 1;
-        unsigned int Clicked : 1;
-        unsigned int Reserved : 6;
-    } Elementstate{};
     point4_t Dimensions{};
     vec4_t Margins{};
+    struct
+    {
+        unsigned int Fixed : 1;
+        unsigned int Hoover : 1;
+        unsigned int Clicked : 1;
+        unsigned int Reserved : 5;
+    } Properties{};
 
     // The children inherit the parents dimensions - margins.
     std::vector<Element_t *> Childelements{};
@@ -33,11 +33,23 @@ struct Element_t
 
             for (auto &Child : Target->Childelements)
             {
-                Child->Dimensions.x0 = int16_t(std::round(Target->Dimensions.x0 + DeltaX * Child->Margins.x0));
-                Child->Dimensions.x1 = int16_t(std::round(Target->Dimensions.x1 - DeltaX * Child->Margins.x1));
-                Child->Dimensions.y0 = int16_t(std::round(Target->Dimensions.y0 + DeltaY * Child->Margins.y0));
-                Child->Dimensions.y1 = int16_t(std::round(Target->Dimensions.y1 - DeltaY * Child->Margins.y1));
-
+                if (!Child->Properties.Fixed)
+                {
+                    // Margins relative to the edges.
+                    Child->Dimensions.x0 = int16_t(std::round(Target->Dimensions.x0 + DeltaX * Child->Margins.x0));
+                    Child->Dimensions.y0 = int16_t(std::round(Target->Dimensions.y0 + DeltaY * Child->Margins.y0));
+                    Child->Dimensions.x1 = int16_t(std::round(Target->Dimensions.x1 - DeltaX * Child->Margins.x1));
+                    Child->Dimensions.y1 = int16_t(std::round(Target->Dimensions.y1 - DeltaY * Child->Margins.y1));
+                }
+                else
+                {
+                    // Margins relative to (0, 0).
+                    Child->Dimensions.x0 = int16_t(std::round(Target->Dimensions.x0 + Child->Margins.x0));
+                    Child->Dimensions.y0 = int16_t(std::round(Target->Dimensions.y0 + Child->Margins.y0));
+                    Child->Dimensions.x1 = int16_t(std::round(Target->Dimensions.x0 + Child->Margins.x1));
+                    Child->Dimensions.y1 = int16_t(std::round(Target->Dimensions.y0 + Child->Margins.y1));
+                }
+ 
                 Recalc(Child);
             }
         };
@@ -110,13 +122,12 @@ namespace Draw = Engine::Rendering::Draw;
 // Manage the scenes and compositing.
 namespace Engine::Compositing
 {
-    // Recalculate all elements dimensions for when the window changes.
-    void Recalculateroot();
+    // Callbacks for composition creation.
+    void Registercomposer(std::string &&Name, std::function<void(Element_t *)> Callback);
 
-    // Remove the old root and recreate, or just append.
-    void Switchscene(std::string &&Name);
-    void Appendscene(std::string &&Name);
+    // Recreate the root element with another focus.
+    void Switchcomposition(std::string &&Name);
 
-    // Register callbacks for scene-creation.
-    void Registercomposer(std::string &&Name, std::function<void(Element_t *Target)> Callback);
+    // Recalculate the elements dimensions.
+    void Recalculate();
 }

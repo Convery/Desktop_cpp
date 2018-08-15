@@ -15,65 +15,44 @@ namespace Engine { Element_t *gRootelement{}; }
 namespace Engine::Compositing
 {
     // Local engine-variables.
-    Element_t *oldRootelement{};
-    std::unordered_map<std::string, std::function<void(Element_t *Target)>> *Composers{};
+    std::unordered_map<std::string, std::function<void(Element_t *)>> *Composers{};
 
-    // Recalculate all elements dimensions for when the window changes.
-    void Recalculateroot()
+    // Callbacks for composition creation.
+    void Registercomposer(std::string &&Name, std::function<void(Element_t *)> Callback)
     {
-        if (oldRootelement) delete oldRootelement;
-        Element_t *newRootelement = new Element_t("Root");
-        newRootelement->Dimensions = { 0, 0, gWindowsize.x, gWindowsize.y };
-        for (const auto &Child : gRootelement->Childelements) newRootelement->addChild(Child);
-
-        oldRootelement = gRootelement;
-        gRootelement = newRootelement;
+        if (!Composers) Composers = new std::unordered_map<std::string, std::function<void(Element_t *)>>();
+        (*Composers)[Name] = Callback;
     }
 
-    // Remove the old root and recreate, or just append.
-    void Switchscene(std::string &&Name)
+    // Recreate the root element with another focus.
+    void Switchcomposition(std::string &&Name)
     {
-        if (oldRootelement) delete oldRootelement;
-        auto newRootelement = new Element_t("Root");
+        auto newRootelement = new Element_t("Rootelement");
         if (!Composers) Composers = new std::unordered_map<std::string, std::function<void(Element_t *)>>();
+
+        // Add the default elements.
+        Composers->find("sidebar")->second(newRootelement);
 
         // Return a new composition.
         if (const auto Result = Composers->find(Name); Result != Composers->end())
         {
             Result->second(newRootelement);
         }
-        else
-        {
-            auto Errorelement = new Element_t("I_am_error");
-            //Errorelement->onRender = [](Element_t *Caller) { Draw::Quad({ 0xFF, 0, 0, 1 }, Caller->Dimensions); };
-            newRootelement->addChild(Errorelement);
-        }
 
-        oldRootelement = gRootelement;
+        if(gRootelement) delete gRootelement;
         gRootelement = newRootelement;
     }
-    void Appendscene(std::string &&Name)
+
+    // Recalculate the elements dimensions.
+    void Recalculate()
     {
         assert(gRootelement);
-        if (!Composers) Composers = new std::unordered_map<std::string, std::function<void(Element_t *)>>();
 
-        // Append a new composition element.
-        if (const auto Result = Composers->find(Name); Result != Composers->end())
-        {
-            Result->second(gRootelement);
-        }
-        else
-        {
-            auto Errorelement = new Element_t(va("Append_error_%s", Name.c_str()));
-            //Errorelement->onRender = [](Element_t *Caller) { Draw::Quad({ 0xFF, 0, 0, 1 }, Caller->Dimensions); };
-            gRootelement->addChild(Errorelement);
-        }
-    }
+        auto newRootelement = new Element_t("Rootelement");
+        newRootelement->Dimensions = { 0, 0, gWindowsize.x, gWindowsize.y - 1 };
+        for (const auto &Child : gRootelement->Childelements) newRootelement->addChild(Child);
 
-    // Register callbacks for scene-creation.
-    void Registercomposer(std::string &&Name, std::function<void(Element_t *Target)> Callback)
-    {
-        if (!Composers) Composers = new std::unordered_map<std::string, std::function<void(Element_t *)>>();
-        (*Composers)[Name] = Callback;
+        delete gRootelement;
+        gRootelement = newRootelement;
     }
 }

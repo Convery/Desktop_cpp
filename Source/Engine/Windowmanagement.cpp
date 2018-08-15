@@ -29,14 +29,14 @@ namespace Engine::Window
     {
         gWindowposition = Position;
         SetWindowPos((HWND)gWindowhandle, NULL, gWindowposition.x, gWindowposition.y, gWindowsize.x, gWindowsize.y, SWP_NOSENDCHANGING | SWP_NOACTIVATE | SWP_NOSIZE);
-        if (!Deferupdate) Compositing::Recalculateroot();
+        if (!Deferupdate) Compositing::Recalculate();
     }
     void Resize(point2_t Size, bool Deferupdate)
     {
         gWindowsize = Size;
         SetWindowPos((HWND)gWindowhandle, NULL, gWindowposition.x, gWindowposition.y, gWindowsize.x, gWindowsize.y, SWP_NOSENDCHANGING | SWP_NOACTIVATE | SWP_NOMOVE);
-        if (!Deferupdate) Compositing::Recalculateroot();
-        Rendering::Invalidatespan({ 0, gWindowsize.y });
+        Rendering::Invalidatespan({ 0, gWindowsize.y }); 
+        if (!Deferupdate) Compositing::Recalculate();
     }
     void Togglevisibility()
     {
