@@ -34,6 +34,6 @@ namespace Pixelmask
     inline uint16_t getBlank(segment_t Segment) { return (Segment.Data[0] << 4) | ((Segment.Data[1] & 0x00F0) >> 4); };
     inline segment_t toSegment(uint16_t Blank, uint16_t Filled) { return { uint8_t((Blank >> 4)), uint8_t((Blank | 0x00F0) << 4 | (Filled | 0x000F) >> 8), uint8_t(Filled) }; };
 };
-using texture_t = struct { point2_t Dimensions; uint8_t Pixelsize; const void *Data; };
+using texture_t = struct { point2_t Dimensions; uint8_t Pixelsize; const uint8_t *Data; };
 
 #pragma pack(pop)

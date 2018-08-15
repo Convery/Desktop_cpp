@@ -60,6 +60,7 @@
 
 // Our components.
 #include "Commontypes.hpp"
+#include "Assets/Assets.hpp"
 #include "Engine/AYAEngine.hpp"
 //#include "Corecomponents/Input.hpp"
 //#include "Corecomponents/Rendering.hpp"
