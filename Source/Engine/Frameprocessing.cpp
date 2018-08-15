@@ -31,8 +31,8 @@ namespace Engine::Window
             Track.cbSize = sizeof(TRACKMOUSEEVENT);
             TrackMouseEvent(&Track);
 
-            // Post a message every 30ms for frame redrawing.
-            SetTimer(HWND(gWindowhandle), FRAMETIMER_ID, 1000 / 30, NULL);
+            // Post a message every 16ms for frame redrawing.
+            SetTimer(HWND(gWindowhandle), FRAMETIMER_ID, (1000 / 60), NULL);
 
             Initialized = true;
         }

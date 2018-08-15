@@ -67,7 +67,7 @@ namespace Engine::Rendering
         for (int16_t i = Dirtyspan.x; i < std::min(gWindowsize.y, Dirtyspan.y); ++i)
         {
             Currentline = i;
-            std::memset(Scanline, rand(), Width);
+            std::memset(Scanline, 0xFF, Width);
 
             // Helper to save my fingers.
             std::function<void(Element_t *)> Render = [&](Element_t *This) -> void
