@@ -10,15 +10,13 @@
 
 void Composeloginmenu(Element_t *Target)
 {
-    #if 0
-
     auto Boundingbox = new Element_t("loginmenu");
     Boundingbox->onRender = [](Element_t *Caller)
     {
         auto Localbox{ Caller->Dimensions };
         Localbox.x0 += 4;
         Localbox.x1 -= 4;
-        //Draw::PNGFile("../Assets/Menubackground.png", Localbox);
+        Draw::Quad(Assets::Menubackground, Localbox);
     };
     Target->addChild(Boundingbox);
 
@@ -26,27 +24,33 @@ void Composeloginmenu(Element_t *Target)
     Loginarea->Margins = { 0.25f, 0.6f, 0.25f, 1.0f };
     Loginarea->onRender = [](Element_t *Caller)
     {
-        //Draw::Quad<true>({ 0, 0xFF, 0, 0xFF }, Caller->Dimensions);
+        Draw::Quad<true>({ 0, 0xFF, 0, 0xFF }, Caller->Dimensions);
     };
     Boundingbox->addChild(Loginarea);
 
     auto Message = new Element_t("loginmessage");
-    Message->Margins = { 0.1f, 0.09f, 0, 1.5f };
+    Message->Margins = { 0.1f, 0.09f };
     Message->onRender = [](Element_t *Caller)
     {
-        //Draw::PNGFile("../Assets/Logintext.png", Caller->Dimensions);
+        auto Localbox{ Caller->Dimensions };
+        Localbox.x1 = Localbox.x0 + Assets::Logintext.Dimensions.x;
+        Localbox.y1 = Localbox.y0 + Assets::Logintext.Dimensions.y;
+        Draw::Quad(Assets::Logintext, Localbox);
     };
     Loginarea->addChild(Message);
 
     auto Emailbox = new Element_t("emailbox");
-    Emailbox->Margins = { 0.025f, 0.5f, 0.025f, 1.0f };
+    Emailbox->Margins = { 0.03f, 0.5f };
     Emailbox->onRender = [](Element_t *Caller)
     {
-        //Draw::PNGFile("../Assets/Emailbox.png", Caller->Dimensions);
+        auto Localbox{ Caller->Dimensions };
+        Localbox.x1 = Localbox.x0 + Assets::Emailbox.Dimensions.x;
+        Localbox.y1 = Localbox.y0 + Assets::Emailbox.Dimensions.y;
+        Draw::Quad(Assets::Emailbox, Localbox);
     };
     Loginarea->addChild(Emailbox);
 
-
+#if 0
     auto Child = new Element_t("Test");
     Child->Margins = { 0.1f, 0.0f, 0.1f, 0.05f };
     Child->onRender = [](Element_t *Caller) {

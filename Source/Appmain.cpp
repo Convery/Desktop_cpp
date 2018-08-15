@@ -23,7 +23,7 @@ int main(int argc, char **argv)
     while (Engine::gErrno == 0)
     {
         Engine::Window::onFrame();
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 60));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 30));
     }
 
     // Log the termination for tracing.
