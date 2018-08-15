@@ -16,10 +16,11 @@ struct Element_t
     vec4_t Margins{};
     struct
     {
-        unsigned int Fixed : 1;
-        unsigned int Hoover : 1;
-        unsigned int Clicked : 1;
-        unsigned int Reserved : 5;
+        unsigned char Hoover : 1;
+        unsigned char Clicked : 1;
+        unsigned char Fixedwidth : 1;
+        unsigned char Fixedheight : 1;
+        unsigned char Reserved : 4;
     } Properties{};
 
     // The children inherit the parents dimensions - margins.
@@ -33,20 +34,21 @@ struct Element_t
 
             for (auto &Child : Target->Childelements)
             {
-                if (!Child->Properties.Fixed)
+                // Margins relative to the edges.
+                Child->Dimensions.x0 = int16_t(std::round(Target->Dimensions.x0 + DeltaX * Child->Margins.x0));
+                Child->Dimensions.y0 = int16_t(std::round(Target->Dimensions.y0 + DeltaY * Child->Margins.y0));
+                Child->Dimensions.x1 = int16_t(std::round(Target->Dimensions.x1 - DeltaX * Child->Margins.x1));
+                Child->Dimensions.y1 = int16_t(std::round(Target->Dimensions.y1 - DeltaY * Child->Margins.y1));
+
+                // Margins relative to (0, 0).
+                if (Child->Properties.Fixedwidth)
                 {
-                    // Margins relative to the edges.
-                    Child->Dimensions.x0 = int16_t(std::round(Target->Dimensions.x0 + DeltaX * Child->Margins.x0));
-                    Child->Dimensions.y0 = int16_t(std::round(Target->Dimensions.y0 + DeltaY * Child->Margins.y0));
-                    Child->Dimensions.x1 = int16_t(std::round(Target->Dimensions.x1 - DeltaX * Child->Margins.x1));
-                    Child->Dimensions.y1 = int16_t(std::round(Target->Dimensions.y1 - DeltaY * Child->Margins.y1));
-                }
-                else
-                {
-                    // Margins relative to (0, 0).
                     Child->Dimensions.x0 = int16_t(std::round(Target->Dimensions.x0 + Child->Margins.x0));
-                    Child->Dimensions.y0 = int16_t(std::round(Target->Dimensions.y0 + Child->Margins.y0));
                     Child->Dimensions.x1 = int16_t(std::round(Target->Dimensions.x0 + Child->Margins.x1));
+                }
+                if (Child->Properties.Fixedheight)
+                {
+                    Child->Dimensions.y0 = int16_t(std::round(Target->Dimensions.y0 + Child->Margins.y0));
                     Child->Dimensions.y1 = int16_t(std::round(Target->Dimensions.y0 + Child->Margins.y1));
                 }
  

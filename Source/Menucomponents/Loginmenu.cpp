@@ -11,12 +11,15 @@
 void Composeloginmenu(Element_t *Target)
 {
     auto Boundingbox = new Element_t("loginmenu");
+    Boundingbox->Margins = { 50, 20, 539, 720 };
+    Boundingbox->Properties.Fixedwidth = true;
+    Boundingbox->Properties.Fixedheight = true;
     Boundingbox->onRender = [](Element_t *Caller)
     {
         auto Localbox{ Caller->Dimensions };
-        Localbox.x0 += 4;
-        Localbox.x1 -= 4;
+        Localbox.x0 -= 11;
         Draw::Quad(Assets::Menubackground, Localbox);
+        //Draw::Quad({ 0, 0xFF, 0xFF, 0xFF }, Caller->Dimensions);
     };
     Target->addChild(Boundingbox);
 
@@ -67,15 +70,18 @@ void Composeloginmenu(Element_t *Target)
     #endif
 
     // A more manageable buffer-size.
-    Engine::Window::Resize({ 520, 720 }, true);
+    Engine::Window::Resize({ 539, 720 }, true);
 }
 
 // Register the composer for later.
-struct Startup
+namespace
 {
-    Startup()
+    struct Startup
     {
-        Engine::Compositing::Registercomposer("loginmenu", Composeloginmenu);
-    }
-};
-static Startup Loader{};
+        Startup()
+        {
+            Engine::Compositing::Registercomposer("loginmenu", Composeloginmenu);
+        }
+    };
+    Startup Loader{};
+}

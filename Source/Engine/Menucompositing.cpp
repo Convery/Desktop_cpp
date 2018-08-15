@@ -30,14 +30,15 @@ namespace Engine::Compositing
         auto newRootelement = new Element_t("Rootelement");
         if (!Composers) Composers = new std::unordered_map<std::string, std::function<void(Element_t *)>>();
 
-        // Add the default elements.
-        Composers->find("sidebar")->second(newRootelement);
-
-        // Return a new composition.
+        // Add the content.
         if (const auto Result = Composers->find(Name); Result != Composers->end())
         {
             Result->second(newRootelement);
         }
+
+        // Add the default topmost elements.
+        Composers->find("toolbar")->second(newRootelement);
+        Composers->find("sidebar")->second(newRootelement);
 
         if(gRootelement) delete gRootelement;
         gRootelement = newRootelement;
