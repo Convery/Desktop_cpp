@@ -73,7 +73,7 @@ struct Element_t
     std::string Elementname;
     Element_t(std::string &&Identity) : Elementname(Identity) {};
     #else
-    Element_t(std::string &&Identity) {};
+    Element_t(std::string &&Identity) { (void)Identity; };
     #endif
 };
 

@@ -30,7 +30,7 @@
 #include <chrono>
 #include <thread>
 #include <string>
-#include <atomic>
+#include <bitset>
 
 // Platform-specific libraries.
 #if defined(_WIN32)

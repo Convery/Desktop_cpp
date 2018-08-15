@@ -13,7 +13,7 @@
 #else
 namespace Engine::Rendering
 {
-    point2_t Dirtyspan{};
+    std::bitset<2160> Dirtylines{};
     int16_t Currentline;
     uint8_t *Scanline;
 
@@ -26,8 +26,10 @@ namespace Engine::Rendering
             only called from the main-thread. No sync.
         */
         
-        Dirtyspan.x = std::min(Dirtyspan.x, Span.x);
-        Dirtyspan.y = std::max(Dirtyspan.y, Span.y);
+        for (int16_t i = Span.x; i <= Span.y; ++i)
+        {
+            Dirtylines[i] = 1;
+        }
     }
 
     // Process elements, render, and present to the context.
@@ -64,8 +66,10 @@ namespace Engine::Rendering
         }
 
         // Render all the scanlines in the main-thread.
-        for (int16_t i = Dirtyspan.x; i < std::min(gWindowsize.y, Dirtyspan.y); ++i)
+        for (int16_t i = 0; i <= std::min(gWindowsize.y, int16_t(2160)); ++i)
         {
+            if (Dirtylines[i] == 0) continue;
+
             Currentline = i;
             std::memset(Scanline, 0xFF, Width);
 
@@ -88,7 +92,7 @@ namespace Engine::Rendering
         }
 
         // Reset the area.
-        Dirtyspan = {};
+        Dirtylines.reset();
 
         // Delete our buffer.
         __asm add esp, Width;
@@ -252,7 +256,7 @@ namespace Engine::Rendering::Draw::Internal
     {
         if (Currentline >= Area.y0 && Currentline <= Area.y1)
         {
-            Callback({ Area.x0, Currentline - Area.y0 }, Area.x1 - Area.x0);
+            Callback({ Area.x0, Currentline - Area.y0 }, Area.x1 - Area.x0 + 1);
         }
     }
     template <typename CB = std::function<void(const point2_t Position, const int16_t Length)>>
