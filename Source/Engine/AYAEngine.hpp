@@ -89,44 +89,27 @@ namespace Engine::Window
 // Render into a framebuffer and present.
 namespace Engine::Rendering
 {
-    extern int16_t Currentline;
-    extern uint8_t *Scanline;
-
     // Process elements, render, and present to the context.
     void onRender(const void *Context);
+
+    // Mark a span of lines as dirty.
+    void Invalidatespan(point2_t Span);
 }
 
 // Draw calls for the elements that are called every frame.
 namespace Engine::Rendering::Draw
 {
-    #if 0
-
     // Outline == if we should only draw the outermost pixels for the specified shape.
     template <bool Outline = false> void Circle(const texture_t Color, const point2_t Position, const float Radius);
     template <bool Outline = false> void Circle(const rgba_t Color, const point2_t Position, const float Radius);
-    template <bool Outline = false> void Polygon(const texture_t Color, const std::vector<vec2_t> Vertices);
-    template <bool Outline = false> void Polygon(const rgba_t Color, const std::vector<vec2_t> Vertices);
     template <bool Outline = false> void Quad(const texture_t Color, const point4_t Area);
     template <bool Outline = false> void Quad(const rgba_t Color, const point4_t Area);
-    void Line(const texture_t Color, const point2_t Start, const point2_t Stop);
-    void Line(const rgba_t Color, const point2_t Start, const point2_t Stop);
-
-    // Special drawing.
-    void PNG(const unsigned char *Data, const size_t Size, const point4_t Area);
-    void PNGFile(const std::string &&Filename, const point4_t Area);
-
-    #endif
 }
 namespace Draw = Engine::Rendering::Draw;
 
 // Manage the scenes and compositing.
 namespace Engine::Compositing
 {
-
-
-
-
-
     // Recalculate all elements dimensions for when the window changes.
     void Recalculateroot();
 

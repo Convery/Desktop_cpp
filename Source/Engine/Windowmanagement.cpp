@@ -36,6 +36,7 @@ namespace Engine::Window
         gWindowsize = Size;
         SetWindowPos((HWND)gWindowhandle, NULL, gWindowposition.x, gWindowposition.y, gWindowsize.x, gWindowsize.y, SWP_NOSENDCHANGING | SWP_NOACTIVATE | SWP_NOMOVE);
         if (!Deferupdate) Compositing::Recalculateroot();
+        Rendering::Invalidatespan({ 0, gWindowsize.y });
     }
     void Togglevisibility()
     {
