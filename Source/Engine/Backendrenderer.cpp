@@ -296,7 +296,7 @@ namespace Engine::Rendering::Draw
     }
     template <bool Outline> void Circle(const rgba_t Color, const point2_t Position, const float Radius)
     {
-        const auto Pixel{ Internal::fromRGBA(Color) };
+        auto Pixel{ Internal::fromRGBA(Color) };
         const auto Lambda = [&](const point2_t Position, const int16_t Length) -> void
         {
             for (int16_t i = 0; i < Length; ++i)
@@ -304,7 +304,12 @@ namespace Engine::Rendering::Draw
                 Internal::setPixel(Position.x + i, Pixel);
             }
         };
-        if (!Outline) Internal::fillCircle(Position, Radius, Lambda);
+        if (!Outline)
+        {
+            Internal::fillCircle(Position, Radius, Lambda);
+            Pixel.Raw[3] /= 2;
+            Internal::outlineCircle(Position, Radius, Lambda);
+        }
         else Internal::outlineCircle(Position, Radius, Lambda);
     }
     template <bool Outline> void Quad(const texture_t Color, const point4_t Area)
