@@ -13,7 +13,7 @@
 #else
 namespace Engine::Rendering
 {
-    std::bitset<2160> Dirtylines{};
+    std::bitset<Windowheight> Dirtylines{};
     int16_t Currentline;
     uint8_t *Scanline;
 
@@ -66,10 +66,12 @@ namespace Engine::Rendering
         }
 
         // Render all the scanlines in the main-thread.
-        for (int16_t i = 0; i <= std::min(gWindowsize.y, int16_t(2160)); ++i)
+        for (int16_t i = 0; i <= std::min(gWindowsize.y, int16_t(Windowheight)); ++i)
         {
-            if (Dirtylines[i] == 0) continue;
+            // Skip clean lines.
+            if (likely(Dirtylines[i] == 0)) continue;
 
+            // Clear the line.
             Currentline = i;
             std::memset(Scanline, 0xFF, Width);
 

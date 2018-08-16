@@ -81,6 +81,7 @@ struct Element_t
 namespace Engine
 {
     extern point2_t gWindowsize, gWindowposition;
+    constexpr size_t Windowheight{ 721 };
     extern point4_t gDisplayrectangle;
     extern Element_t *gRootelement;
     extern void *gWindowhandle;
