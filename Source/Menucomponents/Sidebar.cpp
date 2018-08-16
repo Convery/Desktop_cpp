@@ -55,6 +55,11 @@ void Composesidebar(Element_t *Target)
         if (Caller->Properties.Hoover) Draw::Quad({ 50, 50, 50, 0xFF }, Caller->Dimensions);
         /* TODO(Convery): Draw the icon. */
     };
+    Homebutton->onHoover = [](Element_t *Caller, bool Released)
+    {
+        Engine::Rendering::Invalidatespan({ Caller->Dimensions.y0, Caller->Dimensions.y1 });
+        return false;
+    };
     Navigationbox->addChild(Homebutton);
 
     // Navigate to the plugin 'store'.

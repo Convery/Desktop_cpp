@@ -134,3 +134,11 @@ namespace Engine::Compositing
     // Recalculate the elements dimensions.
     void Recalculate();
 }
+
+// Forward user input to the elements.
+namespace Engine::Input
+{
+    // Callbacks on user-events.
+    void onMousemove(point2_t Position);
+    void onMouseclick(point2_t Position, bool Released);
+}

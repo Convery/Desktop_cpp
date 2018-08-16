@@ -55,6 +55,21 @@ namespace Engine::Window
                 continue;
             }
 
+            // On mouse movement.
+            if (Event.message == WM_MOUSEMOVE)
+            {
+                Input::onMousemove({ GET_X_LPARAM(Event.lParam), GET_Y_LPARAM(Event.lParam) });
+                TrackMouseEvent(&Track);
+                continue;
+            }
+
+            // When the mouse exits the client area.
+            if (Event.message == WM_MOUSELEAVE)
+            {
+                Input::onMousemove({ (int16_t)0xFFFF, (int16_t)0xFFFF });
+                continue;
+            }
+
             // If we should quit, break the loop early.
             if (Event.message == WM_QUIT || Event.message == WM_DESTROY || (Event.message == WM_SYSCOMMAND && Event.wParam == SC_CLOSE))
             {
