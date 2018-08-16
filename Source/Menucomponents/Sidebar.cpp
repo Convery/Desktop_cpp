@@ -70,6 +70,11 @@ void Composesidebar(Element_t *Target)
         if (Caller->Properties.Hoover) Draw::Quad({ 50, 50, 50, 0xFF }, Caller->Dimensions);
         /* TODO(Convery): Draw the icon. */
     };
+    Pluginsbutton->onHoover = [](Element_t *Caller, bool Released)
+    {
+        Engine::Rendering::Invalidatespan({ Caller->Dimensions.y0, Caller->Dimensions.y1 });
+        return false;
+    };
     Navigationbox->addChild(Pluginsbutton);
 
     // Navigate to the social stuffs.
@@ -80,6 +85,11 @@ void Composesidebar(Element_t *Target)
         if (Caller->Properties.Hoover) Draw::Quad({ 50, 50, 50, 0xFF }, Caller->Dimensions);
         /* TODO(Convery): Draw the icon. */
     };
+    Communitybutton->onHoover = [](Element_t *Caller, bool Released)
+    {
+        Engine::Rendering::Invalidatespan({ Caller->Dimensions.y0, Caller->Dimensions.y1 });
+        return false;
+    };
     Navigationbox->addChild(Communitybutton);
 
     // Navigate to the statistics.
@@ -89,6 +99,11 @@ void Composesidebar(Element_t *Target)
     {
         if(Caller->Properties.Hoover) Draw::Quad({ 50, 50, 50, 0xFF }, Caller->Dimensions);
         /* TODO(Convery): Draw the icon. */
+    };
+    Leaderboardbutton->onHoover = [](Element_t *Caller, bool Released)
+    {
+        Engine::Rendering::Invalidatespan({ Caller->Dimensions.y0, Caller->Dimensions.y1 });
+        return false;
     };
     Navigationbox->addChild(Leaderboardbutton);
 }
