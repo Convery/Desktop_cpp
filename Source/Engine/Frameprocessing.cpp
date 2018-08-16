@@ -14,8 +14,9 @@
 namespace Engine::Window
 {
     #define FRAMETIMER_ID 3242
+    bool isTrackingmouse{ true };
+    TRACKMOUSEEVENT Tracker{};
     uint32_t Keymodifiers{};
-    TRACKMOUSEEVENT Track{};
     PAINTSTRUCT State{};
     MSG Event{};
 
@@ -26,10 +27,10 @@ namespace Engine::Window
         if (unlikely(!Initialized))
         {
             // Track mouse movement.
-            Track.dwFlags = TME_LEAVE;
-            Track.hwndTrack = HWND(gWindowhandle);
-            Track.cbSize = sizeof(TRACKMOUSEEVENT);
-            TrackMouseEvent(&Track);
+            Tracker.dwFlags = TME_LEAVE;
+            Tracker.hwndTrack = HWND(gWindowhandle);
+            Tracker.cbSize = sizeof(TRACKMOUSEEVENT);
+            TrackMouseEvent(&Tracker);
 
             // Post a message every 16ms for frame redrawing.
             SetTimer(HWND(gWindowhandle), FRAMETIMER_ID, (1000 / 60), NULL);
@@ -39,8 +40,12 @@ namespace Engine::Window
 
         while (PeekMessageA(&Event, HWND(gWindowhandle), NULL, NULL, PM_REMOVE) > 0)
         {
-            // Render the next frame.
-            if (Event.message == WM_PAINT)
+            /*
+                NOTE(Convery):
+                We'll process the two most common events
+                outside of the switch. Because performance.
+            */
+            if (likely(Event.message == WM_PAINT))
             {
                 auto Devicecontext = BeginPaint(HWND(gWindowhandle), &State);
                 Rendering::onRender(Devicecontext);
@@ -48,37 +53,49 @@ namespace Engine::Window
                 continue;
             }
 
-            // When the timer hits 0, repaint.
-            if (Event.message == WM_TIMER && Event.wParam == FRAMETIMER_ID)
+            /*
+                NOTE(Convery):
+                The system supports out-of-order frame rendering that can
+                be triggered by window-movement or resizing. As such we
+                just invalidate the area to trigger a redraw periodically.
+            */
+            if (likely(Event.message == WM_TIMER && Event.wParam == FRAMETIMER_ID))
             {
                 InvalidateRect(HWND(gWindowhandle), NULL, FALSE);
                 continue;
             }
 
-            // On mouse movement.
-            if (Event.message == WM_MOUSEMOVE)
+            // The rest of the messages in no particular order.
+            switch (Event.message)
             {
-                Input::onMousemove({ GET_X_LPARAM(Event.lParam), GET_Y_LPARAM(Event.lParam) });
-                TrackMouseEvent(&Track);
-                continue;
+                // Mouse interaction.
+                case WM_MOUSEMOVE:
+                {
+                    Input::onMousemove({ GET_X_LPARAM(Event.lParam), GET_Y_LPARAM(Event.lParam) });
+                    if (unlikely(!isTrackingmouse)) TrackMouseEvent(&Tracker);
+                    isTrackingmouse = true;
+                    continue;
+                }
+                case WM_MOUSELEAVE:
+                {
+                    Input::onMousemove({ (int16_t)0x7FFF, (int16_t)0x7FFF });
+                    isTrackingmouse = false;
+                    continue;
+                }
+
+                default:
+                {
+                    // Let windows handle the event if we haven't.
+                    DispatchMessageA(&Event);
+                }
             }
 
-            // When the mouse exits the client area.
-            if (Event.message == WM_MOUSELEAVE)
+            // If we should quit, break the loop without processing the rest of the queue.
+            if (unlikely(Event.message == WM_QUIT || Event.message == WM_DESTROY || (Event.message == WM_SYSCOMMAND && Event.wParam == SC_CLOSE)))
             {
-                Input::onMousemove({ (int16_t)0xFFFF, (int16_t)0xFFFF });
-                continue;
-            }
-
-            // If we should quit, break the loop early.
-            if (Event.message == WM_QUIT || Event.message == WM_DESTROY || (Event.message == WM_SYSCOMMAND && Event.wParam == SC_CLOSE))
-            {
-                gErrno = Hash::FNV1a_32("VM_QUIT");
+                gErrno = Hash::FNV1a_32("WM_QUIT");
                 return;
             }
-
-            // Let windows handle the event if we haven't.
-            DispatchMessageA(&Event);
         }
     }
 }
