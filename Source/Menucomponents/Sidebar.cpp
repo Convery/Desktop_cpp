@@ -53,9 +53,10 @@ void Composesidebar(Element_t *Target)
     Homebutton->onRender = [](Element_t *Caller)
     {
         if (Caller->Properties.Hoover) Draw::Quad({ 50, 50, 50, 0xFF }, Caller->Dimensions);
+        if (Caller->Properties.Clicked) Draw::Quad({ 0xFF, 50, 50, 0xFF }, Caller->Dimensions);
         /* TODO(Convery): Draw the icon. */
     };
-    Homebutton->onHoover = [](Element_t *Caller, bool Released)
+    Homebutton->onHoover = Homebutton->onClicked = [](Element_t *Caller, bool Released)
     {
         Engine::Rendering::Invalidatespan({ Caller->Dimensions.y0, Caller->Dimensions.y1 });
         return false;
@@ -68,9 +69,10 @@ void Composesidebar(Element_t *Target)
     Pluginsbutton->onRender = [](Element_t *Caller)
     {
         if (Caller->Properties.Hoover) Draw::Quad({ 50, 50, 50, 0xFF }, Caller->Dimensions);
+        if (Caller->Properties.Clicked) Draw::Quad({ 0xFF, 50, 50, 0xFF }, Caller->Dimensions);
         /* TODO(Convery): Draw the icon. */
     };
-    Pluginsbutton->onHoover = [](Element_t *Caller, bool Released)
+    Pluginsbutton->onHoover = Pluginsbutton->onClicked = [](Element_t *Caller, bool Released)
     {
         Engine::Rendering::Invalidatespan({ Caller->Dimensions.y0, Caller->Dimensions.y1 });
         return false;
@@ -83,9 +85,10 @@ void Composesidebar(Element_t *Target)
     Communitybutton->onRender = [](Element_t *Caller)
     {
         if (Caller->Properties.Hoover) Draw::Quad({ 50, 50, 50, 0xFF }, Caller->Dimensions);
+        if (Caller->Properties.Clicked) Draw::Quad({ 0xFF, 50, 50, 0xFF }, Caller->Dimensions);
         /* TODO(Convery): Draw the icon. */
     };
-    Communitybutton->onHoover = [](Element_t *Caller, bool Released)
+    Communitybutton->onHoover = Communitybutton->onClicked = [](Element_t *Caller, bool Released)
     {
         Engine::Rendering::Invalidatespan({ Caller->Dimensions.y0, Caller->Dimensions.y1 });
         return false;
@@ -97,14 +100,16 @@ void Composesidebar(Element_t *Target)
     Leaderboardbutton->Margins = { 0, 150, 0, 200 };
     Leaderboardbutton->onRender = [](Element_t *Caller)
     {
-        if(Caller->Properties.Hoover) Draw::Quad({ 50, 50, 50, 0xFF }, Caller->Dimensions);
+        if (Caller->Properties.Hoover) Draw::Quad({ 50, 50, 50, 0xFF }, Caller->Dimensions);
+        if (Caller->Properties.Clicked) Draw::Quad({ 0xFF, 50, 50, 0xFF }, Caller->Dimensions);
         /* TODO(Convery): Draw the icon. */
     };
-    Leaderboardbutton->onHoover = [](Element_t *Caller, bool Released)
+    Leaderboardbutton->onHoover = Leaderboardbutton->onClicked = [](Element_t *Caller, bool Released)
     {
         Engine::Rendering::Invalidatespan({ Caller->Dimensions.y0, Caller->Dimensions.y1 });
         return false;
     };
+
     Navigationbox->addChild(Leaderboardbutton);
 }
 

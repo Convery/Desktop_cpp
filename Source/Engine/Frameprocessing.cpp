@@ -82,6 +82,15 @@ namespace Engine::Window
                     isTrackingmouse = false;
                     continue;
                 }
+                case WM_RBUTTONDOWN:
+                case WM_LBUTTONDOWN:
+                case WM_RBUTTONUP:
+                case WM_LBUTTONUP:
+                {
+                    Input::onMouseclick({ GET_X_LPARAM(Event.lParam), GET_Y_LPARAM(Event.lParam) }, 
+                        Event.message == WM_RBUTTONUP || Event.message == WM_LBUTTONUP);
+                    continue;
+                }
 
                 default:
                 {

@@ -86,8 +86,8 @@ namespace Engine::Input
             }
 
             // Is the position within the elements boundries?
-            if (Position.x >= Target->Dimensions.x0 || Position.x <= Target->Dimensions.x1 ||
-                Position.y >= Target->Dimensions.y0 || Position.y <= Target->Dimensions.y1)
+            if (Position.x >= Target->Dimensions.x0 && Position.x <= Target->Dimensions.x1 &&
+                Position.y >= Target->Dimensions.y0 && Position.y <= Target->Dimensions.y1)
             {
                 // Let the children sink the event first.
                 for (const auto &Item : Target->Childelements)
