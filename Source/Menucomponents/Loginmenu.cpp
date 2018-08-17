@@ -69,7 +69,13 @@ void Composeloginmenu(Element_t *Target)
     Github->Properties.Fixedwidth = true;
     Github->onRender = [](Element_t *Caller)
     {
+        if (Caller->Properties.Hoover) Draw::Quad({ 0x22, 0x22, 0x22, 0xFF }, Caller->Dimensions);
         Draw::Quad(Assets::Github, Caller->Dimensions);
+    };
+    Github->onHoover = Github->onClicked = [](Element_t *Caller, bool Released)
+    {
+        Engine::Rendering::Invalidatespan({ Caller->Dimensions.y0, Caller->Dimensions.y1 });
+        return false;
     };
     SSOBox->addChild(Github);
     
@@ -78,7 +84,13 @@ void Composeloginmenu(Element_t *Target)
     Twitter->Properties.Fixedwidth = true;
     Twitter->onRender = [](Element_t *Caller)
     {
+        if (Caller->Properties.Hoover) Draw::Quad({ 0x22, 0x22, 0x22, 0xFF }, Caller->Dimensions);
         Draw::Quad(Assets::Twitter, Caller->Dimensions);
+    };
+    Twitter->onHoover = Twitter->onClicked = [](Element_t *Caller, bool Released)
+    {
+        Engine::Rendering::Invalidatespan({ Caller->Dimensions.y0, Caller->Dimensions.y1 });
+        return false;
     };
     SSOBox->addChild(Twitter);
 
@@ -87,7 +99,13 @@ void Composeloginmenu(Element_t *Target)
     Google->Properties.Fixedwidth = true;
     Google->onRender = [](Element_t *Caller)
     {
+        if (Caller->Properties.Hoover) Draw::Quad({ 0x22, 0x22, 0x22, 0xFF }, Caller->Dimensions);
         Draw::Quad(Assets::Google, Caller->Dimensions);
+    };
+    Google->onHoover = Google->onClicked = [](Element_t *Caller, bool Released)
+    {
+        Engine::Rendering::Invalidatespan({ Caller->Dimensions.y0, Caller->Dimensions.y1 });
+        return false;
     };
     SSOBox->addChild(Google);
 
