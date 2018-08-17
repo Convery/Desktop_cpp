@@ -49,7 +49,7 @@ void Composesidebar(Element_t *Target)
 
     // Navigate to the frontpage / library.
     Homebutton->Properties.Fixedheight = true;
-    Homebutton->Margins = { 0, 0, 0, 50 };
+    Homebutton->Margins = { 0, 0, 0, 49 };
     Homebutton->onRender = [](Element_t *Caller)
     {
         if (Caller->Properties.Hoover) Draw::Quad({ 50, 50, 50, 0xFF }, Caller->Dimensions);
@@ -65,7 +65,7 @@ void Composesidebar(Element_t *Target)
 
     // Navigate to the plugin 'store'.
     Pluginsbutton->Properties.Fixedheight = true;
-    Pluginsbutton->Margins = { 0, 50, 0, 100 };
+    Pluginsbutton->Margins = { 0, 50, 0, 99 };
     Pluginsbutton->onRender = [](Element_t *Caller)
     {
         if (Caller->Properties.Hoover) Draw::Quad({ 50, 50, 50, 0xFF }, Caller->Dimensions);
@@ -81,7 +81,7 @@ void Composesidebar(Element_t *Target)
 
     // Navigate to the social stuffs.
     Communitybutton->Properties.Fixedheight = true;
-    Communitybutton->Margins = { 0, 100, 0, 150 };
+    Communitybutton->Margins = { 0, 100, 0, 149 };
     Communitybutton->onRender = [](Element_t *Caller)
     {
         if (Caller->Properties.Hoover) Draw::Quad({ 50, 50, 50, 0xFF }, Caller->Dimensions);
@@ -97,7 +97,7 @@ void Composesidebar(Element_t *Target)
 
     // Navigate to the statistics.
     Leaderboardbutton->Properties.Fixedheight = true;
-    Leaderboardbutton->Margins = { 0, 150, 0, 200 };
+    Leaderboardbutton->Margins = { 0, 150, 0, 199 };
     Leaderboardbutton->onRender = [](Element_t *Caller)
     {
         if (Caller->Properties.Hoover) Draw::Quad({ 50, 50, 50, 0xFF }, Caller->Dimensions);
