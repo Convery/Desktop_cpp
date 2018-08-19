@@ -40,7 +40,19 @@ namespace Engine::Compositing
         Composers->find("toolbar")->second(newRootelement);
         Composers->find("sidebar")->second(newRootelement);
 
-        if(gRootelement) delete gRootelement;
+        // TODO(Convery): Perform better cleanup!!one!
+        if (gRootelement)
+        {
+            std::function<void(Element_t *)> Lambda = [&](Element_t *Target)
+            {
+                for (const auto &Item : Target->Childelements) Lambda(Item);
+                for (auto Iterator = Target->Childelements.rbegin(); Iterator != Target->Childelements.rend(); ++Iterator)
+                    delete *Iterator;
+                Target->Childelements.clear();
+            };
+            Lambda(gRootelement);
+            delete gRootelement;
+        }
         gRootelement = newRootelement;
     }
 

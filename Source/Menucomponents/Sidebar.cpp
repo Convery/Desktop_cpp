@@ -40,6 +40,22 @@ void Composesidebar(Element_t *Target)
         // TODO(Convery): Replace with he user-ID like "#455643".
         Draw::Quad<true>({ 0xAA, 0xAA, 0xAA, 0xFF }, { Caller->Dimensions.x0 + 5, Caller->Dimensions.y0 + 56, Caller->Dimensions.x1 - 5, Caller->Dimensions.y1 - 3 });
     };
+    Accountbox->onClicked = [](Element_t *Caller, bool Released)
+    {
+        static bool Armed = false;
+        if (Released && Armed && Caller->Properties.Hoover)
+        {
+            // TODO(Convery): if(!account.isLoggedin)
+            Engine::Compositing::Switchcomposition("loginmenu");
+            // else Switchcomposition("accountinfo");
+            Engine::Window::Centerwindow();
+            Armed = false;
+            return true;
+        }
+
+        Armed = !Released;
+        return false;
+    };
     Boundingbox->addChild(Accountbox);
 
     // Next the navbar.
