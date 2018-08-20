@@ -16,7 +16,7 @@ void Composeloginmenu(Element_t *Target)
     auto Emailbox = new Element_t("Wrap.Email");
     auto SSOBox = new Element_t("Wrap.SSO");
     auto Github = new Element_t("SSO.Github");
-    auto Twitter = new Element_t("SSO.Twitter");       
+    auto Twitter = new Element_t("SSO.Twitter");
     auto Google = new Element_t("SSO.Googleplus");
 
     // Set up the background.
@@ -30,7 +30,7 @@ void Composeloginmenu(Element_t *Target)
         Draw::Quad(Assets::Menubackground, Localbox);
     };
     Target->addChild(Boundingbox);
-    
+
     // Limit the login-area.
     Loginbox->Margins = { 0.2f, 0.6f, 0.2f, 0.8f };
     Loginbox->onRender = [](Element_t *Caller)
@@ -78,7 +78,7 @@ void Composeloginmenu(Element_t *Target)
         return false;
     };
     SSOBox->addChild(Github);
-    
+
     // Or twitter.
     Twitter->Margins = { 136, 0, 256, 0 };
     Twitter->Properties.Fixedwidth = true;

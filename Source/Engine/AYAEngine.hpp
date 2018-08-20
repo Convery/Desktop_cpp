@@ -51,7 +51,7 @@ struct Element_t
                     Child->Dimensions.y0 = int16_t(std::round(Target->Dimensions.y0 + Child->Margins.y0));
                     Child->Dimensions.y1 = int16_t(std::round(Target->Dimensions.y0 + Child->Margins.y1));
                 }
- 
+
                 Recalc(Child);
             }
         };

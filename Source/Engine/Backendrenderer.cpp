@@ -25,7 +25,7 @@ namespace Engine::Rendering
             Unlike previous versions, this function is
             only called from the main-thread. No sync.
         */
-        
+
         for (int16_t i = Span.x; i <= Span.y; ++i)
         {
             Dirtylines[i] = 1;
@@ -292,7 +292,7 @@ namespace Engine::Rendering::Draw
         };
 
         if (!Outline) Internal::fillCircle(Position, Radius, Lambda);
-        else Internal::outlineCircle(Position, Radius, Lambda); 
+        else Internal::outlineCircle(Position, Radius, Lambda);
     }
     template <bool Outline> void Circle(const rgba_t Color, const point2_t Position, const float Radius)
     {

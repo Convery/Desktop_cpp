@@ -40,9 +40,9 @@ namespace Engine::Input
                 Position.y >= Target->Dimensions.y0 && Position.y <= Target->Dimensions.y1)
             {
                 // Let the children sink the event first.
-                for (const auto &Item : Target->Childelements)                
-                    if (Lambda(Item, false)) 
-                        return true;                
+                for (const auto &Item : Target->Childelements)
+                    if (Lambda(Item, false))
+                        return true;
 
                 // Notify the element if the state changed.
                 if (!Target->Properties.Hoover)
