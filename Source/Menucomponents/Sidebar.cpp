@@ -48,13 +48,13 @@ void Composesidebar(Element_t *Target)
             // TODO(Convery): if(!account.isLoggedin)
             Engine::Compositing::Switchcomposition("loginmenu");
             // else Switchcomposition("accountinfo");
-            Engine::Window::Centerwindow();
+            Engine::Window::Move(Engine::gWindowposition);
             Armed = false;
             return true;
         }
 
         Armed = !Released;
-        return false;
+        return Armed;
     };
     Boundingbox->addChild(Accountbox);
 

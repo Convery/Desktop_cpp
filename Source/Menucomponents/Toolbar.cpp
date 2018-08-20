@@ -11,7 +11,7 @@
 void Composetoolbar(Element_t *Target)
 {
     auto Boundingbox = new Element_t("Toolbar");
-
+    auto Closebutton = new Element_t("Toolbar.Close");
 
     // The full toolbar, click to drag.
     Boundingbox->Properties.Fixedheight = true;
@@ -47,11 +47,29 @@ void Composetoolbar(Element_t *Target)
             Engine::Window::Move(Window);
         }).detach();
 
-        return true;
+        return !Released;
     };
     Target->addChild(Boundingbox);
 
+    // Let the user exit in a natural way.
+    Closebutton->Margins = { 1.9, 0, 0.01, 0 };
+    Closebutton->onRender = [](Element_t *Caller)
+    {
+        Draw::Quad({ 0, 0x33, 0, 1 }, Caller->Dimensions);
+    };
+    Closebutton->onClicked = [](Element_t *Caller, bool Released)
+    {
+        static bool Armed = false;
+        if (Released && Armed && Caller->Properties.Hoover)
+        {
+            Engine::gErrno = Hash::FNV1a_32("Toolbar.Close");
+            return true;
+        }
 
+        Armed = !Released;
+        return Armed;
+    };
+    Boundingbox->addChild(Closebutton);
 }
 
 // Register the composer for later.
