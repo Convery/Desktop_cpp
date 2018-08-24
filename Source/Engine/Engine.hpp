@@ -33,7 +33,7 @@ using rgb_t = struct { union { struct { float R, G, B; }; float Raw[3]; }; };
 using rgba_t = struct { union { struct { float R, G, B, A; }; float Raw[4]; }; };
 
 // Textures, images, pre-rendered anything that should not be modified at runtime.
-using texture_t = struct { const point2_t Dimensions; const uint8_t *Data; const uint8_t Pixelsize; };
+using texture_t = struct { const point2_t Dimensions; const uint8_t *Data; uint8_t Pixelsize; };
 
 // Element state for IO notifications.
 using elementstate_t = struct { unsigned char Focused : 1, Clicked : 1, Fixedwidth : 1, Fixedheight : 1, ExclusiveIO : 1, Reserved : 3; };
@@ -93,13 +93,13 @@ struct Element_t
         Recalc(this);
     }
 
-    // Callbacks on user-interaction, exclusive state-changes are consumed by the element.
-    std::function<void(Element_t *Caller, elementstate_t Newstate)> onStatechange;
-    std::function<bool(Element_t *Caller, elementstate_t Newstate)> isExclusive;
+    // Callbacks on user-interaction, exclusive state-changes are consumed by the called element.
+    std::function<void(const Element_t *Caller, const elementstate_t Newstate)> onStatechange;
+    std::function<bool(const Element_t *Caller, const elementstate_t Newstate)> isExclusive;
 
     // Callbacks from the engine for every frame.
-    std::function<void(Element_t *Caller, double Deltatime)> onFrame;
-    std::function<void(Element_t *Caller)> onRender;
+    std::function<void(const Element_t *Caller, double Deltatime)> onFrame;
+    std::function<void(const Element_t *Caller)> onRender;
 
     // While debugging, add an identifier.
     #if !defined(NDEBUG)
@@ -117,12 +117,14 @@ struct Element_t
 namespace Engine
 {
     constexpr size_t Windowheight = 720;
-    const Element_t *getRootelement();
-    const void *getWindowhandle();
-    void setErrno(uint32_t Code);
-    point2_t getWindowposition();
-    point2_t getMouseposition();
-    uint32_t getErrno();
+    ainline void setScanlinelength(uint32_t Length);
+    ainline const Element_t *getRootelement();
+    ainline const void *getWindowhandle();
+    ainline void setErrno(uint32_t Code);
+    ainline point2_t getWindowposition();
+    ainline point2_t getMouseposition();
+    ainline point2_t getWindowsize();
+    ainline uint32_t getErrno();
 }
 
 // Window management.
@@ -138,7 +140,7 @@ namespace Engine::Window
     void onFrame();
 }
 
-// Render into a framebuffer and present.
+// Render into a scanline and present.
 namespace Engine::Rendering
 {
     // Mark a span of lines as dirty.
