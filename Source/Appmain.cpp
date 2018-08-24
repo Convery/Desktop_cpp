@@ -7,12 +7,40 @@
 */
 
 #include "Stdinclude.hpp"
-namespace Engine { bool gShouldquit{ false }; uint32_t gErrno{}; }
 
 int main(int argc, char **argv)
 {
     // Have the window rendering in the highest allowed state.
     SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
+
+    /*
+        Create window.
+    */
+
+    while (true)
+    {
+        // Track the frame-time, should be less than 33ms.
+        static auto Lastframe{ std::chrono::high_resolution_clock::now() };
+        const auto Currentframe{ std::chrono::high_resolution_clock::now() };
+        auto Deltatime{ std::chrono::duration<double>(Currentframe - Lastframe).count() };
+        
+        /* 
+            onInput 
+            onNetwork
+            onTick
+            onRender
+        */
+
+        // If we got an error, terminate.
+        if (Engine::getErrno()) break;
+
+        // Sleep until the next frame.
+        std::this_thread::sleep_until(Lastframe + std::chrono::microseconds(1000000 / 60));
+        Lastframe = Currentframe;
+    }
+
+    // Log the termination for tracing.
+    Debugprint(va("Application terminated with code %u.", Engine::getErrno()));
 
     return 0;
 }
