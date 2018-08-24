@@ -113,18 +113,18 @@ struct Element_t
 #pragma pack(pop)
 #pragma endregion
 
-// Core properties, implemented in different modules.
+// Core properties.
 namespace Engine
 {
     constexpr size_t Windowheight = 720;
-    ainline void setScanlinelength(uint32_t Length);
-    ainline const Element_t *getRootelement();
-    ainline const void *getWindowhandle();
-    ainline void setErrno(uint32_t Code);
-    ainline point2_t getWindowposition();
-    ainline point2_t getMouseposition();
-    ainline point2_t getWindowsize();
-    ainline uint32_t getErrno();
+    void setScanlinelength(uint32_t Length);
+    const Element_t *getRootelement();
+    const void *getWindowhandle();
+    void setErrno(uint32_t Code);
+    point2_t getWindowposition();
+    point2_t getMouseposition();
+    point2_t getWindowsize();
+    uint32_t getErrno();
 }
 
 // Window management.
