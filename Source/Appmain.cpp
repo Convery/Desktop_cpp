@@ -22,13 +22,12 @@ int main(int argc, char **argv)
         // Track the frame-time, should be less than 33ms.
         static auto Lastframe{ std::chrono::high_resolution_clock::now() };
         const auto Currentframe{ std::chrono::high_resolution_clock::now() };
-        auto Deltatime{ std::chrono::duration<double>(Currentframe - Lastframe).count() };
-        
-        /* 
-            onInput 
+
+        /*
+            onInput
             onNetwork
-            onTick
         */
+        Engine::Compositing::onFrame(std::chrono::duration<double>(Currentframe - Lastframe).count());
         Engine::Rendering::onFrame();
 
         // If we got an error, terminate.

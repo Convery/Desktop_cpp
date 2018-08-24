@@ -172,6 +172,9 @@ namespace Engine::Compositing
 
     // Recalculate the elements dimensions.
     void Recalculate();
+
+    // Notify the elements about a tick.
+    void onFrame(const double Deltatime);
 }
 
 // Forward user input to the elements.
