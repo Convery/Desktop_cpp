@@ -16,7 +16,7 @@ namespace Engine
     int16_t Currentline;
     uint8_t *Scanline;
 
-    ainline void setScanlinelength(uint32_t Length)
+    void setScanlinelength(uint32_t Length)
     {
         Scanlinelength = Length;
         Length *= sizeof(pixel24_t);
