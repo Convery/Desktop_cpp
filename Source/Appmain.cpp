@@ -28,8 +28,8 @@ int main(int argc, char **argv)
             onInput 
             onNetwork
             onTick
-            onRender
         */
+        Engine::Rendering::onFrame();
 
         // If we got an error, terminate.
         if (Engine::getErrno()) break;
