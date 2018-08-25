@@ -8,6 +8,8 @@
 
 #include "../Stdinclude.hpp"
 
+void PNGtoTexture(std::string Filename);
+
 namespace Engine
 {
     std::bitset<Windowheight> Dirtylines{};
@@ -394,7 +396,7 @@ void Microsoft_hackery_do_not_call_this()
     Code to create a texture from a png.
     Needs to be modified for different platforms.
 */
-#if 0
+#if 1
 #define STB_IMAGE_IMPLEMENTATION
 #include "../Utility/stb_image.h"
 void PNGtoTexture(std::string Filename)
@@ -406,7 +408,7 @@ void PNGtoTexture(std::string Filename)
 
     if (auto Filehandle = std::fopen(va("../Assets/%s.cpp", Filename.c_str()).c_str(), "wb"))
     {
-        std::fprintf(Filehandle, "#include \"../Commontypes.hpp\"\n\n");
+        std::fprintf(Filehandle, "#include \"../Assets.hpp\"\n\n");
         std::fprintf(Filehandle, "namespace Assets {\n");
         std::fprintf(Filehandle, "static const uint8_t Assetdata[] = {\n\t");
 
