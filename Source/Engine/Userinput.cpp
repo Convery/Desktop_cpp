@@ -53,7 +53,7 @@ namespace Engine::Input
                     Dirtystates[Target].Clicked = true;
 
                     if (Target->State.ExclusiveIO && Target->isExclusive)
-                        if (Target->isExclusive(Target, { 2 }))
+                        if (Target->isExclusive(Target, { 0, 1 }))
                             return true;
                 }
 

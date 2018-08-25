@@ -43,10 +43,25 @@ void Composetoolbar(Element_t *Target)
     Target->addChild(Boundingbox);
 
     // Let the user exit in a natural way.
+    Closebutton->State.ExclusiveIO = true;
     Closebutton->Margins = { 1.9f, 0, 0.01f, 0 };
     Closebutton->onRender = [](const Element_t *Caller)
     {
-        Draw::Quad({ 0, 0x33, 0, 1 }, Caller->Dimensions);
+        if(Caller->State.Clicked) Draw::Quad({ 0, 0xFF, 0, 1 }, Caller->Dimensions);
+        else Draw::Quad({ 0xFF, 0, 0, 1 }, Caller->Dimensions);
+    };
+    Closebutton->isExclusive = [](const Element_t *Caller, const elementstate_t Newstate)
+    {
+        return Newstate.Clicked;
+    };
+    Closebutton->onStatechange = [](const Element_t *Caller, const elementstate_t Newstate)
+    {
+        if (Caller->State.Clicked && Newstate.Clicked && Caller->State.Focused)
+        {
+            Engine::setErrno(Hash::FNV1a_32("Toolbar.Close"));
+        }
+
+        Engine::Rendering::Invalidatespan({ Caller->Dimensions.y0, Caller->Dimensions.y1 });
     };
     Boundingbox->addChild(Closebutton);
 }

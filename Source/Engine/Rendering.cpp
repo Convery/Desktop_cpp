@@ -111,7 +111,7 @@ namespace Engine::Rendering
             if (likely(Dirtylines[i] == 0)) continue;
 
             // Clear the line to fully transparent (chroma-key on 0xFFFFFF).
-            std::memset(Scanline, 0xFF, Bufferlength);
+            std::memset(Scanline, 0x00, Bufferlength);
             Currentline = i;
 
             // Helper to save my fingers.
@@ -167,7 +167,7 @@ namespace Engine::Rendering::Draw::Internal
     template <typename CB = std::function<void(const point2_t Position, const int16_t Length)>>
     ainline void fillQuad(const point4_t Area, const CB Callback)
     {
-        if (Currentline >= Area.y0 && Currentline <= Area.y1)
+        if (Currentline >= Area.y0 && Currentline < Area.y1)
         {
             Callback({ Area.x0, Currentline - Area.y0 }, int16_t(std::max(Area.x1 - Area.x0, 1)));
         }
