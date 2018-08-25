@@ -133,7 +133,7 @@ namespace Engine::Rendering
         }
 
         // Reset the area.
-       // Dirtylines.reset();
+        Dirtylines.reset();
 
         // Give the framebuffer back to the system.
         Unlockbuffer();
@@ -157,8 +157,6 @@ namespace Engine::Rendering
     }
     ainline void setPixel(const size_t Offset, const pixel24_t Color)
     {
-        (2 + 16 - (2 % 16));
-
         return setPixel(Offset, { Color.Raw[0], Color.Raw[1], Color.Raw[2], 0xFF });
     }
 }
