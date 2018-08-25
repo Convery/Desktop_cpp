@@ -32,7 +32,7 @@ namespace Engine::Input
                 // Mark the element as dirty.
                 if (Target->State.Clicked)
                 {
-                    Dirtystates[Target].Clicked = false;
+                    Dirtystates[Target].Clicked = true;
                 }
 
                 return false;
@@ -50,7 +50,7 @@ namespace Engine::Input
                 // Mark the element as dirty.
                 if (Target->State.Clicked != !Released)
                 {
-                    Dirtystates[Target].Clicked = !Released;
+                    Dirtystates[Target].Clicked = true;
 
                     if (Target->State.ExclusiveIO && Target->isExclusive)
                         if (Target->isExclusive(Target, { 2 }))
@@ -80,7 +80,7 @@ namespace Engine::Input
                 // Mark the element as dirty.
                 if (Target->State.Focused)
                 {
-                    Dirtystates[Target].Focused = false;
+                    Dirtystates[Target].Focused = true;
                 }
 
                 return false;
@@ -145,6 +145,7 @@ namespace Engine::Input
                 }
                 case WM_MOUSELEAVE:
                 {
+                    onMouseclick({ (int16_t)0x7FFF, (int16_t)0x7FFF }, true);
                     onMousemove({ (int16_t)0x7FFF, (int16_t)0x7FFF });
                     isTrackingmouse = false;
                     continue;
@@ -177,8 +178,14 @@ namespace Engine::Input
         // Notify the elements about any updates.
         for (const auto &Item : Dirtystates)
         {
-            Item.first->onStatechange(Item.first, Item.second);
-            Item.first->State = Item.second;
+            if (Item.first->onStatechange)
+            {
+                Item.first->onStatechange(Item.first, Item.second);
+            }
+
+            // Toggle the state-flags.
+            if (Item.second.Focused) Item.first->State.Focused = !Item.first->State.Focused;
+            if (Item.second.Clicked) Item.first->State.Clicked = !Item.first->State.Clicked;
         }
         Dirtystates.clear();
     }
