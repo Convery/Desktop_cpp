@@ -431,7 +431,7 @@ void PNGtoTexture(std::string Filename)
         else assert(false);
 
         std::fprintf(Filehandle, "\n};\n");
-        std::fprintf(Filehandle, "extern const texture_t %s\n{\n\t{ %u, %u },\n\tAssetdata,\n\t%u\n};\n}\n", Filename.c_str(), Imagewidth, Imageheight, Imagechannels);
+        std::fprintf(Filehandle, "extern const texture_t %s\n{\n\t{ %u, %u },\n\t%u,\n\tAssetdata\n};\n}\n", Filename.c_str(), Imagewidth, Imageheight, Imagechannels);
 
         std::fclose(Filehandle);
     }
