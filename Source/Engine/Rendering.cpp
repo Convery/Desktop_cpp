@@ -169,14 +169,14 @@ namespace Engine::Rendering::Draw::Internal
     {
         if (Currentline >= Area.y0 && Currentline < Area.y1)
         {
-            Callback({ Area.x0, Currentline - Area.y0 }, int16_t(std::max(Area.x1 - Area.x0, 1)));
+            Callback({ Area.x0, Currentline - Area.y0 }, Area.x1 - Area.x0 + 1);
         }
     }
     template <typename CB = std::function<void(const point2_t Position, const int16_t Length)>>
     ainline void outlineQuad(const point4_t Area, const CB Callback)
     {
-        if (Currentline == Area.y0 || Currentline == Area.y1)
-            return Callback({ Area.x0, Currentline - Area.y0 }, int16_t(std::max(Area.x1 - Area.x0, 1)));
+        if (Currentline == Area.y0 || Currentline == Area.y1 - 1)
+            return Callback({ Area.x0, Currentline - Area.y0 }, Area.x1 - Area.x0 + 1);
 
         if (Currentline > Area.y0 && Currentline < Area.y1)
         {

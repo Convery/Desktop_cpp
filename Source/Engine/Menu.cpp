@@ -66,7 +66,7 @@ namespace Engine::Compositing
     void Recalculate()
     {
         assert(Rootelement);
-        Rootelement->setDimensions({ 0, 0, getWindowsize().x, getWindowsize().y });
+        Rootelement->setDimensions({ 0, 0, getWindowsize().x - 1, getWindowsize().y });
     }
 
     // Notify the elements about a tick.
