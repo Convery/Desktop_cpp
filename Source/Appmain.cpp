@@ -13,9 +13,11 @@ int main(int argc, char **argv)
     // Have the window rendering in the highest allowed state.
     SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
 
-    /*
-        Create window.
-    */
+    // Create the initial scene.
+    Engine::Compositing::Switchcomposition("loginmenu");
+    Engine::Window::Resize({ 720, 720 }, true);
+    Engine::Window::Centerwindow(false);
+    Engine::Window::Togglevisibility();
 
     while (true)
     {
@@ -23,6 +25,7 @@ int main(int argc, char **argv)
         static auto Lastframe{ std::chrono::high_resolution_clock::now() };
         const auto Currentframe{ std::chrono::high_resolution_clock::now() };
 
+        // Notify all components about the new frame.
         /*
             onInput
             onNetwork

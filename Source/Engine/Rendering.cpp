@@ -20,7 +20,7 @@ namespace Engine
     {
         Scanlinelength = Length;
         Length *= sizeof(pixel24_t);
-        Bufferlength += Length % 16 == 0 ? 0 : 16 - (Length % 16);
+        Bufferlength =  Length + (Length % 16 == 0 ? 0 : 16 - (Length % 16));
     }
 }
 
@@ -33,6 +33,8 @@ namespace Engine::Rendering
         #error Non-windows abstraction is not implemented (yet!)
 
         ainline void Present() {}
+        ainline void Lockbuffer() {}
+        ainline void Unlockbuffer() {}
         ainline pixel32_t fromRGBA(const rgba_t Color)
         {
             return
@@ -45,6 +47,8 @@ namespace Engine::Rendering
         }
         #else
 
+        PAINTSTRUCT State{};
+        void *Devicecontext{};
         ainline void Present()
         {
             // Initialize the scanline info for this pass.
@@ -52,7 +56,16 @@ namespace Engine::Rendering
             Lineformat.bmiHeader.biWidth = Scanlinelength;
 
             // Bitblt to screen.
-            SetDIBitsToDevice((HDC)getWindowhandle, 0, Currentline, Scanlinelength, 1, 0, 0, 0, 1, Scanline, &Lineformat, DIB_RGB_COLORS);
+            SetDIBitsToDevice((HDC)Devicecontext, 0, Currentline, Scanlinelength, 1, 0, 0, 0, 1, Scanline, &Lineformat, DIB_RGB_COLORS);
+        }
+        ainline void Lockbuffer()
+        {
+            InvalidateRect(HWND(getWindowhandle()), NULL, NULL);
+            Devicecontext = BeginPaint(HWND(getWindowhandle()), &State);
+        }
+        ainline void Unlockbuffer()
+        {
+            EndPaint(HWND(getWindowhandle()), &State);
         }
         ainline pixel32_t fromRGBA(const rgba_t Color)
         {
@@ -85,6 +98,9 @@ namespace Engine::Rendering
     // Process elements, render, and present to the context.
     void onFrame()
     {
+        // Notify the system that we own the framebuffer.
+        Lockbuffer();
+
         // Create the buffer for this instance.
         Scanline = (uint8_t *)alloca(Bufferlength);
 
@@ -117,7 +133,10 @@ namespace Engine::Rendering
         }
 
         // Reset the area.
-        Dirtylines.reset();
+       // Dirtylines.reset();
+
+        // Give the framebuffer back to the system.
+        Unlockbuffer();
     }
 
     // Internal setters, should be optimized further. Probably via SSE.
