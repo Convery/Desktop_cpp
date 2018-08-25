@@ -172,14 +172,14 @@ namespace Engine::Input
                 setErrno(Hash::FNV1a_32("WM_QUIT"));
                 return;
             }
-
-            // Notify the elements about any updates.
-            for (const auto &Item : Dirtystates)
-            {
-                Item.first->onStatechange(Item.first, Item.second);
-                Item.first->State = Item.second;
-            }
-            Dirtystates.clear();
         }
+
+        // Notify the elements about any updates.
+        for (const auto &Item : Dirtystates)
+        {
+            Item.first->onStatechange(Item.first, Item.second);
+            Item.first->State = Item.second;
+        }
+        Dirtystates.clear();
     }
 }
