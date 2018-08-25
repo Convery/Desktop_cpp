@@ -89,7 +89,7 @@ namespace Engine::Rendering
         Scanline = (uint8_t *)alloca(Bufferlength);
 
         // Render all the scanlines in the main-thread.
-        for (int16_t i = 0; i <= std::min(getWindowsize().y, int16_t(Windowheight)); ++i)
+        for (int16_t i = 0; i < std::min(getWindowsize().y, int16_t(Windowheight)); ++i)
         {
             // Skip clean lines.
             if (likely(Dirtylines[i] == 0)) continue;

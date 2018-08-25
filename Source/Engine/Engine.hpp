@@ -57,13 +57,34 @@ struct Element_t
     vec4_t Margins{};
 
     // The children inherit the parents dimensions - margins.
-    std::vector<Element_t *> Childelements{};
-    void addChild(Element_t *Child)
+    void setDimensions(point4_t Boundingbox)
     {
-        std::function<void(Element_t *)> Recalc = [&Recalc](Element_t *Target) -> void
+        const double DeltaX = std::abs(Boundingbox.x1 - Boundingbox.x0) / 2;
+        const double DeltaY = std::abs(Boundingbox.y1 - Boundingbox.y0) / 2;
+
+        // Margins relative to the edges.
+        Dimensions.x0 = int16_t(std::round(Boundingbox.x0 + DeltaX * Margins.x0));
+        Dimensions.y0 = int16_t(std::round(Boundingbox.y0 + DeltaY * Margins.y0));
+        Dimensions.x1 = int16_t(std::round(Boundingbox.x1 - DeltaX * Margins.x1));
+        Dimensions.y1 = int16_t(std::round(Boundingbox.y1 - DeltaY * Margins.y1));
+
+        // Margins relative to (0, 0).
+        if (State.Fixedwidth)
         {
-            double DeltaX = std::abs(Target->Dimensions.x1 - Target->Dimensions.x0) / 2;
-            double DeltaY = std::abs(Target->Dimensions.y1 - Target->Dimensions.y0) / 2;
+            Dimensions.x0 = int16_t(std::round(Boundingbox.x0 + Margins.x0));
+            Dimensions.x1 = int16_t(std::round(Boundingbox.x0 + Margins.x1));
+        }
+        if (State.Fixedheight)
+        {
+            Dimensions.y0 = int16_t(std::round(Boundingbox.y0 + Margins.y0));
+            Dimensions.y1 = int16_t(std::round(Boundingbox.y0 + Margins.y1));
+        }
+
+        // Update the children.
+        std::function<void(Element_t *)> Recalculate = [&](Element_t *Target) -> void
+        {
+            const double DeltaX = std::abs(Target->Dimensions.x1 - Target->Dimensions.x0) / 2;
+            const double DeltaY = std::abs(Target->Dimensions.y1 - Target->Dimensions.y0) / 2;
 
             for (auto &Child : Target->Childelements)
             {
@@ -85,12 +106,44 @@ struct Element_t
                     Child->Dimensions.y1 = int16_t(std::round(Target->Dimensions.y0 + Child->Margins.y1));
                 }
 
-                Recalc(Child);
+                Recalculate(Child);
             }
         };
+        Recalculate(this);
+    }
+    std::vector<Element_t *> Childelements{};
+    void addChild(Element_t *Child)
+    {
+        std::function<void(Element_t *)> Recalculate = [&](Element_t *Target) -> void
+        {
+            const double DeltaX = std::abs(Target->Dimensions.x1 - Target->Dimensions.x0) / 2;
+            const double DeltaY = std::abs(Target->Dimensions.y1 - Target->Dimensions.y0) / 2;
 
+            for (auto &Child : Target->Childelements)
+            {
+                // Margins relative to the edges.
+                Child->Dimensions.x0 = int16_t(std::round(Target->Dimensions.x0 + DeltaX * Child->Margins.x0));
+                Child->Dimensions.y0 = int16_t(std::round(Target->Dimensions.y0 + DeltaY * Child->Margins.y0));
+                Child->Dimensions.x1 = int16_t(std::round(Target->Dimensions.x1 - DeltaX * Child->Margins.x1));
+                Child->Dimensions.y1 = int16_t(std::round(Target->Dimensions.y1 - DeltaY * Child->Margins.y1));
+
+                // Margins relative to (0, 0).
+                if (Child->State.Fixedwidth)
+                {
+                    Child->Dimensions.x0 = int16_t(std::round(Target->Dimensions.x0 + Child->Margins.x0));
+                    Child->Dimensions.x1 = int16_t(std::round(Target->Dimensions.x0 + Child->Margins.x1));
+                }
+                if (Child->State.Fixedheight)
+                {
+                    Child->Dimensions.y0 = int16_t(std::round(Target->Dimensions.y0 + Child->Margins.y0));
+                    Child->Dimensions.y1 = int16_t(std::round(Target->Dimensions.y0 + Child->Margins.y1));
+                }
+
+                Recalculate(Child);
+            }
+        };
         Childelements.push_back(Child);
-        Recalc(this);
+        Recalculate(this);
     }
 
     // Callbacks on user-interaction, exclusive state-changes are consumed by the called element.
@@ -116,12 +169,12 @@ struct Element_t
 // Core properties.
 namespace Engine
 {
-    constexpr size_t Windowheight = 720;
     void setScanlinelength(uint32_t Length);
-    const Element_t *getRootelement();
+    constexpr size_t Windowheight = 720;
     const void *getWindowhandle();
     void setErrno(uint32_t Code);
     point2_t getWindowposition();
+    Element_t *getRootelement();
     point2_t getMouseposition();
     point2_t getWindowsize();
     uint32_t getErrno();

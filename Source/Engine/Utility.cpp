@@ -11,12 +11,6 @@
 // Core properties.
 namespace Engine
 {
-    Element_t *Rootelement{ new Element_t("Root") };
-    const Element_t *getRootelement()
-    {
-        return Rootelement;
-    }
-
     uint32_t Errno{};
     void setErrno(uint32_t Code)
     {
@@ -42,7 +36,7 @@ namespace Engine
     }
     point2_t getMouseposition()
     {
-        POINT Origin; 
+        POINT Origin;
         GetCursorPos(&Origin);
         return { int16_t(Origin.x), int16_t(Origin.y) };
     }
@@ -51,6 +45,6 @@ namespace Engine
         RECT Client;
         GetClientRect((HWND)getWindowhandle(), &Client);
         return { int16_t(Client.right - Client.left), int16_t(Client.bottom - Client.top) };
-    } 
+    }
     #endif
 }

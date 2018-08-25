@@ -31,7 +31,7 @@ int main(int argc, char **argv)
         Engine::Rendering::onFrame();
 
         // If we got an error, terminate.
-        if (Engine::getErrno()) break;
+        if (unlikely(Engine::getErrno())) break;
 
         // Sleep until the next frame.
         std::this_thread::sleep_until(Lastframe + std::chrono::microseconds(1000000 / 60));
