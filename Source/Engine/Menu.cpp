@@ -43,7 +43,7 @@ namespace Engine::Compositing
         }
 
         // Add the default topmost elements.
-        //Composers->find("toolbar")->second(newRootelement);
+        Composers->find("toolbar")->second(newRootelement);
         //Composers->find("sidebar")->second(newRootelement);
 
         // TODO(Convery): Perform better cleanup!!one!
@@ -66,7 +66,7 @@ namespace Engine::Compositing
     void Recalculate()
     {
         assert(Rootelement);
-        Rootelement->setDimensions(Rootelement->Dimensions);
+        Rootelement->setDimensions({ 0, 0, getWindowsize().x, getWindowsize().y });
     }
 
     // Notify the elements about a tick.
