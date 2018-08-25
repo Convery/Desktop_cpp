@@ -30,9 +30,9 @@ namespace Engine
     #else
     point2_t getWindowposition()
     {
-        RECT Client;
-        GetClientRect((HWND)getWindowhandle(), &Client);
-        return { int16_t(Client.left + getWindowsize().x / 2), int16_t(Client.top + getWindowsize().y / 2) };
+        RECT Window;
+        GetWindowRect((HWND)getWindowhandle(), &Window);
+        return { int16_t(Window.left), int16_t(Window.top) };
     }
     point2_t getMouseposition()
     {
