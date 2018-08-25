@@ -85,7 +85,4 @@ namespace Engine::Window
         }
     };
     static Initializer Loader{};
-
-    // Process any and all window-events.
-    void onFrame();
 }

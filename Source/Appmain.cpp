@@ -26,10 +26,7 @@ int main(int argc, char **argv)
         const auto Currentframe{ std::chrono::high_resolution_clock::now() };
 
         // Notify all components about the new frame.
-        /*
-            onInput
-            onNetwork
-        */
+        Engine::Input::onFrame();
         Engine::Compositing::onFrame(std::chrono::duration<double>(Currentframe - Lastframe).count());
         Engine::Rendering::onFrame();
 

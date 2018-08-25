@@ -188,9 +188,6 @@ namespace Engine::Window
     void Resize(point2_t Size, bool Deferupdate = false);
     void Centerwindow(bool Deferupdate = false);
     void Togglevisibility();
-
-    // Process any and all window-events.
-    void onFrame();
 }
 
 // Render into a scanline and present.
@@ -233,7 +230,6 @@ namespace Engine::Compositing
 // Forward user input to the elements.
 namespace Engine::Input
 {
-    // Callbacks on user-events.
-    void onMousemove(point2_t Position);
-    void onMouseclick(point2_t Position, bool Released);
+    // Process any and all system-events.
+    void onFrame();
 }
