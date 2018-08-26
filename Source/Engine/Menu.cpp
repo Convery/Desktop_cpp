@@ -44,7 +44,7 @@ namespace Engine::Compositing
 
         // Add the default topmost elements.
         Composers->find("toolbar")->second(newRootelement);
-        Composers->find("sidebar")->second(newRootelement);
+        // Devconsole
 
         // TODO(Convery): Perform better cleanup!!one!
         if (Rootelement)
