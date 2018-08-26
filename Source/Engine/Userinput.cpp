@@ -30,7 +30,7 @@ namespace Engine::Input
                     Lambda(Item, true);
 
                 // Mark the element as dirty.
-                if (Target->State.Clicked)
+                if (Target->Properties.Clicked)
                 {
                     Dirtystates[Target].Clicked = true;
                 }
@@ -48,11 +48,11 @@ namespace Engine::Input
                         return true;
 
                 // Mark the element as dirty.
-                if (Target->State.Clicked != !Released)
+                if (Target->Properties.Clicked != !Released)
                 {
                     Dirtystates[Target].Clicked = true;
 
-                    if (Target->State.ExclusiveIO && Target->isExclusive)
+                    if (Target->Properties.ExclusiveIO && Target->isExclusive)
                         if (Target->isExclusive(Target, { 0, 1 }))
                             return true;
                 }
@@ -78,7 +78,7 @@ namespace Engine::Input
                     Lambda(Item, true);
 
                 // Mark the element as dirty.
-                if (Target->State.Focused)
+                if (Target->Properties.Focused)
                 {
                     Dirtystates[Target].Focused = true;
                 }
@@ -96,11 +96,11 @@ namespace Engine::Input
                         return true;
 
                 // Mark the element as dirty.
-                if (!Target->State.Focused)
+                if (!Target->Properties.Focused)
                 {
                     Dirtystates[Target].Focused = true;
 
-                    if (Target->State.ExclusiveIO && Target->isExclusive)
+                    if (Target->Properties.ExclusiveIO && Target->isExclusive)
                         if (Target->isExclusive(Target, { 1 }))
                             return true;
                 }
@@ -184,8 +184,8 @@ namespace Engine::Input
             }
 
             // Toggle the state-flags.
-            if (Item.second.Focused) Item.first->State.Focused = !Item.first->State.Focused;
-            if (Item.second.Clicked) Item.first->State.Clicked = !Item.first->State.Clicked;
+            if (Item.second.Focused) Item.first->Properties.Focused = !Item.first->Properties.Focused;
+            if (Item.second.Clicked) Item.first->Properties.Clicked = !Item.first->Properties.Clicked;
         }
         Dirtystates.clear();
     }

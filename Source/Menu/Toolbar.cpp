@@ -15,7 +15,7 @@ void Composetoolbar(Element_t *Target)
     auto Closebutton = new Element_t("Toolbar.Close");
 
     // The full toolbar, click to drag.
-    Boundingbox->State.Fixedheight = true;
+    Boundingbox->Properties.Fixedheight = true;
     Boundingbox->Margins = { 0.045f, 0, 0.045f, 20 };
     Boundingbox->onRender = [](const Element_t *Caller)
     {
@@ -25,7 +25,7 @@ void Composetoolbar(Element_t *Target)
     {
         static point2_t Previous{};
 
-        if (Caller->State.Clicked)
+        if (Caller->Properties.Clicked)
         {
             if (Previous.x + Previous.y == 0) Previous = Engine::getMouseposition();
             const auto Current{ Engine::getMouseposition() };
@@ -44,13 +44,13 @@ void Composetoolbar(Element_t *Target)
     Target->addChild(Boundingbox);
 
     // Let the user exit in a natural way.
-    Closebutton->State.ExclusiveIO = true;
-    Closebutton->State.Fixedheight = true;
+    Closebutton->Properties.ExclusiveIO = true;
+    Closebutton->Properties.Fixedheight = true;
     Closebutton->Margins = { 1.9f, 1, 0.037f, 20 };
     Closebutton->onRender = [](const Element_t *Caller)
     {
         // NOTE(Convery): This is not a typo.
-        if(Caller->State.Clicked) Draw::Quad(Assets::Closeicon, Caller->Dimensions);
+        if(Caller->Properties.Clicked) Draw::Quad(Assets::Closeicon, Caller->Dimensions);
         Draw::Quad(Assets::Closeicon, Caller->Dimensions);
     };
     Closebutton->isExclusive = [](const Element_t *Caller, const elementstate_t Newstate)
@@ -59,7 +59,7 @@ void Composetoolbar(Element_t *Target)
     };
     Closebutton->onStatechange = [](const Element_t *Caller, const elementstate_t Newstate)
     {
-        if (Caller->State.Clicked && Newstate.Clicked && Caller->State.Focused)
+        if (Caller->Properties.Clicked && Newstate.Clicked && Caller->Properties.Focused)
         {
             Engine::setErrno(Hash::FNV1a_32("Toolbar.Close"));
         }

@@ -52,7 +52,7 @@ struct Element_t
         Callback *onStatechange;
     */
 
-    elementstate_t State{};
+    elementstate_t Properties{};
     point4_t Dimensions{};
     vec4_t Margins{};
 
@@ -69,12 +69,12 @@ struct Element_t
         Dimensions.y1 = int16_t(std::round(Boundingbox.y1 - DeltaY * Margins.y1));
 
         // Margins relative to (0, 0).
-        if (State.Fixedwidth)
+        if (Properties.Fixedwidth)
         {
             Dimensions.x0 = int16_t(std::round(Boundingbox.x0 + Margins.x0));
             Dimensions.x1 = int16_t(std::round(Boundingbox.x0 + Margins.x1));
         }
-        if (State.Fixedheight)
+        if (Properties.Fixedheight)
         {
             Dimensions.y0 = int16_t(std::round(Boundingbox.y0 + Margins.y0));
             Dimensions.y1 = int16_t(std::round(Boundingbox.y0 + Margins.y1));
@@ -95,12 +95,12 @@ struct Element_t
                 Child->Dimensions.y1 = int16_t(std::round(Target->Dimensions.y1 - DeltaY * Child->Margins.y1));
 
                 // Margins relative to (0, 0).
-                if (Child->State.Fixedwidth)
+                if (Child->Properties.Fixedwidth)
                 {
                     Child->Dimensions.x0 = int16_t(std::round(Target->Dimensions.x0 + Child->Margins.x0));
                     Child->Dimensions.x1 = int16_t(std::round(Target->Dimensions.x0 + Child->Margins.x1));
                 }
-                if (Child->State.Fixedheight)
+                if (Child->Properties.Fixedheight)
                 {
                     Child->Dimensions.y0 = int16_t(std::round(Target->Dimensions.y0 + Child->Margins.y0));
                     Child->Dimensions.y1 = int16_t(std::round(Target->Dimensions.y0 + Child->Margins.y1));
@@ -128,12 +128,12 @@ struct Element_t
                 Child->Dimensions.y1 = int16_t(std::round(Target->Dimensions.y1 - DeltaY * Child->Margins.y1));
 
                 // Margins relative to (0, 0).
-                if (Child->State.Fixedwidth)
+                if (Child->Properties.Fixedwidth)
                 {
                     Child->Dimensions.x0 = int16_t(std::round(Target->Dimensions.x0 + Child->Margins.x0));
                     Child->Dimensions.x1 = int16_t(std::round(Target->Dimensions.x0 + Child->Margins.x1));
                 }
-                if (Child->State.Fixedheight)
+                if (Child->Properties.Fixedheight)
                 {
                     Child->Dimensions.y0 = int16_t(std::round(Target->Dimensions.y0 + Child->Margins.y0));
                     Child->Dimensions.y1 = int16_t(std::round(Target->Dimensions.y0 + Child->Margins.y1));
