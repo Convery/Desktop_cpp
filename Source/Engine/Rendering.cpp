@@ -113,7 +113,7 @@ namespace Engine::Rendering
             if (likely(Dirtylines[i] == 0)) continue;
 
             // Clear the line to fully transparent (chroma-key on 0xFFFFFF).
-            std::memset(Scanline, 0x00, Bufferlength);
+            std::memset(Scanline, 0xFF, Bufferlength);
             Currentline = i;
 
             // Helper to save my fingers.
@@ -396,7 +396,7 @@ void Microsoft_hackery_do_not_call_this()
     Code to create a texture from a png.
     Needs to be modified for different platforms.
 */
-#if 1
+#if !defined(NDEBUG)
 #define STB_IMAGE_IMPLEMENTATION
 #include "../Utility/stb_image.h"
 void PNGtoTexture(std::string Filename)

@@ -7,6 +7,7 @@
 */
 
 #include "../Stdinclude.hpp"
+#include "Assets.hpp"
 
 void Composetoolbar(Element_t *Target)
 {
@@ -15,10 +16,10 @@ void Composetoolbar(Element_t *Target)
 
     // The full toolbar, click to drag.
     Boundingbox->State.Fixedheight = true;
-    Boundingbox->Margins = { 0, 0, 0, 20 };
+    Boundingbox->Margins = { 0.045f, 0, 0.045f, 20 };
     Boundingbox->onRender = [](const Element_t *Caller)
     {
-        Draw::Quad({ 97, 72, 47, 0xFF }, Caller->Dimensions);
+        Draw::Quad({ 49, 48, 47, 0xFF }, Caller->Dimensions);
     };
     Boundingbox->onFrame = [](const Element_t *Caller, double Deltatime)
     {
@@ -44,11 +45,13 @@ void Composetoolbar(Element_t *Target)
 
     // Let the user exit in a natural way.
     Closebutton->State.ExclusiveIO = true;
-    Closebutton->Margins = { 1.9f, 0, 0.01f, 0 };
+    Closebutton->State.Fixedheight = true;
+    Closebutton->Margins = { 1.9f, 1, 0.037f, 20 };
     Closebutton->onRender = [](const Element_t *Caller)
     {
-        if(Caller->State.Clicked) Draw::Quad({ 0, 0xFF, 0, 1 }, Caller->Dimensions);
-        else Draw::Quad({ 0xFF, 0, 0, 1 }, Caller->Dimensions);
+        // NOTE(Convery): This is not a typo.
+        if(Caller->State.Clicked) Draw::Quad(Assets::Closeicon, Caller->Dimensions);
+        Draw::Quad(Assets::Closeicon, Caller->Dimensions);
     };
     Closebutton->isExclusive = [](const Element_t *Caller, const elementstate_t Newstate)
     {
