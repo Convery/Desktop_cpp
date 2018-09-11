@@ -10,6 +10,8 @@
 
 namespace Engine
 {
+    uint32_t gCurrentmenuID{};
+
     Element_t *Rootelement{ new Element_t("Rootelement") };
     Element_t *getRootelement()
     {

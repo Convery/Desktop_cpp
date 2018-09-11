@@ -38,6 +38,9 @@ using texture_t = struct { const point2_t Dimensions; uint8_t Pixelsize; const u
 // Element state for IO notifications.
 using elementstate_t = struct { unsigned char Focused : 1, Clicked : 1, Fixedwidth : 1, Fixedheight : 1, ExclusiveIO : 1, Reserved : 3; };
 
+#pragma pack(pop)
+#pragma endregion
+
 // All menu-components should derive from this base element.
 struct Element_t
 {
@@ -155,22 +158,20 @@ struct Element_t
     std::function<void(const Element_t *Caller)> onRender{};
 
     // While debugging, add an identifier.
-    #if !defined(NDEBUG)
+#if !defined(NDEBUG)
     std::string Elementname;
     Element_t(std::string &&Identity) : Elementname(Identity) {};
-    #else
+#else
     Element_t(std::string &&Identity) { (void)Identity; };
-    #endif
+#endif
 };
-
-#pragma pack(pop)
-#pragma endregion
 
 // Core properties.
 namespace Engine
 {
     void setScanlinelength(uint32_t Length);
     constexpr size_t Windowheight = 720;
+    extern uint32_t gCurrentmenuID;
     const void *getWindowhandle();
     void setErrno(uint32_t Code);
     point2_t getWindowposition();

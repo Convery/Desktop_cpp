@@ -22,7 +22,7 @@ void Composeloginmenu(Element_t *Target)
     };
     Target->addChild(Boundingbox);
 
-
+    Engine::gCurrentmenuID = Hash::FNV1a_32("loginmenu");
 }
 
 // Register the composer for later.

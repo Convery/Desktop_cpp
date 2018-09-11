@@ -19,7 +19,10 @@ void Composetoolbar(Element_t *Target)
     Boundingbox->Margins = { 0.045f, 0, 0.045f, 20 };
     Boundingbox->onRender = [](const Element_t *Caller)
     {
-        Draw::Quad({ 49, 48, 47, 0xFF }, Caller->Dimensions);
+        if(Engine::gCurrentmenuID == Hash::FNV1a_32("loginmenu"))
+            Draw::Quad({ 49, 48, 47, 0xFF }, Caller->Dimensions);
+        else
+            Draw::Quad({ 12, 12, 12, 0xFF }, Caller->Dimensions);
     };
     Boundingbox->onFrame = [](const Element_t *Caller, double Deltatime)
     {
