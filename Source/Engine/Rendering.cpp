@@ -12,17 +12,27 @@ void PNGtoTexture(std::string Filename);
 
 namespace Engine
 {
-    std::bitset<Windowheight> Dirtylines{};
+    std::vector<bool> Dirtylines{};
     uint32_t Scanlinelength{};
     uint32_t Bufferlength{};
-    int16_t Currentline;
-    uint8_t *Scanline;
+    point4_t Clippingarea{};
+    uint8_t *Scanline{};
+
+    int16_t Currentline = 0;
 
     void setScanlinelength(uint32_t Length)
     {
+        // The length of each line.
         Scanlinelength = Length;
-        Length *= sizeof(pixel24_t);
+
+        // The length of the buffer for 10 lines.
+        Length *= sizeof(pixel24_t) * 10;
+
+        // Align to 16 bytes.
         Bufferlength =  Length + (Length % 16 == 0 ? 0 : 16 - (Length % 16));
+
+        // Ensure that we have enough storage.
+        Dirtylines.resize(gWindowsize.y + 1);
     }
 }
 
@@ -53,21 +63,18 @@ namespace Engine::Rendering
         void *Devicecontext{};
         ainline void Present()
         {
-            // Initialize the scanline info for this pass.
-            static BITMAPINFO Lineformat{ { sizeof(BITMAPINFO), 1, 1, 1, 24 } };
-            Lineformat.bmiHeader.biWidth = Scanlinelength;
-
-            // Bitblt to screen.
-            SetDIBitsToDevice((HDC)Devicecontext, 0, Currentline, Scanlinelength, 1, 0, 0, 0, 1, Scanline, &Lineformat, DIB_RGB_COLORS);
+            // Initialize the scanline info for this pass and BitBlt.
+            BITMAPINFO Lineformat{ { sizeof(BITMAPINFO), Scanlinelength, -(Clippingarea.y1 - Clippingarea.y0), 1, 24 } };
+            SetDIBitsToDevice((HDC)Devicecontext, 0, Clippingarea.y0, Lineformat.bmiHeader.biWidth, -Lineformat.bmiHeader.biHeight, 0, 0, 0, -Lineformat.bmiHeader.biHeight, Scanline, &Lineformat, DIB_RGB_COLORS);
         }
         ainline void Lockbuffer()
         {
-            InvalidateRect(HWND(getWindowhandle()), NULL, NULL);
-            Devicecontext = BeginPaint(HWND(getWindowhandle()), &State);
+            InvalidateRect(HWND(gWindowhandle), NULL, NULL);
+            Devicecontext = BeginPaint(HWND(gWindowhandle), &State);
         }
         ainline void Unlockbuffer()
         {
-            EndPaint(HWND(getWindowhandle()), &State);
+            EndPaint(HWND(gWindowhandle), &State);
         }
         ainline pixel32_t fromRGBA(const rgba_t Color)
         {
@@ -85,13 +92,8 @@ namespace Engine::Rendering
     // Mark a span of lines as dirty.
     void Invalidatespan(point2_t Span)
     {
-        /*
-            NOTE(Convery):
-            Unlike previous versions, this function is
-            only called from the main-thread. No sync.
-        */
-
-        for (int16_t i = Span.first; i < Span.second; ++i)
+        // Normalize the span to prevent out-of-range errors.
+        for (int16_t i = std::clamp(Span.first, int16_t(0), gWindowsize.y); i <= std::clamp(Span.second, int16_t(0), gWindowsize.y); ++i)
         {
             Dirtylines[i] = 1;
         }
@@ -107,19 +109,21 @@ namespace Engine::Rendering
         Scanline = (uint8_t *)alloca(Bufferlength);
 
         // Render all the scanlines in the main-thread.
-        for (int16_t i = 0; i < std::min(getWindowsize().y, int16_t(Windowheight)); ++i)
+        for (int16_t i = 0; i < gWindowsize.y; ++i)
         {
             // Skip clean lines.
             if (likely(Dirtylines[i] == 0)) continue;
 
             // Clear the line to fully transparent (chroma-key on 0xFFFFFF).
+            Clippingarea = { 0, i, int16_t(Scanlinelength), std::min(gWindowsize.y, int16_t(i + 10)) };
+            i += std::min(gWindowsize.y, int16_t(i + 8)) - i;
             std::memset(Scanline, 0xFF, Bufferlength);
-            Currentline = i;
 
             // Helper to save my fingers.
             std::function<void(const Element_t *)> Render = [&](const Element_t *This) -> void
             {
-                if (This->Dimensions.y0 > Currentline || This->Dimensions.y1 < Currentline)
+                // Occlusion checking.
+                if (This->Dimensions.y0 > Clippingarea.y1 || This->Dimensions.y1 < Clippingarea.y0)
                     return;
 
                 if (This->onRender) This->onRender(This);
@@ -127,15 +131,16 @@ namespace Engine::Rendering
             };
 
             // Render all elements.
-            assert(getRootelement());
-            Render(getRootelement());
+            assert(gRootelement);
+            Render(gRootelement);
 
             // Bitblt to screen.
             Present();
         }
 
         // Reset the area.
-        Dirtylines.reset();
+        Dirtylines.clear();
+        Dirtylines.resize(gWindowsize.y);
 
         // Give the framebuffer back to the system.
         Unlockbuffer();
@@ -161,10 +166,68 @@ namespace Engine::Rendering
     {
         return setPixel(Offset, { Color.Raw[0], Color.Raw[1], Color.Raw[2], 0xFF });
     }
+    ainline void BitBlt(const point4_t Source, const texture_t Texture)
+    {
+        // Get the drawable area.
+        const point4_t Area =
+        {
+            std::clamp(Source.x0, int16_t(0), int16_t(Scanlinelength)),
+            std::clamp(Source.y0, Clippingarea.y0, Clippingarea.y1),
+            std::clamp(Source.x1, int16_t(0),  std::min(int16_t(Scanlinelength), int16_t(Source.x0 + Texture.Dimensions.x))),
+            std::clamp(Source.y1, Clippingarea.y0, std::min(Clippingarea.y1, int16_t(Source.y0 + Texture.Dimensions.y)))
+        };
+
+        // If we don't have any work, return.
+        if (Area.y1 - Area.y0 <= 0 || Area.x1 - Area.x0 <= 0) return;
+
+        // For each line to draw.
+        for (int16_t Y = Area.y0; Y < Area.y1; ++Y)
+        {
+            for (int16_t X = Area.x0; X < Area.x1; ++X)
+            {
+                if (Texture.Pixelsize == sizeof(pixel32_t))
+                {
+
+                    setPixel((Y - Area.y0) * Scanlinelength + X, ((pixel32_t *)Texture.Data)[(Y - Source.y0) * Texture.Dimensions.x + X - Source.x0]);
+                }
+                else
+                {
+                    setPixel((Y - Area.y0) * Scanlinelength + X, ((pixel24_t *)Texture.Data)[(Y - Source.y0) * Texture.Dimensions.x + X - Source.x0]);
+                }
+            }
+        }
+    }
+    ainline void BitBlt(const point4_t Source, const rgba_t Color)
+    {
+        const auto Pixel{ fromRGBA(Color) };
+
+        // Get the drawable area.
+        const point4_t Area =
+        {
+            std::clamp(Source.x0, int16_t(0), int16_t(Scanlinelength)),
+            std::clamp(Source.y0, Clippingarea.y0, Clippingarea.y1),
+            std::clamp(Source.x1, int16_t(0), int16_t(Scanlinelength)),
+            std::clamp(Source.y1, Clippingarea.y0, Clippingarea.y1)
+        };
+
+        // If we don't have any work, return.
+        if (Area.y1 - Area.y0 <= 0 || Area.x1 - Area.x0 <= 0) return;
+
+        // For each line to draw.
+        for (int16_t Y = Area.y0; Y < Area.y1; ++Y)
+        {
+            for (int16_t X = Area.x0; X < Area.x1; ++X)
+            {
+                setPixel((Y - Area.y0) * Scanlinelength + X, Pixel);
+            }
+        }
+    }
 }
 
 namespace Engine::Rendering::Draw::Internal
 {
+
+
     // Outline and fill quads.
     template <typename CB = std::function<void(const point2_t Position, const int16_t Length)>>
     ainline void fillQuad(const point4_t Area, const CB Callback)
@@ -306,6 +369,26 @@ namespace Engine::Rendering::Draw::Internal
 
 namespace Engine::Rendering::Draw
 {
+    template <bool Outline> void Quad(const texture_t Color, const point4_t Area)
+    {
+        BitBlt(Area, Color);
+    }
+    template <bool Outline> void Quad(const rgba_t Color, const point4_t Area)
+    {
+        if (Outline)
+        {
+            BitBlt({ Area.x0, Area.y0, Area.x1, Area.y0 + 1 }, Color);
+            BitBlt({ Area.x0, Area.y1 - 1, Area.x1, Area.y1 }, Color);
+            BitBlt({ Area.x0, Area.y0, Area.x0 + 1, Area.y1 }, Color);
+            BitBlt({ Area.x1 - 1, Area.y0, Area.x1, Area.y1 }, Color);
+        }
+        else
+        {
+            BitBlt(Area, Color);
+        }
+    }
+
+
     template <bool Outline> void Circle(const texture_t Color, const point2_t Position, const float Radius)
     {
         const auto Lambda = [&](const point2_t Position, const int16_t Length) -> void
@@ -339,35 +422,6 @@ namespace Engine::Rendering::Draw
             Internal::outlineCircle(Position, Radius, Lambda);
         }
         else Internal::outlineCircle(Position, Radius, Lambda);
-    }
-    template <bool Outline> void Quad(const texture_t Color, const point4_t Area)
-    {
-        const auto Lambda = [&](const point2_t Position, const int16_t Length) -> void
-        {
-            for (int16_t i = 0; i < Length; ++i)
-            {
-                const auto Index{ (Position.y % Color.Dimensions.y) * Color.Dimensions.x + i };
-
-                if (Color.Pixelsize == sizeof(pixel24_t)) setPixel(Position.x + i, ((pixel24_t *)Color.Data)[Index]);
-                else setPixel(Position.x + i, ((pixel32_t *)Color.Data)[Index]);
-            }
-        };
-
-        if (!Outline) Internal::fillQuad(Area, Lambda);
-        else Internal::outlineQuad(Area, Lambda);
-    }
-    template <bool Outline> void Quad(const rgba_t Color, const point4_t Area)
-    {
-        const auto Pixel{ fromRGBA(Color) };
-        const auto Lambda = [&](const point2_t Position, const int16_t Length) -> void
-        {
-            for (int16_t i = 0; i < Length; ++i)
-            {
-                setPixel(Position.x + i, Pixel);
-            }
-        };
-        if (!Outline) Internal::fillQuad(Area, Lambda);
-        else Internal::outlineQuad(Area, Lambda);
     }
 }
 

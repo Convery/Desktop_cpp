@@ -1,28 +1,25 @@
 /*
     Initial author: Convery (tcn@ayria.se)
-    Started: 25-08-2018
+    Started: 16-09-2018
     License: MIT
 
-    Provides movement and termination.
+    Provides the main area.
 */
 
 #include "../Stdinclude.hpp"
 #include "Assets.hpp"
 
-void Composetoolbar(Element_t *Target)
+static void Composetoolbar(Element_t *Target)
 {
     auto Boundingbox = new Element_t("Toolbar");
     auto Closebutton = new Element_t("Toolbar.Close");
 
     // The full toolbar, click to drag.
     Boundingbox->Properties.Fixedheight = true;
-    Boundingbox->Margins = { 0.045f, 0, 0.045f, 20 };
+    Boundingbox->Margins = { 0, 0, 0, 20 };
     Boundingbox->onRender = [](const Element_t *Caller)
     {
-        if(Engine::gCurrentmenuID == Hash::FNV1a_32("loginmenu"))
-            Draw::Quad({ 49, 48, 47, 0xFF }, Caller->Dimensions);
-        else
-            Draw::Quad({ 12, 12, 12, 0xFF }, Caller->Dimensions);
+        Draw::Quad({ 12, 12, 12, 0xFF }, Caller->Dimensions);
     };
     Boundingbox->onFrame = [](const Element_t *Caller, double Deltatime)
     {
@@ -46,15 +43,15 @@ void Composetoolbar(Element_t *Target)
     };
     Target->addChild(Boundingbox);
 
-    // Let the user exit in a natural way.
+    // Terminate the client.
     Closebutton->Properties.ExclusiveIO = true;
     Closebutton->Properties.Fixedheight = true;
-    Closebutton->Margins = { 1.9f, 1, 0.037f, 20 };
+    Closebutton->Margins = { 1.955f, -1, 0.005, 15 };
     Closebutton->onRender = [](const Element_t *Caller)
     {
-        // NOTE(Convery): This is not a typo.
-        if(Caller->Properties.Clicked) Draw::Quad(Assets::Closeicon, Caller->Dimensions);
-        Draw::Quad(Assets::Closeicon, Caller->Dimensions);
+        if (Caller->Properties.Focused) Draw::Quad({ 0x33, 0x33, 0x33, 1 }, Caller->Dimensions);
+        if (Caller->Properties.Clicked) Draw::Quad({ 0, 0xFF, 0xFF, 1 }, Caller->Dimensions);
+        Draw::Quad<true>({ 0, 0xFF, 0xFF, 1 }, Caller->Dimensions);
     };
     Closebutton->isExclusive = [](const Element_t *Caller, const elementstate_t Newstate)
     {
@@ -62,7 +59,7 @@ void Composetoolbar(Element_t *Target)
     };
     Closebutton->onStatechange = [](const Element_t *Caller, const elementstate_t Newstate)
     {
-        if (Caller->Properties.Clicked && Newstate.Clicked && Caller->Properties.Focused)
+        if (Newstate.Clicked && !Newstate.Focused && Caller->Properties.Clicked && Caller->Properties.Focused)
         {
             Engine::setErrno(Hash::FNV1a_32("Toolbar.Close"));
         }
@@ -70,6 +67,22 @@ void Composetoolbar(Element_t *Target)
         Engine::Rendering::Invalidatespan({ Caller->Dimensions.y0, Caller->Dimensions.y1 });
     };
     Boundingbox->addChild(Closebutton);
+}
+void Composemainmenu(Element_t *Target)
+{
+    auto Boundingbox = new Element_t("Mainmenu");
+
+    // The content is window-height - 20 for the toolbar.
+    Boundingbox->onRender = [](const Element_t *Caller)
+    {
+        auto Local{ Caller->Dimensions };
+        Draw::Quad({ 0xFE, 0x00, 0xFE, 1 }, Local);
+    };
+    Target->addChild(Boundingbox);
+
+    Engine::gCurrentmenuID = Hash::FNV1a_32("mainmenu");
+    Engine::Window::Resize({ 1280, 720 }, false);
+    Composetoolbar(Target);
 }
 
 // Register the composer for later.
@@ -79,7 +92,7 @@ namespace
     {
         Startup()
         {
-            Engine::Compositing::Registercomposer("toolbar", Composetoolbar);
+            Engine::Compositing::Registercomposer("mainmenu", Composemainmenu);
         }
     };
     Startup Loader{};

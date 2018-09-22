@@ -11,13 +11,9 @@
 // Core properties.
 namespace Engine
 {
-    void *Windowhandle{};
-    bool Visible{ false };
+    extern const void *gWindowhandle{};
     point4_t gDisplayrectangle;
-    const void *getWindowhandle()
-    {
-        return Windowhandle;
-    }
+    bool Visible{ false };
 }
 
 namespace Engine::Window
@@ -25,24 +21,25 @@ namespace Engine::Window
     // Modify the windows visible state and notify the composition-manager.
     void Move(point2_t Position, bool Deferupdate)
     {
-        SetWindowPos((HWND)Windowhandle, NULL, Position.x, Position.y, getWindowsize().x, getWindowsize().y, SWP_NOSENDCHANGING | SWP_NOACTIVATE | SWP_NOSIZE);
+        SetWindowPos((HWND)gWindowhandle, NULL, Position.x, Position.y, gWindowsize.x, gWindowsize.y, SWP_NOSENDCHANGING | SWP_NOACTIVATE | SWP_NOSIZE);
         if (!Deferupdate) Compositing::Recalculate();
     }
     void Resize(point2_t Size, bool Deferupdate)
     {
-        SetWindowPos((HWND)Windowhandle, NULL, getWindowposition().x, getWindowposition().y, Size.x, Size.y, SWP_NOSENDCHANGING | SWP_NOACTIVATE | SWP_NOMOVE);
-        Rendering::Invalidatespan({ 0, getWindowsize().y });
-        if (!Deferupdate) Compositing::Recalculate();
+        gWindowsize = Size;
         setScanlinelength(Size.x);
+        if (!Deferupdate) Compositing::Recalculate();
+        Rendering::Invalidatespan({ 0, gWindowsize.y });
+        SetWindowPos((HWND)gWindowhandle, NULL, getWindowposition().x, getWindowposition().y, Size.x, Size.y, SWP_NOSENDCHANGING | SWP_NOACTIVATE | SWP_NOMOVE);
     }
     void Centerwindow(bool Deferupdate)
     {
-        Move({ int16_t(std::abs((gDisplayrectangle.x1 - getWindowsize().x) / 2)), int16_t(std::abs((gDisplayrectangle.y1 - getWindowsize().y) / 2)) }, Deferupdate);
+        Move({ int16_t(std::abs((gDisplayrectangle.x1 - gWindowsize.x) / 2)), int16_t(std::abs((gDisplayrectangle.y1 - gWindowsize.y) / 2)) }, Deferupdate);
     }
     void Togglevisibility()
     {
         Visible = !Visible;
-        ShowWindow(HWND(Windowhandle), BOOL(Visible));
+        ShowWindow(HWND(gWindowhandle), BOOL(Visible));
     }
 
     // Initialize the manager on startup.
@@ -73,15 +70,15 @@ namespace Engine::Window
             }
 
             // Create a hidden window.
-            Windowhandle = CreateWindowExA(WS_EX_LAYERED, "Desktop_cpp", "", WS_POPUP, 0, 0, 0, 0, NULL, NULL, Windowclass.hInstance, NULL);
-            if (!Windowhandle)
+            gWindowhandle = CreateWindowExA(WS_EX_LAYERED, "Desktop_cpp", "", WS_POPUP, 0, 0, 0, 0, NULL, NULL, Windowclass.hInstance, NULL);
+            if (!gWindowhandle)
             {
                 setErrno(Hash::FNV1a_32("Createwindow"));
                 return;
             }
 
             // Use a pixel-value of {0xFF, 0xFF, 0xFF} to mean transparent, because we should not use pure white anyways.
-            SetLayeredWindowAttributes((HWND)Windowhandle, 0x00FFFFFF, 0, LWA_COLORKEY);
+            SetLayeredWindowAttributes((HWND)gWindowhandle, 0x00FFFFFF, 0, LWA_COLORKEY);
         }
     };
     static Initializer Loader{};

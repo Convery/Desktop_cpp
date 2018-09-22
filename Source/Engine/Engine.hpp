@@ -169,16 +169,17 @@ struct Element_t
 // Core properties.
 namespace Engine
 {
-    void setScanlinelength(uint32_t Length);
-    constexpr size_t Windowheight = 720;
-    extern uint32_t gCurrentmenuID;
-    const void *getWindowhandle();
-    void setErrno(uint32_t Code);
     point2_t getWindowposition();
-    Element_t *getRootelement();
     point2_t getMouseposition();
-    point2_t getWindowsize();
     uint32_t getErrno();
+
+    void setScanlinelength(uint32_t Length);
+    void setErrno(uint32_t Code);
+
+    extern const void *gWindowhandle;
+    extern Element_t *gRootelement;
+    extern uint32_t gCurrentmenuID;
+    extern point2_t gWindowsize;
 }
 
 // Window management.

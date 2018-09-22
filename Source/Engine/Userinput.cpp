@@ -64,7 +64,7 @@ namespace Engine::Input
             return Lambda(Target, true);
         };
 
-        Lambda(getRootelement(), false);
+        Lambda(gRootelement, false);
     }
     void onMousemove(point2_t Position)
     {
@@ -112,7 +112,7 @@ namespace Engine::Input
             return Lambda(Target, true);
         };
 
-        Lambda(getRootelement(), false);
+        Lambda(gRootelement, false);
     }
 
     // Process any and all window-events.
@@ -123,15 +123,15 @@ namespace Engine::Input
         {
             // Track mouse movement.
             Tracker.dwFlags = TME_LEAVE;
+            Tracker.hwndTrack = HWND(gWindowhandle);
             Tracker.cbSize = sizeof(TRACKMOUSEEVENT);
-            Tracker.hwndTrack = HWND(getWindowhandle());
             TrackMouseEvent(&Tracker);
 
             Initialized = true;
         }
 
         // Poll for any new events.
-        while (PeekMessageA(&Event, HWND(getWindowhandle()), NULL, NULL, PM_REMOVE) > 0)
+        while (PeekMessageA(&Event, HWND(gWindowhandle), NULL, NULL, PM_REMOVE) > 0)
         {
             switch (Event.message)
             {

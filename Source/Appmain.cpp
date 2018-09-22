@@ -15,7 +15,6 @@ int main(int argc, char **argv)
 
     // Create the initial scene.
     Engine::Compositing::Switchcomposition("loginmenu");
-    Engine::Window::Resize({ 500, 720 }, true);
     Engine::Window::Centerwindow(false);
     Engine::Window::Togglevisibility();
 

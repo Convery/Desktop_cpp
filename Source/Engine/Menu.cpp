@@ -10,13 +10,8 @@
 
 namespace Engine
 {
+    Element_t *gRootelement{ new Element_t("Rootelement") };
     uint32_t gCurrentmenuID{};
-
-    Element_t *Rootelement{ new Element_t("Rootelement") };
-    Element_t *getRootelement()
-    {
-        return Rootelement;
-    }
 }
 
 // Manage the scenes and compositing.
@@ -45,11 +40,11 @@ namespace Engine::Compositing
         }
 
         // Add the default topmost elements.
-        Composers->find("toolbar")->second(newRootelement);
+        //Composers->find("toolbar")->second(newRootelement);
         // Devconsole
 
         // TODO(Convery): Perform better cleanup!!one!
-        if (Rootelement)
+        if (gRootelement)
         {
             std::function<void(Element_t *)> Lambda = [&](Element_t *Target)
             {
@@ -58,17 +53,17 @@ namespace Engine::Compositing
                     delete *Iterator;
                 Target->Childelements.clear();
             };
-            Lambda(Rootelement);
-            delete Rootelement;
+            Lambda(gRootelement);
+            delete gRootelement;
         }
-        Rootelement = newRootelement;
+        gRootelement = newRootelement;
     }
 
     // Recalculate the elements dimensions.
     void Recalculate()
     {
-        assert(Rootelement);
-        Rootelement->setDimensions({ 0, 0, getWindowsize().x - 1, getWindowsize().y });
+        assert(gRootelement);
+        gRootelement->setDimensions({ 0, 0, gWindowsize.x, gWindowsize.y });
     }
 
     // Notify the elements about a tick.
@@ -82,7 +77,7 @@ namespace Engine::Compositing
         };
 
         // Update all elements.
-        assert(Rootelement);
-        Tick(Rootelement);
+        assert(gRootelement);
+        Tick(gRootelement);
     }
 }

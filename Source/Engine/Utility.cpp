@@ -11,6 +11,8 @@
 // Core properties.
 namespace Engine
 {
+    extern point2_t gWindowsize{};
+
     uint32_t Errno{};
     void setErrno(uint32_t Code)
     {
@@ -25,13 +27,12 @@ namespace Engine
     #error Non-windows abstraction is not implemented (yet!)
     point2_t getWindowposition() {}
     point2_t getMouseposition() {}
-    point2_t getWindowsize() {}
     }
     #else
     point2_t getWindowposition()
     {
         RECT Window;
-        GetWindowRect((HWND)getWindowhandle(), &Window);
+        GetWindowRect((HWND)gWindowhandle, &Window);
         return { int16_t(Window.left), int16_t(Window.top) };
     }
     point2_t getMouseposition()
@@ -39,12 +40,6 @@ namespace Engine
         POINT Origin;
         GetCursorPos(&Origin);
         return { int16_t(Origin.x), int16_t(Origin.y) };
-    }
-    point2_t getWindowsize()
-    {
-        RECT Client;
-        GetClientRect((HWND)getWindowhandle(), &Client);
-        return { int16_t(Client.right - Client.left), int16_t(Client.bottom - Client.top) };
     }
     #endif
 }
