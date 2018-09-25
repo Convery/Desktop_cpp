@@ -1,6 +1,6 @@
 /*
     Initial author: Convery (tcn@ayria.se)
-    Started: 26-08-2018
+    Started: 24-09-2018
     License: MIT
 
     Provides the login-menu, which is fixed size at 500x720
@@ -9,13 +9,73 @@
 #include "../Stdinclude.hpp"
 #include "Assets.hpp"
 
+/*
+    div Background
+    div Toolbar
+    div Mailarea
+    div SSOarea
+    div Offlinearea
+
+*/
+
+namespace Loginmenu
+{
+    Element_t *Createbackground()
+    {
+        auto Element = new Element_t("Background");
+        Element->Margins = { 7, 20, 7, 0 };
+        Element->onRender = [](const Element_t *Caller)
+        {
+            Draw::Quad(Assets::Loginbackground, Caller->Dimensions);
+        };
+
+        return Element;
+    }
+    Element_t *Createtoolbar()
+    {
+        auto Element = new Element_t("Toolbar");
+        Element->Margins = { 17, 0, 17, 700 };
+        Element->onRender = [](const Element_t *Caller)
+        {
+            Draw::Quad({ 49, 48, 47, 0xFF }, Caller->Dimensions);
+        };
+
+        return Element;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 static void Composetoolbar(Element_t *Target)
 {
     auto Boundingbox = new Element_t("Toolbar");
     auto Closebutton = new Element_t("Toolbar.Close");
 
     // The full toolbar, click to drag.
-    Boundingbox->Properties.Fixedheight = true;
     Boundingbox->Margins = { 0.045f, 0, 0.045f, 20 };
     Boundingbox->onRender = [](const Element_t *Caller)
     {
@@ -45,8 +105,7 @@ static void Composetoolbar(Element_t *Target)
 
     // Let the user exit in a natural way.
     Closebutton->Properties.ExclusiveIO = true;
-    Closebutton->Properties.Fixedheight = true;
-    Closebutton->Margins = { 1.9f, 1, 0.02f, 20 };
+    Closebutton->Margins = { 1.9f, 1.001, 0.02f, 20 };
     Closebutton->onRender = [](const Element_t *Caller)
     {
         // NOTE(Convery): This is not a typo.
@@ -64,26 +123,19 @@ static void Composetoolbar(Element_t *Target)
             Engine::setErrno(Hash::FNV1a_32("Toolbar.Close"));
         }
 
-        Engine::Rendering::Invalidatespan({ Caller->Dimensions.y0, Caller->Dimensions.y1 });
+        Engine::Rendering::Invalidateregion(Caller->Dimensions);
     };
     Boundingbox->addChild(Closebutton);
 }
 void Composeloginmenu(Element_t *Target)
 {
     auto Boundingbox = new Element_t("Loginmenu");
-
-    // The content is window-height - 20 for the toolbar.
-    Boundingbox->onRender = [](const Element_t *Caller)
-    {
-        auto Local{ Caller->Dimensions };
-        Local.x0 += 1; Local.y0 += 19;
-        Draw::Quad(Assets::Loginbackground, Local);
-    };
+    Boundingbox->addChild(Loginmenu::Createbackground());
+    Boundingbox->addChild(Loginmenu::Createtoolbar());
     Target->addChild(Boundingbox);
 
     Engine::gCurrentmenuID = Hash::FNV1a_32("loginmenu");
-    Engine::Window::Resize({ 500, 720 }, false);
-    Composetoolbar(Target);
+    Engine::Window::Resize({ 512, 720 }, false);
 }
 
 // Register the composer for later.

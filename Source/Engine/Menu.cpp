@@ -59,11 +59,14 @@ namespace Engine::Compositing
         gRootelement = newRootelement;
     }
 
-    // Recalculate the elements dimensions.
+    // Recalculate the root-elements dimensions.
     void Recalculate()
     {
         assert(gRootelement);
-        gRootelement->setDimensions({ 0, 0, gWindowsize.x, gWindowsize.y });
+        auto newRootelement = new Element_t("Rootelement");
+        newRootelement->Dimensions = { 0, 0, gWindowsize.x, gWindowsize.y };
+        newRootelement->addChild(gRootelement);
+        gRootelement = newRootelement;
     }
 
     // Notify the elements about a tick.

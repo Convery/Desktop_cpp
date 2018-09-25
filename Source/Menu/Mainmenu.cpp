@@ -15,7 +15,6 @@ static void Composetoolbar(Element_t *Target)
     auto Closebutton = new Element_t("Toolbar.Close");
 
     // The full toolbar, click to drag.
-    Boundingbox->Properties.Fixedheight = true;
     Boundingbox->Margins = { 0, 0, 0, 20 };
     Boundingbox->onRender = [](const Element_t *Caller)
     {
@@ -44,9 +43,7 @@ static void Composetoolbar(Element_t *Target)
     Target->addChild(Boundingbox);
 
     // Terminate the client.
-    Closebutton->Properties.ExclusiveIO = true;
-    Closebutton->Properties.Fixedheight = true;
-    Closebutton->Margins = { 1.955f, -1, 0.005, 15 };
+    Closebutton->Margins = { 1.955f, -3, 0.005, 15 };
     Closebutton->onRender = [](const Element_t *Caller)
     {
         if (Caller->Properties.Focused) Draw::Quad({ 0x33, 0x33, 0x33, 1 }, Caller->Dimensions);
@@ -64,7 +61,7 @@ static void Composetoolbar(Element_t *Target)
             Engine::setErrno(Hash::FNV1a_32("Toolbar.Close"));
         }
 
-        Engine::Rendering::Invalidatespan({ Caller->Dimensions.y0, Caller->Dimensions.y1 });
+        Engine::Rendering::Invalidateregion(Caller->Dimensions);
     };
     Boundingbox->addChild(Closebutton);
 }

@@ -36,7 +36,7 @@ using rgba_t = struct { union { struct { float R, G, B, A; }; float Raw[4]; }; }
 using texture_t = struct { const point2_t Dimensions; uint8_t Pixelsize; const uint8_t *Data; };
 
 // Element state for IO notifications.
-using elementstate_t = struct { unsigned char Focused : 1, Clicked : 1, Fixedwidth : 1, Fixedheight : 1, ExclusiveIO : 1, Reserved : 3; };
+using elementstate_t = struct { unsigned char Focused : 1, Clicked : 1, ExclusiveIO : 1; };
 
 #pragma pack(pop)
 #pragma endregion
@@ -60,88 +60,29 @@ struct Element_t
     vec4_t Margins{};
 
     // The children inherit the parents dimensions - margins.
-    void setDimensions(point4_t Boundingbox)
-    {
-        const double DeltaX = std::abs(Boundingbox.x1 - Boundingbox.x0) / 2;
-        const double DeltaY = std::abs(Boundingbox.y1 - Boundingbox.y0) / 2;
-
-        // Margins relative to the edges.
-        Dimensions.x0 = int16_t(std::round(Boundingbox.x0 + DeltaX * Margins.x0));
-        Dimensions.y0 = int16_t(std::round(Boundingbox.y0 + DeltaY * Margins.y0));
-        Dimensions.x1 = int16_t(std::round(Boundingbox.x1 - DeltaX * Margins.x1));
-        Dimensions.y1 = int16_t(std::round(Boundingbox.y1 - DeltaY * Margins.y1));
-
-        // Margins relative to (0, 0).
-        if (Properties.Fixedwidth)
-        {
-            Dimensions.x0 = int16_t(std::round(Boundingbox.x0 + Margins.x0));
-            Dimensions.x1 = int16_t(std::round(Boundingbox.x0 + Margins.x1));
-        }
-        if (Properties.Fixedheight)
-        {
-            Dimensions.y0 = int16_t(std::round(Boundingbox.y0 + Margins.y0));
-            Dimensions.y1 = int16_t(std::round(Boundingbox.y0 + Margins.y1));
-        }
-
-        // Update the children.
-        std::function<void(Element_t *)> Recalculate = [&](Element_t *Target) -> void
-        {
-            const double DeltaX = std::abs(Target->Dimensions.x1 - Target->Dimensions.x0) / 2;
-            const double DeltaY = std::abs(Target->Dimensions.y1 - Target->Dimensions.y0) / 2;
-
-            for (auto &Child : Target->Childelements)
-            {
-                // Margins relative to the edges.
-                Child->Dimensions.x0 = int16_t(std::round(Target->Dimensions.x0 + DeltaX * Child->Margins.x0));
-                Child->Dimensions.y0 = int16_t(std::round(Target->Dimensions.y0 + DeltaY * Child->Margins.y0));
-                Child->Dimensions.x1 = int16_t(std::round(Target->Dimensions.x1 - DeltaX * Child->Margins.x1));
-                Child->Dimensions.y1 = int16_t(std::round(Target->Dimensions.y1 - DeltaY * Child->Margins.y1));
-
-                // Margins relative to (0, 0).
-                if (Child->Properties.Fixedwidth)
-                {
-                    Child->Dimensions.x0 = int16_t(std::round(Target->Dimensions.x0 + Child->Margins.x0));
-                    Child->Dimensions.x1 = int16_t(std::round(Target->Dimensions.x0 + Child->Margins.x1));
-                }
-                if (Child->Properties.Fixedheight)
-                {
-                    Child->Dimensions.y0 = int16_t(std::round(Target->Dimensions.y0 + Child->Margins.y0));
-                    Child->Dimensions.y1 = int16_t(std::round(Target->Dimensions.y0 + Child->Margins.y1));
-                }
-
-                Recalculate(Child);
-            }
-        };
-        Recalculate(this);
-    }
     std::vector<Element_t *> Childelements{};
     void addChild(Element_t *Child)
     {
         std::function<void(Element_t *)> Recalculate = [&](Element_t *Target) -> void
         {
-            const double DeltaX = std::abs(Target->Dimensions.x1 - Target->Dimensions.x0) / 2;
-            const double DeltaY = std::abs(Target->Dimensions.y1 - Target->Dimensions.y0) / 2;
+            const double DeltaX = std::abs(Target->Dimensions.x1 - Target->Dimensions.x0);
+            const double DeltaY = std::abs(Target->Dimensions.y1 - Target->Dimensions.y0);
 
             for (auto &Child : Target->Childelements)
             {
-                // Margins relative to the edges.
-                Child->Dimensions.x0 = int16_t(std::round(Target->Dimensions.x0 + DeltaX * Child->Margins.x0));
-                Child->Dimensions.y0 = int16_t(std::round(Target->Dimensions.y0 + DeltaY * Child->Margins.y0));
-                Child->Dimensions.x1 = int16_t(std::round(Target->Dimensions.x1 - DeltaX * Child->Margins.x1));
-                Child->Dimensions.y1 = int16_t(std::round(Target->Dimensions.y1 - DeltaY * Child->Margins.y1));
+                // Margins are given in pixels.
+                if (std::abs(Child->Margins.x0 > 1.0001)) Child->Dimensions.x0 = int16_t(Target->Dimensions.x0 + std::round(Child->Margins.x0));
+                if (std::abs(Child->Margins.y0 > 1.0001)) Child->Dimensions.y0 = int16_t(Target->Dimensions.y0 + std::round(Child->Margins.y0));
+                if (std::abs(Child->Margins.x1 > 1.0001)) Child->Dimensions.x1 = int16_t(Target->Dimensions.x1 - std::round(Child->Margins.x1));
+                if (std::abs(Child->Margins.y1 > 1.0001)) Child->Dimensions.y1 = int16_t(Target->Dimensions.y1 - std::round(Child->Margins.y1));
 
-                // Margins relative to (0, 0).
-                if (Child->Properties.Fixedwidth)
-                {
-                    Child->Dimensions.x0 = int16_t(std::round(Target->Dimensions.x0 + Child->Margins.x0));
-                    Child->Dimensions.x1 = int16_t(std::round(Target->Dimensions.x0 + Child->Margins.x1));
-                }
-                if (Child->Properties.Fixedheight)
-                {
-                    Child->Dimensions.y0 = int16_t(std::round(Target->Dimensions.y0 + Child->Margins.y0));
-                    Child->Dimensions.y1 = int16_t(std::round(Target->Dimensions.y0 + Child->Margins.y1));
-                }
+                // Margins are given in percentages.
+                if (Child->Margins.x0 <= 1.0) Child->Dimensions.x0 = int16_t(std::round(Target->Dimensions.x0 + DeltaX * Child->Margins.x0));
+                if (Child->Margins.y0 <= 1.0) Child->Dimensions.y0 = int16_t(std::round(Target->Dimensions.y0 + DeltaY * Child->Margins.y0));
+                if (Child->Margins.x1 <= 1.0) Child->Dimensions.x1 = int16_t(std::round(Target->Dimensions.x1 - DeltaX * Child->Margins.x1));
+                if (Child->Margins.y1 <= 1.0) Child->Dimensions.y1 = int16_t(std::round(Target->Dimensions.y1 - DeltaY * Child->Margins.y1));
 
+                // Recurse into the sub-elements.
                 Recalculate(Child);
             }
         };
@@ -170,11 +111,9 @@ struct Element_t
 namespace Engine
 {
     point2_t getWindowposition();
+    void setErrno(uint32_t Code);
     point2_t getMouseposition();
     uint32_t getErrno();
-
-    void setScanlinelength(uint32_t Length);
-    void setErrno(uint32_t Code);
 
     extern const void *gWindowhandle;
     extern Element_t *gRootelement;
@@ -195,8 +134,11 @@ namespace Engine::Window
 // Render into a scanline and present.
 namespace Engine::Rendering
 {
-    // Mark a span of lines as dirty.
-    void Invalidatespan(point2_t Span);
+    // onWindowresize().
+    void Recalculatebuffers();
+
+    // MArk a region as dirty.
+    void Invalidateregion(const point4_t Area);
 
     // Process elements, render, and present to the context.
     void onFrame();

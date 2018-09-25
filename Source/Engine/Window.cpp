@@ -27,9 +27,8 @@ namespace Engine::Window
     void Resize(point2_t Size, bool Deferupdate)
     {
         gWindowsize = Size;
-        setScanlinelength(Size.x);
+        Rendering::Recalculatebuffers();
         if (!Deferupdate) Compositing::Recalculate();
-        Rendering::Invalidatespan({ 0, gWindowsize.y });
         SetWindowPos((HWND)gWindowhandle, NULL, getWindowposition().x, getWindowposition().y, Size.x, Size.y, SWP_NOSENDCHANGING | SWP_NOACTIVATE | SWP_NOMOVE);
     }
     void Centerwindow(bool Deferupdate)

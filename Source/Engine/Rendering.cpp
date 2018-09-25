@@ -8,36 +8,19 @@
 
 #include "../Stdinclude.hpp"
 
-void PNGtoTexture(std::string Filename);
-
-namespace Engine
-{
-    std::vector<bool> Dirtylines{};
-    uint32_t Scanlinelength{};
-    uint32_t Bufferlength{};
-    point4_t Clippingarea{};
-    uint8_t *Scanline{};
-
-    int16_t Currentline = 0;
-
-    void setScanlinelength(uint32_t Length)
-    {
-        // The length of each line.
-        Scanlinelength = Length;
-
-        // The length of the buffer for 10 lines.
-        Length *= sizeof(pixel24_t) * 10;
-
-        // Align to 16 bytes.
-        Bufferlength =  Length + (Length % 16 == 0 ? 0 : 16 - (Length % 16));
-
-        // Ensure that we have enough storage.
-        Dirtylines.resize(gWindowsize.y + 1);
-    }
-}
+/*
+    Split the screen into 8 * 8 areas.
+    Render each when dirty.
+*/
 
 namespace Engine::Rendering
 {
+    uint32_t Gridwidth{}, Gridheight{};
+    std::bitset<8 * 8> Dirtygrid{};
+    point4_t Clippingarea{};
+    uint32_t Bufferlength{};
+    void *Renderbuffer{};
+
     // Platform-specific presentation.
     namespace
     {
@@ -57,15 +40,17 @@ namespace Engine::Rendering
                 uint8_t(Color.A <= 1 ? Color.A * 255 : Color.A)
             };
         }
+        ainline void _Recalculatebuffers() {}
         #else
 
         PAINTSTRUCT State{};
         void *Devicecontext{};
+        BITMAPINFO Lineformat{ { sizeof(BITMAPINFO), 1, 1, 1, 24 } };
         ainline void Present()
         {
-            // Initialize the scanline info for this pass and BitBlt.
-            BITMAPINFO Lineformat{ { sizeof(BITMAPINFO), Scanlinelength, -(Clippingarea.y1 - Clippingarea.y0), 1, 24 } };
-            SetDIBitsToDevice((HDC)Devicecontext, 0, Clippingarea.y0, Lineformat.bmiHeader.biWidth, -Lineformat.bmiHeader.biHeight, 0, 0, 0, -Lineformat.bmiHeader.biHeight, Scanline, &Lineformat, DIB_RGB_COLORS);
+            // Bitblt to screen.
+
+            SetDIBitsToDevice((HDC)Devicecontext, Clippingarea.x0, Clippingarea.y0, Lineformat.bmiHeader.biWidth, -Lineformat.bmiHeader.biHeight, 0, 0, 0, -Lineformat.bmiHeader.biHeight, Renderbuffer, &Lineformat, DIB_RGB_COLORS);
         }
         ainline void Lockbuffer()
         {
@@ -86,16 +71,38 @@ namespace Engine::Rendering
                 uint8_t(Color.A <= 1 ? Color.A * 255 : Color.A)
             };
         }
+        ainline void _Recalculatebuffers()
+        {
+            // Split the window into a grid.
+            Gridheight = gWindowsize.y / 8;
+            Gridwidth = gWindowsize.x / 8;
+
+            // The buffer for the pixels should be a multiple of 16.
+            Bufferlength = Gridwidth * Gridheight * sizeof(pixel24_t);
+            Bufferlength += Bufferlength % 16 == 0 ? 0 : 16 - (Bufferlength % 16);
+
+            // Initialize the scanline info for this pass.
+            Lineformat.bmiHeader.biHeight = -Gridheight;
+            Lineformat.bmiHeader.biWidth = Gridwidth;
+
+            // Mark all areas as dirty.
+            Dirtygrid.set();
+        }
         #endif
     }
 
-    // Mark a span of lines as dirty.
-    void Invalidatespan(point2_t Span)
+    // onWindowresize().
+    void Recalculatebuffers() { _Recalculatebuffers(); }
+
+    // Mark a region as dirty.
+    void Invalidateregion(const point4_t Area)
     {
-        // Normalize the span to prevent out-of-range errors.
-        for (int16_t i = std::clamp(Span.first, int16_t(0), gWindowsize.y); i <= std::clamp(Span.second, int16_t(0), gWindowsize.y); ++i)
+        for (size_t Y = Area.y0 / Gridheight; Y < Area.y1 / Gridheight; ++Y)
         {
-            Dirtylines[i] = 1;
+            for (size_t X = Area.x0 / Gridwidth; X < Area.x1 / Gridwidth; ++X)
+            {
+                Dirtygrid.set(Y * 8 + X);
+            }
         }
     }
 
@@ -106,25 +113,28 @@ namespace Engine::Rendering
         Lockbuffer();
 
         // Create the buffer for this instance.
-        Scanline = (uint8_t *)alloca(Bufferlength);
+        Renderbuffer = (uint8_t *)alloca(Bufferlength);
 
         // Render all the scanlines in the main-thread.
-        for (int16_t i = 0; i < gWindowsize.y; ++i)
+        for (int16_t i = 0; i < 8 * 8; ++i)
         {
-            // Skip clean lines.
-            if (likely(Dirtylines[i] == 0)) continue;
+            // Skip clean areas.
+            if (likely(Dirtygrid[i] == false)) continue;
 
-            // Clear the line to fully transparent (chroma-key on 0xFFFFFF).
-            Clippingarea = { 0, i, int16_t(Scanlinelength), std::min(gWindowsize.y, int16_t(i + 10)) };
-            i += std::min(gWindowsize.y, int16_t(i + 8)) - i;
-            std::memset(Scanline, 0xFF, Bufferlength);
+            // Clear the area to fully transparent (chroma-key on 0xFFFFFF).
+            std::memset(Renderbuffer, 0xFF, Bufferlength);
+            Clippingarea =
+            {
+                int16_t(i % 8 * Gridwidth), int16_t(i / 8 * Gridheight),
+                int16_t((1 + i % 8) * Gridwidth), int16_t((1 + i / 8) * Gridheight)
+            };
 
             // Helper to save my fingers.
             std::function<void(const Element_t *)> Render = [&](const Element_t *This) -> void
             {
                 // Occlusion checking.
-                if (This->Dimensions.y0 > Clippingarea.y1 || This->Dimensions.y1 < Clippingarea.y0)
-                    return;
+                if (This->Dimensions.y0 > Clippingarea.y1 || This->Dimensions.y1 < Clippingarea.y0) return;
+                if (This->Dimensions.x0 > Clippingarea.x1 || This->Dimensions.x1 < Clippingarea.x0) return;
 
                 if (This->onRender) This->onRender(This);
                 for (const auto &Item : This->Childelements) Render(Item);
@@ -139,8 +149,7 @@ namespace Engine::Rendering
         }
 
         // Reset the area.
-        Dirtylines.clear();
-        Dirtylines.resize(gWindowsize.y);
+        Dirtygrid.reset();
 
         // Give the framebuffer back to the system.
         Unlockbuffer();
@@ -152,218 +161,76 @@ namespace Engine::Rendering
         // Alpha is always the last entry.
         if (Color.Raw[3] == 0xFF)
         {
-            std::memcpy(((pixel24_t *)Scanline)[Offset].Raw, Color.Raw, sizeof(pixel24_t));
+            std::memcpy(((pixel24_t *)Renderbuffer)[Offset].Raw, Color.Raw, sizeof(pixel24_t));
         }
         else
         {
             #define BLEND(A, B) A += int32_t((((B - A) * Color.Raw[3]))) >> 8;
-            BLEND(((pixel24_t *)Scanline)[Offset].Raw[0], Color.Raw[0]);
-            BLEND(((pixel24_t *)Scanline)[Offset].Raw[1], Color.Raw[1]);
-            BLEND(((pixel24_t *)Scanline)[Offset].Raw[2], Color.Raw[2]);
+            BLEND(((pixel24_t *)Renderbuffer)[Offset].Raw[0], Color.Raw[0]);
+            BLEND(((pixel24_t *)Renderbuffer)[Offset].Raw[1], Color.Raw[1]);
+            BLEND(((pixel24_t *)Renderbuffer)[Offset].Raw[2], Color.Raw[2]);
         }
     }
     ainline void setPixel(const size_t Offset, const pixel24_t Color)
     {
         return setPixel(Offset, { Color.Raw[0], Color.Raw[1], Color.Raw[2], 0xFF });
     }
-    ainline void BitBlt(const point4_t Source, const texture_t Texture)
-    {
-        // Get the drawable area.
-        const point4_t Area =
-        {
-            std::clamp(Source.x0, int16_t(0), int16_t(Scanlinelength)),
-            std::clamp(Source.y0, Clippingarea.y0, Clippingarea.y1),
-            std::clamp(Source.x1, int16_t(0),  std::min(int16_t(Scanlinelength), int16_t(Source.x0 + Texture.Dimensions.x))),
-            std::clamp(Source.y1, Clippingarea.y0, std::min(Clippingarea.y1, int16_t(Source.y0 + Texture.Dimensions.y)))
-        };
 
-        // If we don't have any work, return.
-        if (Area.y1 - Area.y0 <= 0 || Area.x1 - Area.x0 <= 0) return;
-
-        // For each line to draw.
-        for (int16_t Y = Area.y0; Y < Area.y1; ++Y)
-        {
-            for (int16_t X = Area.x0; X < Area.x1; ++X)
-            {
-                if (Texture.Pixelsize == sizeof(pixel32_t))
-                {
-
-                    setPixel((Y - Area.y0) * Scanlinelength + X, ((pixel32_t *)Texture.Data)[(Y - Source.y0) * Texture.Dimensions.x + X - Source.x0]);
-                }
-                else
-                {
-                    setPixel((Y - Area.y0) * Scanlinelength + X, ((pixel24_t *)Texture.Data)[(Y - Source.y0) * Texture.Dimensions.x + X - Source.x0]);
-                }
-            }
-        }
-    }
-    ainline void BitBlt(const point4_t Source, const rgba_t Color)
+    // Fill an area of the buffer.
+    ainline void fillRect(const point4_t Area, const rgba_t Color)
     {
         const auto Pixel{ fromRGBA(Color) };
 
         // Get the drawable area.
-        const point4_t Area =
+        const point4_t Rect =
         {
-            std::clamp(Source.x0, int16_t(0), int16_t(Scanlinelength)),
-            std::clamp(Source.y0, Clippingarea.y0, Clippingarea.y1),
-            std::clamp(Source.x1, int16_t(0), int16_t(Scanlinelength)),
-            std::clamp(Source.y1, Clippingarea.y0, Clippingarea.y1)
+            std::clamp(Area.x0, Clippingarea.x0,  Clippingarea.x1),
+            std::clamp(Area.y0, Clippingarea.y0,  Clippingarea.y1),
+            std::clamp(Area.x1, Clippingarea.x0,  Clippingarea.x1),
+            std::clamp(Area.y1, Clippingarea.y0,  Clippingarea.y1)
         };
 
         // If we don't have any work, return.
-        if (Area.y1 - Area.y0 <= 0 || Area.x1 - Area.x0 <= 0) return;
+        if (Rect.y1 - Rect.y0 <= 0 || Rect.x1 - Rect.x0 <= 0) return;
 
-        // For each line to draw.
-        for (int16_t Y = Area.y0; Y < Area.y1; ++Y)
+        // For each pixel.
+        for (int16_t Y = Rect.y0; Y < Rect.y1; ++Y)
         {
-            for (int16_t X = Area.x0; X < Area.x1; ++X)
+            for (int16_t X = Rect.x0; X < Rect.x1; ++X)
             {
-                setPixel((Y - Area.y0) * Scanlinelength + X, Pixel);
+                setPixel((Y - Clippingarea.y0) * Gridwidth + (X - Clippingarea.x0), Pixel);
             }
         }
     }
-}
-
-namespace Engine::Rendering::Draw::Internal
-{
-
-
-    // Outline and fill quads.
-    template <typename CB = std::function<void(const point2_t Position, const int16_t Length)>>
-    ainline void fillQuad(const point4_t Area, const CB Callback)
+    ainline void fillRect(const point4_t Area, const texture_t Texture)
     {
-        if (Currentline >= Area.y0 && Currentline < Area.y1)
+        // Get the drawable area.
+        const point4_t Rect =
         {
-            Callback({ Area.x0, Currentline - Area.y0 }, Area.x1 - Area.x0 + 1);
-        }
-    }
-    template <typename CB = std::function<void(const point2_t Position, const int16_t Length)>>
-    ainline void outlineQuad(const point4_t Area, const CB Callback)
-    {
-        if (Currentline == Area.y0 || Currentline == Area.y1 - 1)
-            return Callback({ Area.x0, Currentline - Area.y0 }, Area.x1 - Area.x0 + 1);
-
-        if (Currentline > Area.y0 && Currentline < Area.y1)
-        {
-            Callback({ Area.x0, Currentline - Area.y0 }, 1);
-            Callback({ Area.x1, Currentline - Area.y0 }, 1);
-        }
-    }
-
-    // Outline and fill circles.
-    template <bool Fill, typename CB = std::function<void(const point2_t Position, const int16_t Length)>>
-    ainline void drawCircle(const point2_t Position, const float Radius, const CB Callback)
-    {
-        const int16_t Top{ Position.y - int16_t(Radius) };
-        const double R2{ Radius * Radius };
-        int16_t X{}, Y{ int16_t(Radius) };
-
-        // Helpers to keep the algorithm cleaner.
-        auto doCallback = [&Callback, Top](const point2_t Position, const size_t Length = 1) -> void
-        {
-            if (Position.y == Currentline)
-            {
-                const point2_t Line{ Position.x, std::min(int16_t(Position.x + Length), int16_t(Scanlinelength)) };
-                Callback({ Line.x, Currentline - Top }, std::max(int16_t(Line.y - Line.x), int16_t(1)));
-            }
-        };
-        auto doDrawing = [&](const point2_t Origin, const point2_t Size) -> void
-        {
-            if (Size.x == 0)
-            {
-                doCallback({ Origin.x, int16_t(Origin.y + Size.y) });
-                doCallback({ Origin.x, int16_t(Origin.y - Size.y) });
-
-                if (Fill)
-                {
-                    doCallback({ int16_t(Origin.x - Size.y), Origin.y }, Size.y * 2);
-                }
-                else
-                {
-                    doCallback({ int16_t(Origin.x + Size.y), Origin.y });
-                    doCallback({ int16_t(Origin.x - Size.y), Origin.y });
-                }
-                return;
-            }
-
-            if (Size.x == Size.y)
-            {
-                if (Fill)
-                {
-                    doCallback({ int16_t(Origin.x - Size.x), int16_t(Origin.y + Size.y) }, Size.x * 2);
-                    doCallback({ int16_t(Origin.x - Size.x), int16_t(Origin.y - Size.y) }, Size.x * 2);
-                }
-                else
-                {
-                    doCallback({ int16_t(Origin.x + Size.x), int16_t(Origin.y + Size.y) });
-                    doCallback({ int16_t(Origin.x - Size.x), int16_t(Origin.y + Size.y) });
-                    doCallback({ int16_t(Origin.x + Size.x), int16_t(Origin.y - Size.y) });
-                    doCallback({ int16_t(Origin.x - Size.x), int16_t(Origin.y - Size.y) });
-                }
-                return;
-            }
-
-            if (Size.x < Size.y)
-            {
-                if (Fill)
-                {
-                    /*
-                        HACK(Convery):
-                        We can not draw multiple lines with the same Y coord
-                        because it messes up the alpha-blending and creates
-                        an orb-like effect. https://i.imgur.com/AhdOsqp.png
-                    */
-                    thread_local int16_t PreviousY = -1;
-                    if (PreviousY != Size.y)
-                    {
-                        doCallback({ int16_t(Origin.x - Size.x), int16_t(Origin.y + Size.y) }, Size.x * 2);
-                        doCallback({ int16_t(Origin.x - Size.x), int16_t(Origin.y - Size.y) }, Size.x * 2);
-                        PreviousY = Size.y;
-                    }
-                    doCallback({ int16_t(Origin.x - Size.y), int16_t(Origin.y + Size.x) }, Size.y * 2);
-                    doCallback({ int16_t(Origin.x - Size.y), int16_t(Origin.y - Size.x) }, Size.y * 2);
-                }
-                else
-                {
-                    doCallback({ int16_t(Origin.x + Size.x), int16_t(Origin.y + Size.y) });
-                    doCallback({ int16_t(Origin.x - Size.x), int16_t(Origin.y + Size.y) });
-                    doCallback({ int16_t(Origin.x + Size.x), int16_t(Origin.y - Size.y) });
-                    doCallback({ int16_t(Origin.x - Size.x), int16_t(Origin.y - Size.y) });
-                    doCallback({ int16_t(Origin.x + Size.y), int16_t(Origin.y + Size.x) });
-                    doCallback({ int16_t(Origin.x - Size.y), int16_t(Origin.y + Size.x) });
-                    doCallback({ int16_t(Origin.x + Size.y), int16_t(Origin.y - Size.x) });
-                    doCallback({ int16_t(Origin.x - Size.y), int16_t(Origin.y - Size.x) });
-                }
-                return;
-            }
+            std::clamp(Area.x0, Clippingarea.x0,  Clippingarea.x1),
+            std::clamp(Area.y0, Clippingarea.y0,  Clippingarea.y1),
+            std::clamp(Area.x1, Clippingarea.x0,  Clippingarea.x1),
+            std::clamp(Area.y1, Clippingarea.y0,  Clippingarea.y1)
         };
 
-        // Draw the cardinals..
-        doDrawing(Position, { X, Y });
+        // If we don't have any work, return.
+        if (Rect.y1 - Rect.y0 <= 0 || Rect.x1 - Rect.x0 <= 0) return;
 
-        // Draw the rest of the owl..
-        Y = int16_t(std::sqrt(R2 - int16_t(1)) + 0.5f); X++;
-        while (X < Y)
+        // For each pixel.
+        for (int16_t Y = Rect.y0; Y < Rect.y1; ++Y)
         {
-            doDrawing(Position, { X++, Y });
-            Y = int16_t(std::sqrt(R2 - X * X) + 0.5f);
+            for (int16_t X = Rect.x0; X < Rect.x1; ++X)
+            {
+                if (Texture.Pixelsize == sizeof(pixel32_t))
+                {
+                    setPixel((Y - Clippingarea.y0) * Gridwidth + (X - Clippingarea.x0), ((pixel32_t *)Texture.Data)[(Y - Area.y0) * Texture.Dimensions.x + X - Area.x0]);
+                }
+                else
+                {
+                    setPixel((Y - Clippingarea.y0) * Gridwidth + (X - Clippingarea.x0), ((pixel24_t *)Texture.Data)[(Y - Area.y0) * Texture.Dimensions.x + X - Area.x0]);
+                }
+            }
         }
-
-        // Precision..
-        if (X == Y)
-        {
-            doDrawing(Position, { X, Y });
-        }
-    }
-    template<typename CB = std::function<void(const point2_t Position, const int16_t Length)>>
-    ainline void fillCircle(const point2_t Position, const float Radius, const CB Callback)
-    {
-        return drawCircle<true>(Position, Radius, Callback);
-    }
-    template<typename CB = std::function<void(const point2_t Position, const int16_t Length)>>
-    ainline void outlineCircle(const point2_t Position, const float Radius, const CB Callback)
-    {
-        return drawCircle<false>(Position, Radius, Callback);
     }
 }
 
@@ -371,57 +238,21 @@ namespace Engine::Rendering::Draw
 {
     template <bool Outline> void Quad(const texture_t Color, const point4_t Area)
     {
-        BitBlt(Area, Color);
+        fillRect(Area, Color);
     }
     template <bool Outline> void Quad(const rgba_t Color, const point4_t Area)
     {
         if (Outline)
         {
-            BitBlt({ Area.x0, Area.y0, Area.x1, Area.y0 + 1 }, Color);
-            BitBlt({ Area.x0, Area.y1 - 1, Area.x1, Area.y1 }, Color);
-            BitBlt({ Area.x0, Area.y0, Area.x0 + 1, Area.y1 }, Color);
-            BitBlt({ Area.x1 - 1, Area.y0, Area.x1, Area.y1 }, Color);
+            fillRect({ Area.x0, Area.y0, Area.x1, Area.y0 + 1 }, Color);
+            fillRect({ Area.x0, Area.y1 - 1, Area.x1, Area.y1 }, Color);
+            fillRect({ Area.x0, Area.y0, Area.x0 + 1, Area.y1 }, Color);
+            fillRect({ Area.x1 - 1, Area.y0, Area.x1, Area.y1 }, Color);
         }
         else
         {
-            BitBlt(Area, Color);
+            fillRect(Area, Color);
         }
-    }
-
-
-    template <bool Outline> void Circle(const texture_t Color, const point2_t Position, const float Radius)
-    {
-        const auto Lambda = [&](const point2_t Position, const int16_t Length) -> void
-        {
-            for (int16_t i = 0; i < Length; ++i)
-            {
-                const auto Index{ (Position.y % Color.Dimensions.y) * Color.Dimensions.x + i };
-
-                if (Color.Pixelsize == sizeof(pixel24_t)) setPixel(Position.x + i, ((pixel24_t *)Color.Data)[Index]);
-                else setPixel(Position.x + i, ((pixel32_t *)Color.Data)[Index]);
-            }
-        };
-
-        if (!Outline) Internal::fillCircle(Position, Radius, Lambda);
-        else Internal::outlineCircle(Position, Radius, Lambda);
-    }
-    template <bool Outline> void Circle(const rgba_t Color, const point2_t Position, const float Radius)
-    {
-        auto Pixel{ fromRGBA(Color) };
-        const auto Lambda = [&](const point2_t Position, const int16_t Length) -> void
-        {
-            for (int16_t i = 0; i < Length; ++i)
-            {
-                setPixel(Position.x + i, Pixel);
-            }
-        };
-        if (!Outline)
-        {
-            Internal::fillCircle(Position, Radius, Lambda);
-            Pixel.Raw[3] /= 2;
-            Internal::outlineCircle(Position, Radius, Lambda);
-        }
-        else Internal::outlineCircle(Position, Radius, Lambda);
     }
 }
 
@@ -434,10 +265,10 @@ namespace Engine::Rendering::Draw
 */
 void Microsoft_hackery_do_not_call_this()
 {
-    Draw::Circle<false>(texture_t(), point2_t(), float());
-    Draw::Circle<true>(texture_t(), point2_t(), float());
-    Draw::Circle<false>(rgba_t(), point2_t(), float());
-    Draw::Circle<true>(rgba_t(), point2_t(), float());
+    //Draw::Circle<false>(texture_t(), point2_t(), float());
+    //Draw::Circle<true>(texture_t(), point2_t(), float());
+    //Draw::Circle<false>(rgba_t(), point2_t(), float());
+    //Draw::Circle<true>(rgba_t(), point2_t(), float());
     Draw::Quad<false>(texture_t(), point4_t());
     Draw::Quad<true>(texture_t(), point4_t());
     Draw::Quad<false>(rgba_t(), point4_t());
