@@ -71,10 +71,10 @@ struct Element_t
             for (auto &Child : Target->Childelements)
             {
                 // Margins are given in pixels.
-                if (std::abs(Child->Margins.x0 > 1.0001)) Child->Dimensions.x0 = int16_t(Target->Dimensions.x0 + std::round(Child->Margins.x0));
-                if (std::abs(Child->Margins.y0 > 1.0001)) Child->Dimensions.y0 = int16_t(Target->Dimensions.y0 + std::round(Child->Margins.y0));
-                if (std::abs(Child->Margins.x1 > 1.0001)) Child->Dimensions.x1 = int16_t(Target->Dimensions.x1 - std::round(Child->Margins.x1));
-                if (std::abs(Child->Margins.y1 > 1.0001)) Child->Dimensions.y1 = int16_t(Target->Dimensions.y1 - std::round(Child->Margins.y1));
+                if (std::abs(Child->Margins.x0) > 1.0) Child->Dimensions.x0 = int16_t(Target->Dimensions.x0 + std::round(Child->Margins.x0));
+                if (std::abs(Child->Margins.y0) > 1.0) Child->Dimensions.y0 = int16_t(Target->Dimensions.y0 + std::round(Child->Margins.y0));
+                if (std::abs(Child->Margins.x1) > 1.0) Child->Dimensions.x1 = int16_t(Target->Dimensions.x1 - std::round(Child->Margins.x1));
+                if (std::abs(Child->Margins.y1) > 1.0) Child->Dimensions.y1 = int16_t(Target->Dimensions.y1 - std::round(Child->Margins.y1));
 
                 // Margins are given in percentages.
                 if (Child->Margins.x0 <= 1.0) Child->Dimensions.x0 = int16_t(std::round(Target->Dimensions.x0 + DeltaX * Child->Margins.x0));

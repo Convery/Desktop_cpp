@@ -8,15 +8,10 @@
 
 #include "../Stdinclude.hpp"
 
-/*
-    Split the screen into 8 * 8 areas.
-    Render each when dirty.
-*/
-
 namespace Engine::Rendering
 {
     uint32_t Gridwidth{}, Gridheight{};
-    std::bitset<8 * 8> Dirtygrid{};
+    std::bitset<16 * 16> Dirtygrid{};
     point4_t Clippingarea{};
     uint32_t Bufferlength{};
     void *Renderbuffer{};
@@ -49,7 +44,6 @@ namespace Engine::Rendering
         ainline void Present()
         {
             // Bitblt to screen.
-
             SetDIBitsToDevice((HDC)Devicecontext, Clippingarea.x0, Clippingarea.y0, Lineformat.bmiHeader.biWidth, -Lineformat.bmiHeader.biHeight, 0, 0, 0, -Lineformat.bmiHeader.biHeight, Renderbuffer, &Lineformat, DIB_RGB_COLORS);
         }
         ainline void Lockbuffer()
@@ -74,8 +68,8 @@ namespace Engine::Rendering
         ainline void _Recalculatebuffers()
         {
             // Split the window into a grid.
-            Gridheight = gWindowsize.y / 8;
-            Gridwidth = gWindowsize.x / 8;
+            Gridheight = gWindowsize.y / 16;
+            Gridwidth = gWindowsize.x / 16;
 
             // The buffer for the pixels should be a multiple of 16.
             Bufferlength = Gridwidth * Gridheight * sizeof(pixel24_t);
@@ -97,11 +91,11 @@ namespace Engine::Rendering
     // Mark a region as dirty.
     void Invalidateregion(const point4_t Area)
     {
-        for (size_t Y = Area.y0 / Gridheight; Y < Area.y1 / Gridheight; ++Y)
+        for (size_t Y = Area.y0 / Gridheight; Y <= Area.y1 / Gridheight; ++Y)
         {
-            for (size_t X = Area.x0 / Gridwidth; X < Area.x1 / Gridwidth; ++X)
+            for (size_t X = Area.x0 / Gridwidth; X <= Area.x1 / Gridwidth; ++X)
             {
-                Dirtygrid.set(Y * 8 + X);
+                Dirtygrid.set(Y * 16 + X);
             }
         }
     }
@@ -113,20 +107,20 @@ namespace Engine::Rendering
         Lockbuffer();
 
         // Create the buffer for this instance.
-        Renderbuffer = (uint8_t *)alloca(Bufferlength);
+        Renderbuffer = alloca(Bufferlength);
 
-        // Render all the scanlines in the main-thread.
-        for (int16_t i = 0; i < 8 * 8; ++i)
+        // Render all the quads in the main-thread.
+        for (int16_t i = 0; i < 16 * 16; ++i)
         {
-            // Skip clean areas.
+            // Skip clean regions.
             if (likely(Dirtygrid[i] == false)) continue;
 
             // Clear the area to fully transparent (chroma-key on 0xFFFFFF).
             std::memset(Renderbuffer, 0xFF, Bufferlength);
             Clippingarea =
             {
-                int16_t(i % 8 * Gridwidth), int16_t(i / 8 * Gridheight),
-                int16_t((1 + i % 8) * Gridwidth), int16_t((1 + i / 8) * Gridheight)
+                int16_t(i % 16 * Gridwidth), int16_t(i / 16 * Gridheight),
+                int16_t((1 + i % 16) * Gridwidth), int16_t((1 + i / 16) * Gridheight)
             };
 
             // Helper to save my fingers.
@@ -207,10 +201,10 @@ namespace Engine::Rendering
         // Get the drawable area.
         const point4_t Rect =
         {
-            std::clamp(Area.x0, Clippingarea.x0,  Clippingarea.x1),
-            std::clamp(Area.y0, Clippingarea.y0,  Clippingarea.y1),
-            std::clamp(Area.x1, Clippingarea.x0,  Clippingarea.x1),
-            std::clamp(Area.y1, Clippingarea.y0,  Clippingarea.y1)
+            std::clamp(Area.x0, std::min(int16_t(Area.x0 + Texture.Dimensions.x), Clippingarea.x0),  std::min(int16_t(Area.x0 + Texture.Dimensions.x), Clippingarea.x1)),
+            std::clamp(Area.y0, std::min(int16_t(Area.y0 + Texture.Dimensions.y), Clippingarea.y0),  std::min(int16_t(Area.y0 + Texture.Dimensions.y), Clippingarea.y1)),
+            std::clamp(Area.x1, std::min(int16_t(Area.x0 + Texture.Dimensions.x), Clippingarea.x0),  std::min(int16_t(Area.x0 + Texture.Dimensions.x), Clippingarea.x1)),
+            std::clamp(Area.y1, std::min(int16_t(Area.y0 + Texture.Dimensions.y), Clippingarea.y0),  std::min(int16_t(Area.y0 + Texture.Dimensions.y), Clippingarea.y1))
         };
 
         // If we don't have any work, return.
@@ -238,7 +232,17 @@ namespace Engine::Rendering::Draw
 {
     template <bool Outline> void Quad(const texture_t Color, const point4_t Area)
     {
-        fillRect(Area, Color);
+        if (Outline)
+        {
+            fillRect({ Area.x0, Area.y0, Area.x1, Area.y0 + 1 }, Color);
+            fillRect({ Area.x0, Area.y1 - 1, Area.x1, Area.y1 }, Color);
+            fillRect({ Area.x0, Area.y0, Area.x0 + 1, Area.y1 }, Color);
+            fillRect({ Area.x1 - 1, Area.y0, Area.x1, Area.y1 }, Color);
+        }
+        else
+        {
+            fillRect(Area, Color);
+        }
     }
     template <bool Outline> void Quad(const rgba_t Color, const point4_t Area)
     {
