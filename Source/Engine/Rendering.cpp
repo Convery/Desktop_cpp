@@ -44,7 +44,9 @@ namespace Engine::Rendering
         ainline void Present()
         {
             // Bitblt to screen.
-            SetDIBitsToDevice((HDC)Devicecontext, Clippingarea.x0, Clippingarea.y0, Lineformat.bmiHeader.biWidth, -Lineformat.bmiHeader.biHeight, 0, 0, 0, -Lineformat.bmiHeader.biHeight, Renderbuffer, &Lineformat, DIB_RGB_COLORS);
+            SetDIBitsToDevice((HDC)Devicecontext, Clippingarea.x0, Clippingarea.y0, 
+                              Lineformat.bmiHeader.biWidth, -Lineformat.bmiHeader.biHeight, 
+                              0, 0, 0, -Lineformat.bmiHeader.biHeight, Renderbuffer, &Lineformat, DIB_RGB_COLORS);
         }
         ainline void Lockbuffer()
         {
