@@ -20,6 +20,128 @@
 
 namespace Loginmenu
 {
+    Element_t *Createtoolbar()
+    {
+        auto Element = new Element_t("Toolbar");
+        Element->Margins = { 17, 0, 17, 700 };
+        Element->onRender = [](const Element_t *Caller)
+        {
+            Draw::Quad({ 49, 48, 47, 0xFF }, Caller->Dimensions);
+        };
+        Element->onFrame = [](const Element_t *Caller, double Deltatime)
+        {
+            static point2_t Previous{};
+
+            if (Caller->Properties.Clicked)
+            {
+                if (Previous.x + Previous.y == 0) Previous = Engine::getMouseposition();
+                const auto Current{ Engine::getMouseposition() };
+                auto Window{ Engine::getWindowposition() };
+
+                Window.x += (Current.x - Previous.x);
+                Window.y += (Current.y - Previous.y);
+                Engine::Window::Move(Window, true);
+                Previous = Current;
+            }
+            else
+            {
+                Previous = {};
+            }
+        };
+
+        Element->addChild([]()
+        {
+            auto Element = new Element_t("Close");
+            Element->Properties.ExclusiveIO = true;
+            Element->Margins = { 0.95f, 1.001, 0.01f, 0 };
+            Element->onRender = [](const Element_t *Caller)
+            {
+                // NOTE(Convery): This is not a typo.
+                Draw::Quad(Assets::Closeicon, Caller->Dimensions);
+                if (Caller->Properties.Clicked) Draw::Quad(Assets::Closeicon, Caller->Dimensions);
+            };
+            Element->isExclusive = [](const Element_t *Caller, const elementstate_t Newstate)
+            {
+                return Newstate.Clicked;
+            };
+            Element->onStatechange = [](const Element_t *Caller, const elementstate_t Newstate)
+            {
+                if (Newstate.Clicked && !Newstate.Focused && Caller->Properties.Clicked && Caller->Properties.Focused)
+                {
+                    Engine::setErrno(Hash::FNV1a_32("Toolbar.Close"));
+                }
+
+                Engine::Rendering::Invalidateregion(Caller->Dimensions);
+            };
+
+            return Element;
+        }());
+
+        return Element;
+    }
+    Element_t *Createmailarea()
+    {
+        auto Element = new Element_t("Emaillogin");
+        Element->Margins = { 0.2, 0.4, 0.2, 0.5 };
+
+        Element->addChild([]()
+        {
+            auto Element = new Element_t("Emailtext");
+            Element->Margins = { 0.1, 0, 0.5, 0.85 };
+            Element->onRender = [](const Element_t *Caller)
+            {
+                Draw::Quad(Assets::Emailprompt, Caller->Dimensions);
+            };
+
+            return Element;
+        }());
+        Element->addChild([]()
+        {
+            auto Element = new Element_t("Emailtop");
+            Element->Margins = { 0, 0.16, 0, 0.82 };
+            Element->onRender = [](const Element_t *Caller)
+            {
+                Draw::Quad({ 49, 48, 47, 0xFF }, Caller->Dimensions);
+            };
+
+            return Element;
+        }());
+        Element->addChild([]()
+        {
+            auto Element = new Element_t("Emailbottom");
+            Element->Margins = { 0, 0.46, 0, 0.53 };
+            Element->onRender = [](const Element_t *Caller)
+            {
+                Draw::Quad({ 49, 48, 47, 0xFF }, Caller->Dimensions);
+            };
+
+            return Element;
+        }());
+        Element->addChild([]()
+        {
+            auto Element = new Element_t("Signin");
+            Element->Margins = { 0.2, 0.55, 0.6, 0.2 };
+            Element->onRender = [](const Element_t *Caller)
+            {
+                Draw::Quad(Assets::Signintext, Caller->Dimensions);
+            };
+
+            return Element;
+        }());
+        Element->addChild([]()
+        {
+            auto Element = new Element_t("Register");
+            Element->Margins = { 0.6, 0.55, 0.15, 0.2 };
+            Element->onRender = [](const Element_t *Caller)
+            {
+                Draw::Quad(Assets::Registertext, Caller->Dimensions);
+            };
+
+            return Element;
+        }());
+
+        return Element;
+    }
     Element_t *Createbackground()
     {
         auto Element = new Element_t("Background");
@@ -31,111 +153,102 @@ namespace Loginmenu
 
         return Element;
     }
-    Element_t *Createtoolbar()
+    Element_t *CreateSSOarea()
     {
-        auto Element = new Element_t("Toolbar");
-        Element->Margins = { 17, 0, 17, 700 };
-        Element->onRender = [](const Element_t *Caller)
+        auto Element = new Element_t("SSOLogin");
+        Element->Margins = { 0.3, 0.55, 0.3, 0.35 };
+
+        Element->addChild([]()
         {
-            Draw::Quad({ 49, 48, 47, 0xFF }, Caller->Dimensions);
-        };
+            auto Element = new Element_t("Github");
+            Element->Margins = { 0.1, 0, 0.75, 0.6 };
+            Element->onRender = [](const Element_t *Caller)
+            {
+                Draw::Quad(Assets::Github, Caller->Dimensions);
+            };
+
+            return Element;
+        }());
+        Element->addChild([]()
+        {
+            auto Element = new Element_t("Twitter");
+            Element->Margins = { 0.45, 0, 0.4, 0.6 };
+            Element->onRender = [](const Element_t *Caller)
+            {
+                Draw::Quad(Assets::Twitter, Caller->Dimensions);
+            };
+
+            return Element;
+        }());
+        Element->addChild([]()
+        {
+            auto Element = new Element_t("Google");
+            Element->Margins = { 0.8, 0, 0.05, 0.6 };
+            Element->onRender = [](const Element_t *Caller)
+            {
+                Draw::Quad(Assets::Google, Caller->Dimensions);
+            };
+
+            return Element;
+        }());
+        Element->addChild([]()
+        {
+            auto Element = new Element_t("SSOline");
+            Element->Margins = { 0, 0.4, 0, 0.58 };
+            Element->onRender = [](const Element_t *Caller)
+            {
+                Draw::Quad({ 49, 48, 47, 0xFF }, Caller->Dimensions);
+            };
+
+            return Element;
+        }());
 
         return Element;
     }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-static void Composetoolbar(Element_t *Target)
-{
-    auto Boundingbox = new Element_t("Toolbar");
-    auto Closebutton = new Element_t("Toolbar.Close");
-
-    // The full toolbar, click to drag.
-    Boundingbox->Margins = { 0.045f, 0, 0.045f, 20 };
-    Boundingbox->onRender = [](const Element_t *Caller)
+    Element_t *Createoffline()
     {
-        Draw::Quad({ 49, 48, 47, 0xFF }, Caller->Dimensions);
-    };
-    Boundingbox->onFrame = [](const Element_t *Caller, double Deltatime)
-    {
-        static point2_t Previous{};
+        auto Element = new Element_t("Offlinemode");
+        Element->Margins = { 0.3, 0.9, 0.3, 0 };
 
-        if (Caller->Properties.Clicked)
+        Element->addChild([]()
         {
-            if (Previous.x + Previous.y == 0) Previous = Engine::getMouseposition();
-            const auto Current{ Engine::getMouseposition() };
-            auto Window{ Engine::getWindowposition() };
+            auto Element = new Element_t("Offlineline");
+            Element->Margins = { 0, 0, 0, 0.98 };
+            Element->onRender = [](const Element_t *Caller)
+            {
+                Draw::Quad({ 49, 48, 47, 0xFF }, Caller->Dimensions);
+            };
 
-            Window.x += (Current.x - Previous.x);
-            Window.y += (Current.y - Previous.y);
-            Engine::Window::Move(Window);
-            Previous = Current;
-        }
-        else
+            return Element;
+        }());
+        Element->addChild([]()
         {
-            Previous = {};
-        }
-    };
-    Target->addChild(Boundingbox);
+            auto Element = new Element_t("Offlineline");
+            Element->Margins = { 0.3, 0.2, 0.2, 0.3 };
+            Element->onRender = [](const Element_t *Caller)
+            {
+                Draw::Quad(Assets::Offlinetext, Caller->Dimensions);
+            };
 
-    // Let the user exit in a natural way.
-    Closebutton->Properties.ExclusiveIO = true;
-    Closebutton->Margins = { 1.9f, 1.001, 0.02f, 20 };
-    Closebutton->onRender = [](const Element_t *Caller)
-    {
-        // NOTE(Convery): This is not a typo.
-        Draw::Quad(Assets::Closeicon, Caller->Dimensions);
-        if (Caller->Properties.Clicked) Draw::Quad(Assets::Closeicon, Caller->Dimensions);
-    };
-    Closebutton->isExclusive = [](const Element_t *Caller, const elementstate_t Newstate)
-    {
-        return Newstate.Clicked;
-    };
-    Closebutton->onStatechange = [](const Element_t *Caller, const elementstate_t Newstate)
-    {
-        if (Newstate.Clicked && !Newstate.Focused && Caller->Properties.Clicked && Caller->Properties.Focused)
-        {
-            Engine::setErrno(Hash::FNV1a_32("Toolbar.Close"));
-        }
+            return Element;
+        }());
 
-        Engine::Rendering::Invalidateregion(Caller->Dimensions);
-    };
-    Boundingbox->addChild(Closebutton);
-}
-void Composeloginmenu(Element_t *Target)
-{
-    auto Boundingbox = new Element_t("Loginmenu");
-    Boundingbox->addChild(Loginmenu::Createbackground());
-    Boundingbox->addChild(Loginmenu::Createtoolbar());
-    Target->addChild(Boundingbox);
+        return Element;
+    }
 
-    Engine::gCurrentmenuID = Hash::FNV1a_32("loginmenu");
-    Engine::Window::Resize({ 512, 720 }, false);
+    void Compose(Element_t *Target)
+    {
+        auto Element = new Element_t("Loginmenu");
+        Element->addChild(Createbackground());
+        Element->addChild(Createmailarea());
+        Element->addChild(Createtoolbar());
+        Element->addChild(CreateSSOarea());
+        Element->addChild(Createoffline());
+        Target->addChild(Element);
+
+        Engine::gCurrentmenuID = Hash::FNV1a_32("loginmenu");
+        Engine::Window::Resize({ 512, 720 }, true);
+    }
 }
 
 // Register the composer for later.
@@ -145,7 +258,7 @@ namespace
     {
         Startup()
         {
-            Engine::Compositing::Registercomposer("loginmenu", Composeloginmenu);
+            Engine::Compositing::Registercomposer("loginmenu", Loginmenu::Compose);
         }
     };
     Startup Loader{};
