@@ -14,7 +14,7 @@ int main(int argc, char **argv)
     SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
 
     // Create the initial scene.
-    Engine::Compositing::Switchcomposition("loginmenu");
+    Engine::Compositing::Switchcomposition("loginwindow"); /* TODO(Convery): if (false == hasLogininfo()) Compositing::Switchcomposition("loginwindow"); */
     Engine::Window::Centerwindow(false);
     Engine::Window::Togglevisibility();
 

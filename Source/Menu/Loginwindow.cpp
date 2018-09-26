@@ -9,15 +9,6 @@
 #include "../Stdinclude.hpp"
 #include "Assets.hpp"
 
-/*
-    div Background
-    div Toolbar
-    div Mailarea
-    div SSOarea
-    div Offlinearea
-
-*/
-
 namespace Loginmenu
 {
     Element_t *Createtoolbar()
@@ -58,7 +49,7 @@ namespace Loginmenu
             {
                 // NOTE(Convery): This is not a typo.
                 Draw::Quad(Assets::Closeicon, Caller->Dimensions);
-                if (Caller->Properties.Clicked) Draw::Quad(Assets::Closeicon, Caller->Dimensions);
+                if (Caller->Properties.Focused) Draw::Quad(Assets::Closeicon, Caller->Dimensions);
             };
             Element->isExclusive = [](const Element_t *Caller, const elementstate_t Newstate)
             {
@@ -123,7 +114,13 @@ namespace Loginmenu
             Element->Margins = { 0.2, 0.55, 0.6, 0.2 };
             Element->onRender = [](const Element_t *Caller)
             {
+                // NOTE(Convery): This is not a typo.
                 Draw::Quad(Assets::Signintext, Caller->Dimensions);
+                if (Caller->Properties.Focused) Draw::Quad(Assets::Signintext, Caller->Dimensions);
+            };
+            Element->onStatechange = [](const Element_t *Caller, const elementstate_t Newstate)
+            {
+                Engine::Rendering::Invalidateregion(Caller->Dimensions);
             };
 
             return Element;
@@ -134,7 +131,13 @@ namespace Loginmenu
             Element->Margins = { 0.6, 0.55, 0.15, 0.2 };
             Element->onRender = [](const Element_t *Caller)
             {
+                // NOTE(Convery): This is not a typo.
                 Draw::Quad(Assets::Registertext, Caller->Dimensions);
+                if (Caller->Properties.Focused) Draw::Quad(Assets::Registertext, Caller->Dimensions);
+            };
+            Element->onStatechange = [](const Element_t *Caller, const elementstate_t Newstate)
+            {
+                Engine::Rendering::Invalidateregion(Caller->Dimensions);
             };
 
             return Element;
@@ -164,7 +167,13 @@ namespace Loginmenu
             Element->Margins = { 0.1, 0, 0.75, 0.6 };
             Element->onRender = [](const Element_t *Caller)
             {
+                // NOTE(Convery): This is not a typo.
                 Draw::Quad(Assets::Github, Caller->Dimensions);
+                if (Caller->Properties.Focused) Draw::Quad(Assets::Github, Caller->Dimensions);
+            };
+            Element->onStatechange = [](const Element_t *Caller, const elementstate_t Newstate)
+            {
+                Engine::Rendering::Invalidateregion(Caller->Dimensions);
             };
 
             return Element;
@@ -175,7 +184,13 @@ namespace Loginmenu
             Element->Margins = { 0.45, 0, 0.4, 0.6 };
             Element->onRender = [](const Element_t *Caller)
             {
+                // NOTE(Convery): This is not a typo.
                 Draw::Quad(Assets::Twitter, Caller->Dimensions);
+                if (Caller->Properties.Focused) Draw::Quad(Assets::Twitter, Caller->Dimensions);
+            };
+            Element->onStatechange = [](const Element_t *Caller, const elementstate_t Newstate)
+            {
+                Engine::Rendering::Invalidateregion(Caller->Dimensions);
             };
 
             return Element;
@@ -186,7 +201,13 @@ namespace Loginmenu
             Element->Margins = { 0.8, 0, 0.05, 0.6 };
             Element->onRender = [](const Element_t *Caller)
             {
+                // NOTE(Convery): This is not a typo.
                 Draw::Quad(Assets::Google, Caller->Dimensions);
+                if (Caller->Properties.Focused) Draw::Quad(Assets::Google, Caller->Dimensions);
+            };
+            Element->onStatechange = [](const Element_t *Caller, const elementstate_t Newstate)
+            {
+                Engine::Rendering::Invalidateregion(Caller->Dimensions);
             };
 
             return Element;
@@ -223,11 +244,27 @@ namespace Loginmenu
         }());
         Element->addChild([]()
         {
-            auto Element = new Element_t("Offlineline");
+            auto Element = new Element_t("Offlinetext");
+            Element->Properties.ExclusiveIO = true;
             Element->Margins = { 0.3, 0.2, 0.2, 0.3 };
             Element->onRender = [](const Element_t *Caller)
             {
+                // NOTE(Convery): This is not a typo.
                 Draw::Quad(Assets::Offlinetext, Caller->Dimensions);
+                if (Caller->Properties.Focused) Draw::Quad(Assets::Offlinetext, Caller->Dimensions);
+            };
+            Element->isExclusive = [](const Element_t *Caller, const elementstate_t Newstate)
+            {
+                return Newstate.Clicked;
+            };
+            Element->onStatechange = [](const Element_t *Caller, const elementstate_t Newstate)
+            {
+                if (Newstate.Clicked && !Newstate.Focused && Caller->Properties.Clicked && Caller->Properties.Focused)
+                {
+                    Engine::Compositing::Switchcomposition("mainwindow");
+                    Engine::Compositing::Recalculate();
+                }
+                else Engine::Rendering::Invalidateregion(Caller->Dimensions);
             };
 
             return Element;
@@ -258,7 +295,7 @@ namespace
     {
         Startup()
         {
-            Engine::Compositing::Registercomposer("loginmenu", Loginmenu::Compose);
+            Engine::Compositing::Registercomposer("loginwindow", Loginmenu::Compose);
         }
     };
     Startup Loader{};

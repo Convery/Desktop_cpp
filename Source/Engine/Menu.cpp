@@ -39,10 +39,6 @@ namespace Engine::Compositing
             Result->second(newRootelement);
         }
 
-        // Add the default topmost elements.
-        //Composers->find("toolbar")->second(newRootelement);
-        // Devconsole
-
         // TODO(Convery): Perform better cleanup!!one!
         if (gRootelement)
         {
