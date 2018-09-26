@@ -140,7 +140,7 @@ namespace Engine::Rendering
     // MArk a region as dirty.
     void Invalidateregion(const point4_t Area);
 
-    // Process elements, render, and present to the context.
+    // Render and present the scene.
     void onFrame();
 }
 
