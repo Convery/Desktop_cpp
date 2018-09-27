@@ -262,7 +262,6 @@ namespace Loginmenu
                 if (Newstate.Clicked && !Newstate.Focused && Caller->Properties.Clicked && Caller->Properties.Focused)
                 {
                     Engine::Compositing::Switchcomposition("mainwindow");
-                    Engine::Compositing::Recalculate();
                     Engine::Window::Centerwindow();
                 }
                 else Engine::Rendering::Invalidateregion(Caller->Dimensions);
