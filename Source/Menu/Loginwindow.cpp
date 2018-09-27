@@ -263,6 +263,7 @@ namespace Loginmenu
                 {
                     Engine::Compositing::Switchcomposition("mainwindow");
                     Engine::Compositing::Recalculate();
+                    Engine::Window::Centerwindow();
                 }
                 else Engine::Rendering::Invalidateregion(Caller->Dimensions);
             };
