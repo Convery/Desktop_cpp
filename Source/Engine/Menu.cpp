@@ -39,19 +39,7 @@ namespace Engine::Compositing
             Result->second(newRootelement);
         }
 
-        // TODO(Convery): Perform better cleanup!!one!
-        if (gRootelement)
-        {
-            std::function<void(Element_t *)> Lambda = [&](Element_t *Target)
-            {
-                for (const auto &Item : Target->Childelements) Lambda(Item);
-                for (auto Iterator = Target->Childelements.rbegin(); Iterator != Target->Childelements.rend(); ++Iterator)
-                    delete *Iterator;
-                Target->Childelements.clear();
-            };
-            Lambda(gRootelement);
-            delete gRootelement;
-        }
+        if (gRootelement) delete gRootelement;
         gRootelement = newRootelement;
     }
 

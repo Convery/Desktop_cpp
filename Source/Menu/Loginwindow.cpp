@@ -44,12 +44,12 @@ namespace Loginmenu
         {
             auto Element = new Element_t("Close");
             Element->Properties.ExclusiveIO = true;
-            Element->Margins = { 0.95f, 1.001, 0.01f, 0 };
+            Element->Margins = { 0.95f, 0, 0, 0 };
             Element->onRender = [](const Element_t *Caller)
             {
                 // NOTE(Convery): This is not a typo.
-                Draw::Quad(Assets::Closeicon, Caller->Dimensions);
-                if (Caller->Properties.Focused) Draw::Quad(Assets::Closeicon, Caller->Dimensions);
+                Draw::Quad(Assets::Closeicon, Centertexture(Caller->Dimensions, Assets::Closeicon));
+                if (Caller->Properties.Focused) Draw::Quad(Assets::Closeicon, Centertexture(Caller->Dimensions, Assets::Closeicon));
             };
             Element->isExclusive = [](const Element_t *Caller, const elementstate_t Newstate)
             {
@@ -73,15 +73,16 @@ namespace Loginmenu
     Element_t *Createmailarea()
     {
         auto Element = new Element_t("Emaillogin");
-        Element->Margins = { 0.2, 0.4, 0.2, 0.5 };
+        Element->Margins = { 0.2, 0.35, 0.2, 0.5 };
 
         Element->addChild([]()
         {
             auto Element = new Element_t("Emailtext");
-            Element->Margins = { 0.1, 0, 0.5, 0.85 };
+            Element->Margins = { 0, 0, 0.7, 0.85 };
             Element->onRender = [](const Element_t *Caller)
             {
-                Draw::Quad(Assets::Emailprompt, Caller->Dimensions);
+
+                Draw::Quad(Assets::Emailprompt, Centertexture(Caller->Dimensions, Assets::Emailprompt));
             };
 
             return Element;
@@ -111,12 +112,12 @@ namespace Loginmenu
         Element->addChild([]()
         {
             auto Element = new Element_t("Signin");
-            Element->Margins = { 0.2, 0.55, 0.6, 0.2 };
+            Element->Margins = { 0.1, 0.55, 0.5, 0.2 };
             Element->onRender = [](const Element_t *Caller)
             {
                 // NOTE(Convery): This is not a typo.
-                Draw::Quad(Assets::Signintext, Caller->Dimensions);
-                if (Caller->Properties.Focused) Draw::Quad(Assets::Signintext, Caller->Dimensions);
+                Draw::Quad(Assets::Signintext, Centertexture(Caller->Dimensions, Assets::Signintext));
+                if (Caller->Properties.Focused) Draw::Quad(Assets::Signintext, Centertexture(Caller->Dimensions, Assets::Signintext));
             };
             Element->onStatechange = [](const Element_t *Caller, const elementstate_t Newstate)
             {
@@ -128,12 +129,12 @@ namespace Loginmenu
         Element->addChild([]()
         {
             auto Element = new Element_t("Register");
-            Element->Margins = { 0.6, 0.55, 0.15, 0.2 };
+            Element->Margins = { 0.5, 0.55, 0.1, 0.2 };
             Element->onRender = [](const Element_t *Caller)
             {
                 // NOTE(Convery): This is not a typo.
-                Draw::Quad(Assets::Registertext, Caller->Dimensions);
-                if (Caller->Properties.Focused) Draw::Quad(Assets::Registertext, Caller->Dimensions);
+                Draw::Quad(Assets::Registertext, Centertexture(Caller->Dimensions, Assets::Registertext));
+                if (Caller->Properties.Focused) Draw::Quad(Assets::Registertext, Centertexture(Caller->Dimensions, Assets::Registertext));
             };
             Element->onStatechange = [](const Element_t *Caller, const elementstate_t Newstate)
             {
@@ -164,12 +165,12 @@ namespace Loginmenu
         Element->addChild([]()
         {
             auto Element = new Element_t("Github");
-            Element->Margins = { 0.1, 0, 0.75, 0.6 };
+            Element->Margins = { 0, 0, 0.66, 0.6 };
             Element->onRender = [](const Element_t *Caller)
             {
                 // NOTE(Convery): This is not a typo.
-                Draw::Quad(Assets::Github, Caller->Dimensions);
-                if (Caller->Properties.Focused) Draw::Quad(Assets::Github, Caller->Dimensions);
+                Draw::Quad(Assets::Github, Centertexture(Caller->Dimensions, Assets::Github));
+                if (Caller->Properties.Focused) Draw::Quad(Assets::Github, Centertexture(Caller->Dimensions, Assets::Github));
             };
             Element->onStatechange = [](const Element_t *Caller, const elementstate_t Newstate)
             {
@@ -181,12 +182,12 @@ namespace Loginmenu
         Element->addChild([]()
         {
             auto Element = new Element_t("Twitter");
-            Element->Margins = { 0.45, 0, 0.4, 0.6 };
+            Element->Margins = { 0.33, 0, 0.33, 0.6 };
             Element->onRender = [](const Element_t *Caller)
             {
                 // NOTE(Convery): This is not a typo.
-                Draw::Quad(Assets::Twitter, Caller->Dimensions);
-                if (Caller->Properties.Focused) Draw::Quad(Assets::Twitter, Caller->Dimensions);
+                Draw::Quad(Assets::Twitter, Centertexture(Caller->Dimensions, Assets::Twitter));
+                if (Caller->Properties.Focused) Draw::Quad(Assets::Twitter, Centertexture(Caller->Dimensions, Assets::Twitter));
             };
             Element->onStatechange = [](const Element_t *Caller, const elementstate_t Newstate)
             {
@@ -198,12 +199,12 @@ namespace Loginmenu
         Element->addChild([]()
         {
             auto Element = new Element_t("Google");
-            Element->Margins = { 0.8, 0, 0.05, 0.6 };
+            Element->Margins = { 0.66, 0, 0, 0.6 };
             Element->onRender = [](const Element_t *Caller)
             {
                 // NOTE(Convery): This is not a typo.
-                Draw::Quad(Assets::Google, Caller->Dimensions);
-                if (Caller->Properties.Focused) Draw::Quad(Assets::Google, Caller->Dimensions);
+                Draw::Quad(Assets::Google, Centertexture(Caller->Dimensions, Assets::Google));
+                if (Caller->Properties.Focused) Draw::Quad(Assets::Google, Centertexture(Caller->Dimensions, Assets::Google));
             };
             Element->onStatechange = [](const Element_t *Caller, const elementstate_t Newstate)
             {
@@ -246,12 +247,12 @@ namespace Loginmenu
         {
             auto Element = new Element_t("Offlinetext");
             Element->Properties.ExclusiveIO = true;
-            Element->Margins = { 0.3, 0.2, 0.2, 0.3 };
+            Element->Margins = { 0.2, 0.2, 0.2, 0.3 };
             Element->onRender = [](const Element_t *Caller)
             {
                 // NOTE(Convery): This is not a typo.
-                Draw::Quad(Assets::Offlinetext, Caller->Dimensions);
-                if (Caller->Properties.Focused) Draw::Quad(Assets::Offlinetext, Caller->Dimensions);
+                Draw::Quad(Assets::Offlinetext, Centertexture(Caller->Dimensions, Assets::Offlinetext));
+                if (Caller->Properties.Focused) Draw::Quad(Assets::Offlinetext, Centertexture(Caller->Dimensions, Assets::Offlinetext));
             };
             Element->isExclusive = [](const Element_t *Caller, const elementstate_t Newstate)
             {
