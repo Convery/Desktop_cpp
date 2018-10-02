@@ -22,7 +22,7 @@
 #define vaprint(format, ...) Logprint(va(format, __VA_ARGS__))
 
 // Some performance tweaking.
-#if defined(_WIN32)
+#if defined(_MSC_VER)
     #define likely(x)       x
     #define unlikely(x)     x
     #define ainline         __forceinline

@@ -1,6 +1,6 @@
 /*
     Initial author: Convery (tcn@ayria.se)
-    Started: 17-06-2018
+    Started: 24-08-2018
     License: MIT
 
     Provides a single include-file for all modules.
@@ -30,7 +30,7 @@
 #include <chrono>
 #include <thread>
 #include <string>
-#include <atomic>
+#include <bitset>
 
 // Platform-specific libraries.
 #if defined(_WIN32)
@@ -38,8 +38,6 @@
     #include <Windows.h>
     #include <direct.h>
     #include <intrin.h>
-    #include <ObjIdl.h>
-    #include <gdiplus.h>
     #undef min
     #undef max
 #else
@@ -61,6 +59,4 @@
 #include "Utility/Base64.hpp"
 
 // Our components.
-#include "Commontypes.hpp"
-#include "Corecomponents/Input.hpp"
-#include "Corecomponents/Rendering.hpp"
+#include "Engine/Engine.hpp"

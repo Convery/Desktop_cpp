@@ -15,9 +15,9 @@ set(CMAKE_DEBUG_POSTFIX "d")
 
 # Platform libraries to be linked.
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" OR ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-	set(CORE_LIBS ${CORE_LIBS} dl pthread)
+	set(CORE_LIBS dl pthread)
 else()
-	set(CORE_LIBS ${CORE_LIBS} Gdiplus)
+	set(CORE_LIBS)
 endif()
 
 # Extra flags for compiling and linking.
@@ -30,8 +30,8 @@ if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" OR ${CMAKE_CXX_COMPILER_ID} STREQUAL
 		set(EXTRA_LNKFLAGS ${EXTRA_LNKFLAGS} "-m64 -static-libgcc -static-libstdc++")
     endif()
 else()
-	set(EXTRA_CMPFLAGS ${EXTRA_CMPFLAGS} "/permissive-")
-	set(EXTRA_LNKFLAGS ${EXTRA_LNKFLAGS} "/subsystem:windows")
+	set(EXTRA_CMPFLAGS ${EXTRA_CMPFLAGS} "/permissive- /Gy /Gw /GS /GA /GL /guard:cf")
+	set(EXTRA_LNKFLAGS ${EXTRA_LNKFLAGS} "/subsystem:windows /entry:mainCRTStartup /LTCG /safeseh:no /filealign:512 /opt:ref /guard:cf /incremental:no")
 endif()
 
 # Set warningflags per compiler.
@@ -60,7 +60,8 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 endif()
 
 # Third-party libraries, prefer find_library() and find_path().
-set(MODULE_INCS ${MODULE_INCS})
+#find_path(JSON_INC nlohmann/json.hpp)
+#set(MODULE_INCS ${JSON_INC})
 set(MODULE_LIBS ${MODULE_LIBS})
 include_directories(${MODULE_INCS})
 
