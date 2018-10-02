@@ -60,6 +60,7 @@ namespace Engine::Window
             Windowclass.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
             Windowclass.lpfnWndProc = [](HWND Handle, UINT Message, WPARAM wParam, LPARAM lParam) -> LRESULT
             {
+                if (unlikely(Message == WM_QUIT || Message == WM_DESTROY)) setErrno(Hash::FNV1a_32("WM_QUIT"));
                 return DefWindowProcA(Handle, Message, wParam, lParam);
             };
             if (NULL == RegisterClassExA(&Windowclass))

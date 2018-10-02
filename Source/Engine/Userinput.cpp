@@ -168,7 +168,7 @@ namespace Engine::Input
             }
 
             // If we should quit, break the loop without processing the rest of the queue.
-            if (unlikely(Event.message == WM_QUIT || Event.message == WM_DESTROY || (Event.message == WM_SYSCOMMAND && Event.wParam == SC_CLOSE)))
+            if (unlikely(Event.message == WM_SYSCOMMAND && Event.wParam == SC_CLOSE))
             {
                 setErrno(Hash::FNV1a_32("WM_QUIT"));
                 return;
