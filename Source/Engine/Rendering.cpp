@@ -44,8 +44,8 @@ namespace Engine::Rendering
         ainline void Present()
         {
             // Bitblt to screen.
-            SetDIBitsToDevice((HDC)Devicecontext, Clippingarea.x0, Clippingarea.y0, 
-                              Lineformat.bmiHeader.biWidth, -Lineformat.bmiHeader.biHeight, 
+            SetDIBitsToDevice((HDC)Devicecontext, Clippingarea.x0, Clippingarea.y0,
+                              Lineformat.bmiHeader.biWidth, -Lineformat.bmiHeader.biHeight,
                               0, 0, 0, -Lineformat.bmiHeader.biHeight, Renderbuffer, &Lineformat, DIB_RGB_COLORS);
         }
         ainline void Lockbuffer()
@@ -93,9 +93,9 @@ namespace Engine::Rendering
     // Mark a region as dirty.
     void Invalidateregion(const point4_t Area)
     {
-        for (size_t Y = Area.y0 / Gridheight; Y <= Area.y1 / Gridheight; ++Y)
+        for (size_t Y = std::max(Area.y0, int16_t(0)) / Gridheight; Y <= std::max(Area.y1, int16_t(0)) / Gridheight; ++Y)
         {
-            for (size_t X = Area.x0 / Gridwidth; X <= Area.x1 / Gridwidth; ++X)
+            for (size_t X = std::max(Area.x0, int16_t(0)) / Gridwidth; X <= std::max(Area.x1, int16_t(0)) / Gridwidth; ++X)
             {
                 Dirtygrid.set(Y * 16 + X);
             }
@@ -129,8 +129,8 @@ namespace Engine::Rendering
             std::function<void(const Element_t *)> Render = [&](const Element_t *This) -> void
             {
                 // Occlusion checking.
-                if (This->Dimensions.y0 > Clippingarea.y1 || This->Dimensions.y1 < Clippingarea.y0) return;
-                if (This->Dimensions.x0 > Clippingarea.x1 || This->Dimensions.x1 < Clippingarea.x0) return;
+                if (std::max(This->Dimensions.y0, int16_t(0)) > Clippingarea.y1 || std::max(This->Dimensions.y1, int16_t(0)) < Clippingarea.y0) return;
+                if (std::max(This->Dimensions.x0, int16_t(0)) > Clippingarea.x1 || std::max(This->Dimensions.x1, int16_t(0)) < Clippingarea.x0) return;
 
                 if (This->onRender) This->onRender(This);
                 for (const auto &Item : This->Childelements) Render(Item);

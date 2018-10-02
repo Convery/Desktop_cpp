@@ -39,8 +39,8 @@ namespace Engine::Input
             }
 
             // Is the position within the elements boundaries?
-            if (Position.x >= Target->Dimensions.x0 && Position.x <= Target->Dimensions.x1 &&
-                Position.y >= Target->Dimensions.y0 && Position.y <= Target->Dimensions.y1)
+            if (Position.x >= std::max(Target->Dimensions.x0, int16_t(0)) && Position.x <= std::max(Target->Dimensions.x1, int16_t(0)) &&
+                Position.y >= std::max(Target->Dimensions.y0, int16_t(0)) && Position.y <= std::max(Target->Dimensions.y1, int16_t(0)))
             {
                 // Let the children sink the event first.
                 for (const auto &Item : Target->Childelements)
@@ -87,8 +87,8 @@ namespace Engine::Input
             }
 
             // Is the position within the elements boundaries?
-            if (Position.x >= Target->Dimensions.x0 && Position.x <= Target->Dimensions.x1 &&
-                Position.y >= Target->Dimensions.y0 && Position.y <= Target->Dimensions.y1)
+            if (Position.x >= std::max(Target->Dimensions.x0, int16_t(0)) && Position.x <= std::max(Target->Dimensions.x1, int16_t(0)) &&
+                Position.y >= std::max(Target->Dimensions.y0, int16_t(0)) && Position.y <= std::max(Target->Dimensions.y1, int16_t(0)))
             {
                 // Let the children sink the event first.
                 for (const auto &Item : Target->Childelements)
