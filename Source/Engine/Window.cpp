@@ -14,10 +14,13 @@ namespace Engine
     extern const void *gWindowhandle{};
     point4_t gDisplayrectangle;
     bool Visible{ false };
+
 }
 
 namespace Engine::Window
 {
+    point4_t Previouswindowrectangle{};
+
     // Modify the windows visible state and notify the composition-manager.
     void Move(point2_t Position, bool Deferupdate)
     {
@@ -34,6 +37,28 @@ namespace Engine::Window
     void Centerwindow(bool Deferupdate)
     {
         Move({ int16_t(std::abs((gDisplayrectangle.x1 - gWindowsize.x) / 2)), int16_t(std::abs((gDisplayrectangle.y1 - gWindowsize.y) / 2)) }, Deferupdate);
+    }
+    void Maximize()
+    {
+        const point4_t Currentrect{ getWindowposition().x, getWindowposition().y, getWindowposition().x + gWindowsize.x, getWindowposition().y + gWindowsize.y };
+
+        // If already max, restore.
+        if (0 == std::memcmp(gDisplayrectangle.Raw, Currentrect.Raw, sizeof(point4_t)))
+        {
+            Move({ Previouswindowrectangle.x0, Previouswindowrectangle.y0 }, true);
+            Resize({ Previouswindowrectangle.x1 - Previouswindowrectangle.x0, Previouswindowrectangle.y1 - Previouswindowrectangle.y0 });
+            Previouswindowrectangle = Currentrect;
+        }
+        else
+        {
+            Previouswindowrectangle = Currentrect;
+            Move({ gDisplayrectangle.x0, gDisplayrectangle.y0 }, true);
+            Resize({ gDisplayrectangle.x1 - gDisplayrectangle.x0, gDisplayrectangle.y1 - gDisplayrectangle.y0 });
+        }
+    }
+    void Minimize()
+    {
+        ShowWindow((HWND)gWindowhandle, SW_MINIMIZE);
     }
     void Togglevisibility()
     {
@@ -60,6 +85,7 @@ namespace Engine::Window
             Windowclass.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
             Windowclass.lpfnWndProc = [](HWND Handle, UINT Message, WPARAM wParam, LPARAM lParam) -> LRESULT
             {
+                if (unlikely(Message == WM_ACTIVATE)) Resize(gWindowsize);
                 if (unlikely(Message == WM_QUIT || Message == WM_DESTROY)) setErrno(Hash::FNV1a_32("WM_QUIT"));
                 return DefWindowProcA(Handle, Message, wParam, lParam);
             };
