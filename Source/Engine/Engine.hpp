@@ -128,9 +128,9 @@ namespace Engine::Window
     void Move(point2_t Position, bool Deferupdate = false);
     void Resize(point2_t Size, bool Deferupdate = false);
     void Centerwindow(bool Deferupdate = false);
+    void Togglevisibility();
     void Maximize();
     void Minimize();
-    void Togglevisibility();
 }
 
 // Render into a scanline and present.
