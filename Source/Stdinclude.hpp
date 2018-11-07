@@ -9,7 +9,6 @@
 #pragma once
 
 // Our configuration-settings.
-#include "Configuration/Buildsettings.hpp"
 #include "Configuration/Definitions.hpp"
 #include "Configuration/Macros.hpp"
 

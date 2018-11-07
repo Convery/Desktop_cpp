@@ -26,11 +26,12 @@ inline void Logprint(std::string_view Message)
     std::fflush(Filehandle);
 
     // Duplicate to stderr if debugging.
-    if (Build::Debug::isDebugging)
+    #if !defined(NDEBUG)
     {
         std::fputs(Message.data(), stderr);
         std::fputs("\n", stderr);
     }
+    #endif
 }
 
 // Formatted output, [Type][Time][Message]
