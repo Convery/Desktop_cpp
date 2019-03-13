@@ -61,8 +61,8 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 endif()
 
 # Third-party libraries, prefer find_library() and find_path().
-find_path(JSON_INC nlohmann/json.hpp)
-set(MODULE_INCS ${JSON_INC})
+#find_path(JSON_INC nlohmann/json.hpp)
+#set(MODULE_INCS ${JSON_INC})
 set(MODULE_LIBS ${MODULE_LIBS})
 include_directories(${MODULE_INCS})
 

@@ -6,8 +6,9 @@
 
 #pragma once
 
-// Our configuration-settings.
-#include "Configuration.hpp"
+// Our configuration-settings and datatypes.
+#include "Config.hpp"
+#include "Global.hpp"
 
 // Ignore warnings from third-party code.
 #pragma warning(push, 0)
@@ -54,3 +55,5 @@
 #include "Utilities/FNV1Hash.hpp"
 #include "Utilities/Logging.hpp"
 #include "Utilities/Base64.hpp"
+
+// Our components.
