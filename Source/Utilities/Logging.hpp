@@ -42,6 +42,10 @@ namespace Logging
 
         std::strftime(Buffer, 80, "%H:%M:%S", std::localtime(&Now));
         toFile(va("[%c][%-8s] %*s", Prefix, Buffer, Message.size(), Message.data()));
+
+        #if !defined(NDEBUG)
+        toStream(va("[%c][%-8s] %*s", Prefix, Buffer, Message.size(), Message.data()));
+        #endif
     }
 
     // Remove the old logfile.
