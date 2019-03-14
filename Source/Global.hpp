@@ -9,6 +9,10 @@
 #include <functional>
 #include <cstdint>
 #include <vector>
+#include <memory>
+
+// Forward declaration.
+namespace Gdiplus { struct Graphics; }
 
 // Disable padding.
 #pragma pack(push, 1)
@@ -30,8 +34,6 @@ using pixel24_t = struct { union { struct { uint8_t R, G, B; } RGB; struct { uin
 using Texture32_t = struct { vec2_t Size; pixel32_t *Data; };
 using Texture24_t = struct { vec2_t Size; pixel24_t *Data; };
 
-
-
 // Global state for storage on a line.
 namespace Global
 {
@@ -40,7 +42,7 @@ namespace Global
     uint32_t Subscribe(Event_t Event, std::function<void(void *Param)> Callback);
 
     // Keep global-state on a single line.
-    struct alignas(64) Globalstate_t
+    struct Globalstate_t
     {
         // Most commonly accessed property.
         uint32_t Errorno;
@@ -52,16 +54,18 @@ namespace Global
         struct { vec2_t Position; Mouseflags_t Flags; } Mouse;
 
         // The current implementation only has a single window, create your own class for sub-windows.
+        std::unique_ptr<struct Gdiplus::Graphics> Drawingcontext;
         const void *Windowhandle;
-        vec4_t Desktopregion;
+        vec2_t Windowposition;
         vec4_t Dirtyregion;
 
         /*
             TODO(tcn):
-            10 free bytes here, use them or lose them.
+            14 free bytes here, use them or lose them.
         */
     };
     extern Globalstate_t State;
+    constexpr size_t Bytesleft = 64 - sizeof(Globalstate_t);
 }
 
 // The element-state is updated remotely.

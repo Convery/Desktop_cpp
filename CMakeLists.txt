@@ -18,7 +18,7 @@ set(CMAKE_DEBUG_POSTFIX "d")
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" OR ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
 	set(CORE_LIBS dl pthread)
 else()
-	set(CORE_LIBS)
+	set(CORE_LIBS gdiplus)
 endif()
 
 # Extra flags for compiling and linking.
