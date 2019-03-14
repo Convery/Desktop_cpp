@@ -28,37 +28,38 @@ using Texture32_t = struct { vec2_t Size; pixel32_t *Data; };
 using Texture24_t = struct { vec2_t Size; pixel24_t *Data; };
 
 // Global state for storage on a line.
-namespace Global
+struct /*alignas(64)*/ Globalstate_t
 {
-    // Events that panels (or anyone; really) can subscribe to.
-    enum class Event_t { PAINT, PRESENT, TICK, STARTUP, TERMINATION };
-    uint32_t Subscribe(Event_t Event, std::function<void(void *Param)> Callback);
+    // Most commonly accessed property.
+    uint32_t Errorno;
 
-    // Keep global-state on a single line.
-    struct /*alignas(64)*/ Globalstate_t
-    {
-        // Most commonly accessed property.
-        uint32_t Errorno;
+    // Note(tcn): Input information is only updated once per frame (~16ms), elements are notified about all events for the frame automatically.
+    using Keyboardflags_t = struct { uint16_t Keydown : 1, Keyrepeat : 1, Keyup : 1, ALTMod : 1, CTRLMod : 1, SHIFTMod : 1, CaretMod : 1, OumlatMod : 1, TildeMod : 1; };
+    using Mouseflags_t    = struct { uint16_t Rightdown : 1, Leftdown : 1, Middledown : 1; };
+    struct { uint16_t Keycode; Keyboardflags_t Flags; } Keyboard;
+    struct { vec2_t Position; Mouseflags_t Flags; } Mouse;
 
-        // Note(tcn): Input information is only updated once per frame (~16ms), elements are notified about all events for the frame automatically.
-        using Keyboardflags_t = struct { uint16_t Keydown : 1, Keyrepeat : 1, Keyup : 1, ALTMod : 1, CTRLMod : 1, SHIFTMod : 1, CaretMod : 1, OumlatMod : 1, TildeMod : 1; };
-        using Mouseflags_t    = struct { uint16_t Rightdown : 1, Leftdown : 1, Middledown : 1; };
-        struct { uint16_t Keycode; Keyboardflags_t Flags; } Keyboard;
-        struct { vec2_t Position; Mouseflags_t Flags; } Mouse;
+    // The current implementation only has a single window, create your own class for sub-windows.
+    std::unique_ptr<Gdiplus::Graphics> Drawingcontext;
+    const void *Windowhandle;
+    vec2_t Windowposition;
+    vec4_t Dirtyregion;
 
-        // The current implementation only has a single window, create your own class for sub-windows.
-        std::unique_ptr<Gdiplus::Graphics> Drawingcontext;
-        const void *Windowhandle;
-        vec2_t Windowposition;
-        vec4_t Dirtyregion;
+    /*
+        TODO(tcn):
+        14 free bytes here, use them or lose them.
+    */
+};
+extern Globalstate_t Global;
+constexpr size_t Bytesleft = 64 - sizeof(Globalstate_t);
 
-        /*
-            TODO(tcn):
-            14 free bytes here, use them or lose them.
-        */
-    };
-    extern Globalstate_t State;
-    constexpr size_t Bytesleft = 64 - sizeof(Globalstate_t);
+// Events that panels (or anyone; really) can subscribe to.
+namespace Events
+{
+    template <typename E> uint32_t Subscribe(E Event, std::function<void(void *Param)> Callback);
+    template <typename E> void Unsubscribe(E Event, uint32_t Identifier);
+
+    enum class Engineevent { PAINT, PRESENT, TICK, STARTUP, TERMINATION };
 }
 
 // The element-state is updated remotely.
@@ -83,6 +84,14 @@ struct Element_t
     // Child-elements, generally only a single one.
     absl::InlinedVector<Element_t *, 1> Children{};
 };
+
+// Callbacks for element-scripts.
+namespace Commands
+{
+    using Callback_t = std::function<void(Element_t *Caller, std::vector<std::string_view> Arguments)>;
+    void Add(std::string Name, Callback_t Function);
+    Callback_t *Find(std::string_view Name);
+}
 
 // Re-enable padding.
 #pragma pack(pop)
