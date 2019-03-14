@@ -61,9 +61,12 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 endif()
 
 # Third-party libraries, prefer find_library() and find_path().
-#find_path(JSON_INC nlohmann/json.hpp)
-#set(MODULE_INCS ${JSON_INC})
-set(MODULE_LIBS ${MODULE_LIBS})
+find_path(JSON_INC nlohmann/json.hpp)
+find_path(ABSL_INC absl)
+find_library(ABSL_BASE absl_base.lib)
+find_library(ABSL_CONTAINER absl_container.lib)
+set(MODULE_INCS ${JSON_INC} ${ABSL_INC})
+set(MODULE_LIBS ${ABSL_BASE} ${ABSL_CONTAINER})
 include_directories(${MODULE_INCS})
 
 # Just pull all the files from /Source

@@ -5,14 +5,7 @@
 */
 
 #pragma once
-#include <unordered_map>
-#include <functional>
-#include <cstdint>
-#include <vector>
-#include <memory>
-
-// Forward declaration.
-namespace Gdiplus { struct Graphics; }
+#include "Stdinclude.hpp"
 
 // Disable padding.
 #pragma pack(push, 1)
@@ -42,7 +35,7 @@ namespace Global
     uint32_t Subscribe(Event_t Event, std::function<void(void *Param)> Callback);
 
     // Keep global-state on a single line.
-    struct Globalstate_t
+    struct /*alignas(64)*/ Globalstate_t
     {
         // Most commonly accessed property.
         uint32_t Errorno;
@@ -54,7 +47,7 @@ namespace Global
         struct { vec2_t Position; Mouseflags_t Flags; } Mouse;
 
         // The current implementation only has a single window, create your own class for sub-windows.
-        std::unique_ptr<struct Gdiplus::Graphics> Drawingcontext;
+        std::unique_ptr<Gdiplus::Graphics> Drawingcontext;
         const void *Windowhandle;
         vec2_t Windowposition;
         vec4_t Dirtyregion;
@@ -85,10 +78,10 @@ struct Element_t
     uint32_t TransformID{};
 
     // Keep all properties readable.
-    std::unordered_map<std::string, std::string> Properties{};
+    absl::flat_hash_map<std::string, std::string> Properties{};
 
-    // Child-elements, should not overlap.
-    std::vector<Element_t *> Children{};
+    // Child-elements, generally only a single one.
+    absl::InlinedVector<Element_t *, 1> Children{};
 };
 
 // Re-enable padding.

@@ -6,9 +6,8 @@
 
 #pragma once
 
-// Our configuration-settings and datatypes.
+// Our configuration-settings.
 #include "Config.hpp"
-#include "Global.hpp"
 
 // Ignore warnings from third-party code.
 #pragma warning(push, 0)
@@ -47,6 +46,11 @@
 #include <dlfcn.h>
 #endif
 
+// Third-party includes.
+#include <absl/container/inlined_vector.h>
+#include <absl/container/flat_hash_map.h>
+#include <nlohmann/json.hpp>
+
 // Restore warnings.
 #pragma warning(pop)
 
@@ -57,3 +61,4 @@
 #include "Utilities/Base64.hpp"
 
 // Our components.
+#include "Global.hpp"
