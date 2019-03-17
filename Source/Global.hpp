@@ -28,7 +28,11 @@ using Texture32_t = struct { vec2_t Size; pixel32_t *Data; };
 using Texture24_t = struct { vec2_t Size; pixel24_t *Data; };
 
 // Global state for storage on a line.
-struct /*alignas(64)*/ Globalstate_t
+struct
+#if defined(NDEBUG)
+    alignas(64)
+#endif
+Globalstate_t
 {
     // Most commonly accessed property.
     uint32_t Errorno;
@@ -41,26 +45,18 @@ struct /*alignas(64)*/ Globalstate_t
 
     // The current implementation only has a single window, create your own class for sub-windows.
     std::unique_ptr<Gdiplus::Graphics> Drawingcontext;
+    struct Element_t *Rootelement;
     const void *Windowhandle;
     vec2_t Windowposition;
     vec4_t Dirtyregion;
 
     /*
         TODO(tcn):
-        14 free bytes here, use them or lose them.
+        10 free bytes here, use them or lose them.
     */
 };
 extern Globalstate_t Global;
 constexpr size_t Bytesleft = 64 - sizeof(Globalstate_t);
-
-// Events that panels (or anyone; really) can subscribe to.
-namespace Events
-{
-    template <typename E> uint32_t Subscribe(E Event, std::function<void(void *Param)> Callback);
-    template <typename E> void Unsubscribe(E Event, uint32_t Identifier);
-
-    enum class Engineevent { PAINT, PRESENT, TICK, STARTUP, TERMINATION };
-}
 
 // The element-state is updated remotely.
 using Elementstate_t = union { struct {
@@ -84,6 +80,41 @@ struct Element_t
     // Child-elements, generally only a single one.
     absl::InlinedVector<Element_t *, 1> Children{};
 };
+
+// Events that panels (or anyone; really) can subscribe to.
+namespace Events
+{
+    // A simple event-stack until we have something better.
+    template<typename Event, typename... Callbacks> struct Eventstack_t
+    {
+        std::tuple<std::vector<std::function<Callbacks>>...> Internalstack;
+
+        // Sanity-checking if we ever re-use this shit..
+        static_assert(std::is_enum_v<Event>, "Eventstack error 1");
+        static_assert(size_t(Event::MAX) != 0, "Eventstack error 2");
+        static_assert(sizeof...(Callbacks) == size_t(Event::MAX), "Eventstack error 3");
+
+        template<Event e, typename Function> const void Subscribe(Function &&Callback)
+        {
+            std::get<size_t(e)>(Internalstack).push_back(std::forward<Function>(Callback));
+        }
+        template<Event e, typename... Args>  const void Execute(const Args&... Arguments)
+        {
+            static_assert(std::is_invocable_v<typename std::tuple_element_t<size_t(e), decltype(Internalstack)>::value_type, Args...>, "Eventstack error 4");
+            for (const auto &Item : std::get<size_t(e)>(Internalstack)) std::invoke(Item, Arguments...);
+        }
+    };
+
+    // A separate stack for each category.
+    enum class Engineevent { PAINT, PRESENT, TICK, STARTUP, TERMINATION, MAX };
+    extern Eventstack_t<Engineevent, void(void), void(void), void(void), void(void), void(void)> *Enginestack;
+    /* TODO(tcn): Add more stacks here */
+
+    // Defines to ensure safe operations.
+    #define Validatestack(Stack) { if(!Stack) Stack = new std::remove_pointer_t<decltype(Stack)>(); assert(Stack); }
+    #define Subscribetostack(Stack, Event, Callback) { Validatestack(Stack); Stack->Subscribe<Event>(Callback); }
+    #define Executeevent(Stack, Event, ...) { Validatestack(Stack); Stack->Execute<Event>(__VA_ARGS__); }
+}
 
 // Callbacks for element-scripts.
 namespace Commands

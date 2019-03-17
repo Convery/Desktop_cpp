@@ -51,7 +51,7 @@ namespace
 
             // Create the window as 'hidden', i.e. size of 0.
             // NOTE(tcn): This prevents windows from flashing a black frame over the desktop on startup.
-            auto Windowhandle = CreateWindowExA(WS_EX_LAYERED | WS_EX_APPWINDOW, "Desktop_cpp", NULL, WS_POPUP, 0, 0, 0, 0, NULL, NULL, GetModuleHandleA(NULL), NULL);
+            auto Windowhandle = CreateWindowExA(WS_EX_LAYERED | WS_EX_APPWINDOW, "Desktop_cpp", NULL, WS_POPUP, 0, 0, 0, 0, NULL, NULL, Windowclass.hInstance, NULL);
             if (NULL == Windowhandle) { Global.Errorno = Hash::FNV1a_32("CreateWindow"); return; }
             Global.Windowhandle = Windowhandle;
 

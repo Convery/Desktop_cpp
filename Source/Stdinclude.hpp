@@ -17,6 +17,8 @@
 #include <string_view>
 #include <functional>
 #include <algorithm>
+#include <typeindex>
+#include <typeinfo>
 #include <cassert>
 #include <cstdint>
 #include <cstdarg>
@@ -27,6 +29,7 @@
 #include <chrono>
 #include <thread>
 #include <queue>
+#include <any>
 
 // Platform-specific libraries.
 #if defined(_WIN32)

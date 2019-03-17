@@ -9,6 +9,12 @@
 // Keep the global-state close.
 Globalstate_t Global{};
 
+// TODO(tcn): Move to a more appropriate module.
+namespace Events
+{
+    Eventstack_t<Engineevent, void(void), void(void), void(void), void(void), void(void)> *Enginestack;
+}
+
 // Entrypoint for the application.
 int __cdecl main(int argc, char **argv)
 {
@@ -18,10 +24,12 @@ int __cdecl main(int argc, char **argv)
     // As we are single-threaded (in release), boost our priority.
     SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
 
-    /*
-        1. Subscribe to termination events.
-        2. Fire startup events.
-    */
+    // Log the termination for tracing.
+    Subscribetostack(Events::Enginestack, Events::Engineevent::TERMINATION, []()
+                    { Infoprint(va("Application terminated with code %u.", Global.Errorno)); });
+
+    // Notify all listeners that we are starting up.
+    Executeevent(Events::Enginestack, Events::Engineevent::STARTUP);
 
     /*
         1. Load the blueprint from file.
@@ -29,7 +37,7 @@ int __cdecl main(int argc, char **argv)
         3. Reload as needed.
     */
 
-    //doStartup();
+    // DEV
     Global.Dirtyregion = { 0, 0, 1280, 720 };
 
     // Main-loop, quit on error.
@@ -65,7 +73,7 @@ int __cdecl main(int argc, char **argv)
             Global.Drawingcontext->TranslateTransform(-Region.x0 - Global.Windowposition.x, -Region.y0 - Global.Windowposition.y);
 
             // Clear the surface to white (chroma-key for transparent).
-            Global.Drawingcontext->Clear(Gdiplus::Color::Black);
+            Global.Drawingcontext->Clear(Gdiplus::Color::White);
 
             /*
                 doRendering.
@@ -92,7 +100,7 @@ int __cdecl main(int argc, char **argv)
     }
 
     // Notify all subscribers about terminating.
-    // TODO^
+    Executeevent(Events::Enginestack, Events::Engineevent::TERMINATION);
 
     return 0;
 }
