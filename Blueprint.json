@@ -1,0 +1,21 @@
+{
+    "Fonts": [],
+    "Images": [],
+    "Colors": [ { "DefaultBG": "0x121212" } ],
+
+    "Rootelement":
+    {
+        "Name": "Mainview",
+        "Margins": [ 0.0, 0.0, 0.0, 0.0 ],
+        "Background-color": "DefaultBG",
+        "Elements":
+        [
+            {
+                "Name": "Toolbar",
+                "Margins": _[ 0.0, 0.0, 0.0, 20.0 ],
+                "Background-image": "None",
+            }
+        ]
+    }
+
+}
