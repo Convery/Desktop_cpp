@@ -74,7 +74,7 @@ struct Element_t
     Elementstate_t State{};
 
     // Keep all properties readable.
-    absl::flat_hash_map<std::string, std::string, std::hash<std::string>> Properties{};
+    std::unordered_map<std::string, std::string, std::hash<std::string>> Properties{};
 
     // Child-elements, generally only a single one.
     absl::InlinedVector<Element_t *, 1> Children{};

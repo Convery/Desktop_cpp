@@ -1,12 +1,12 @@
 {
-    "Fonts": [],
-    "Images": [],
-    "Colors": [ { "DefaultBG": "0x121212" } ],
+    "Fonts": [ { "Name": "Default", "Data":  "" } ],
+    "Images": [ {  "Name": "Default", "Data":  "" } ],
+    "Colors": [ {  "Name": "Default", "Data":  "#121212" } ],
 
     "Rootelement":
     {
         "Name": "Mainview",
-        "Background-color": "DefaultBG",
+        "Background-color": "Default",
         "Elements":
         [
             {
