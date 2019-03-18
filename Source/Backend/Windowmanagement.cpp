@@ -74,3 +74,100 @@ namespace
     static Startup Loader{};
 }
 
+// Basic windowing operations.
+namespace Window
+{
+    // Argument can be in pixels or percentage (<= 1.0).
+    void Move(vec2_t Newposition, bool Deferredraw)
+    {
+        const auto Height{ std::abs(Desktoparea.y1 - Desktoparea.y0) };
+        const auto Width{ std::abs(Desktoparea.x1 - Desktoparea.x0) };
+
+        // Position given in percentage.
+        if (std::abs(Newposition.x) <= 1.0) Newposition.x = Desktoparea.x + (Width - Global.Windowsize.x) * Newposition.x;
+        if (std::abs(Newposition.y) <= 1.0) Newposition.y = Desktoparea.y + (Height - Global.Windowsize.y) * Newposition.y;
+
+        // Move the window.
+        Global.Windowposition = Newposition;
+        SetWindowPos((HWND)Global.Windowhandle, NULL, (int)Global.Windowposition.x, (int)Global.Windowposition.y,
+                     (int)Global.Windowsize.x, (int)Global.Windowsize.y, SWP_NOSENDCHANGING | SWP_NOSIZE);
+
+        if (!Deferredraw) Forceredraw();
+    }
+    void Resize(vec2_t Newsize, bool Deferredraw)
+    {
+        const auto Height{ std::abs(Desktoparea.y1 - Desktoparea.y0) };
+        const auto Width{ std::abs(Desktoparea.x1 - Desktoparea.x0) };
+
+        // Size given in percentage.
+        if (std::abs(Newsize.x) <= 1.0) Newsize.x = Width * Newsize.x;
+        if (std::abs(Newsize.y) <= 1.0) Newsize.y = Height * Newsize.y;
+
+        // Resize the window.
+        Global.Windowsize = Newsize;
+        SetWindowPos((HWND)Global.Windowhandle, NULL, (int)Global.Windowposition.x, (int)Global.Windowposition.y,
+                     (int)Global.Windowsize.x, (int)Global.Windowsize.y, SWP_NOSENDCHANGING | SWP_NOMOVE);
+
+        if (!Deferredraw) Forceredraw();
+    }
+    void Togglevisibility()
+    {
+        static bool isVisible{ IsWindowVisible((HWND)Global.Windowhandle) == TRUE };
+
+        isVisible ^= true;
+        ShowWindow((HWND)Global.Windowhandle, isVisible);
+
+        if (isVisible) Forceredraw();
+    }
+    void Forceredraw()
+    {
+        // Maybe the blueprint failed to load?
+        assert(Global.Rootelement);
+
+        // The root is the same size as the window, no margins.
+        Global.Rootelement->Position = Global.Windowposition;
+        Global.Rootelement->Size = Global.Windowsize;
+
+        // Save my fingers and just recurse over the elements.
+        std::function<void(Element_t *)> Lambda = [&](Element_t *Node) -> void
+        {
+            const vec4_t Parentbox{ Node->Position.x, Node->Position.y, Node->Position.x + Node->Size.x, Node->Position.y + Node->Size.y };
+            const auto Height{ std::abs(Parentbox.y1 - Parentbox.y0) };
+            const auto Width{ std::abs(Parentbox.x1 - Parentbox.x0) };
+
+            for (const auto &Child : Node->Children)
+            {
+                vec4_t Margins{};
+
+                // If a margin is provided.
+                if (const auto Plaintext = Child->Properties.find("Margins"); Plaintext != Child->Properties.end())
+                {
+                    try
+                    {
+                        std::vector<float> Parsed = nlohmann::json::parse(Plaintext->second);
+                        Parsed.resize(4); Margins = { Parsed[0], Parsed[1], Parsed[2], Parsed[3] };
+                    }
+                    catch (std::exception & e) { (void)e; Errorprint(va("JSON parsing failed with: %s", e.what())); };
+                }
+
+                // Position and size given in pixels or percentage.
+                if (std::abs(Margins.x0) >  1.0) Child->Size.x = Margins.x0;
+                if (std::abs(Margins.y0) >  1.0) Child->Size.y = Margins.y0;
+                if (std::abs(Margins.x0) <= 1.0) Child->Size.x = Width  * Margins.x0;
+                if (std::abs(Margins.y0) <= 1.0) Child->Size.y = Height * Margins.y0;
+                if (std::abs(Margins.x1) >  1.0) Child->Position.x = Parentbox.x + Margins.x1;
+                if (std::abs(Margins.y1) >  1.0) Child->Position.y = Parentbox.y + Margins.y1;
+                if (std::abs(Margins.x1) <= 1.0) Child->Position.x = Parentbox.x + (Width  - Child->Size.x) * Margins.x1;
+                if (std::abs(Margins.y1) <= 1.0) Child->Position.y = Parentbox.y + (Height - Child->Size.y) * Margins.y1;
+
+                // Update recursively.
+                Lambda(Child);
+            }
+        };
+        Lambda(Global.Rootelement);
+
+        // Invalidate everything.
+        Global.Dirtyregion = { Global.Windowposition.x, Global.Windowposition.y,
+            Global.Windowposition.x + Global.Windowsize.x, Global.Windowposition.y + Global.Windowsize.y };
+    }
+}

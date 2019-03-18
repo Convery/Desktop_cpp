@@ -49,10 +49,11 @@ Globalstate_t
     const void *Windowhandle;
     vec2_t Windowposition;
     vec4_t Dirtyregion;
+    vec2_t Windowsize;
 
     /*
         TODO(tcn):
-        10 free bytes here, use them or lose them.
+        2 free bytes here, use them or lose them.
     */
 };
 extern Globalstate_t Global;
@@ -72,10 +73,9 @@ struct Element_t
     // Evaluated properties.
     vec2_t Position, Size{};
     Elementstate_t State{};
-    uint32_t TransformID{};
 
     // Keep all properties readable.
-    absl::flat_hash_map<std::string, std::string> Properties{};
+    absl::flat_hash_map<std::string, std::string, std::hash<std::string>> Properties{};
 
     // Child-elements, generally only a single one.
     absl::InlinedVector<Element_t *, 1> Children{};
@@ -122,6 +122,16 @@ namespace Commands
     using Callback_t = std::function<void(Element_t *Caller, std::vector<std::string_view> Arguments)>;
     void Add(std::string Name, Callback_t Function);
     Callback_t *Find(std::string_view Name);
+}
+
+// Basic windowing operations.
+namespace Window
+{
+    // Argument can be in pixels or percentage (<= 1.0).
+    void Move(vec2_t Newposition, bool Deferredraw = false);
+    void Resize(vec2_t Newsize, bool Deferredraw = false);
+    void Togglevisibility();
+    void Forceredraw();
 }
 
 // Re-enable padding.
