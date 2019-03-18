@@ -49,13 +49,20 @@ int __cdecl main(int argc, char **argv)
 
         /*
             1.  Check input.
-            2.  Fire a tick event.
         */
+
+        // Notify the components about there being a new frame.
+        Executeevent(Events::Enginestack, Events::Engineevent::TICK, std::chrono::duration<double>(Thisframe - Lastframe).count());
 
         // Check if we need to redraw the window-area.
         auto &Region{ Global.Dirtyregion };
         if (*(uint64_t *)&Region.Raw[0] || *(uint64_t *)&Region.Raw[2])
         {
+            #if !defined(NDEBUG)
+            // DEBUG: Notify components that we are going to repaint.
+            Executeevent(Events::Enginestack, Events::Engineevent::PAINT);
+            #endif
+
             // Notify Windows, the window needs repainting.
             InvalidateRect((HWND)Global.Windowhandle, NULL, FALSE);
 
@@ -78,6 +85,11 @@ int __cdecl main(int argc, char **argv)
             /*
                 doRendering.
             */
+
+            #if !defined(NDEBUG)
+            // DEBUG: Notify components about presenting.
+            Executeevent(Events::Enginestack, Events::Engineevent::PRESENT);
+            #endif
 
             // Present to the window.
             BitBlt(Devicecontext, (int)Region.x0, (int)Region.y0, (int)(Region.x1 - Region.x0), (int)(Region.y1 - Region.y0), Memorycontext, 0, 0, SRCCOPY);

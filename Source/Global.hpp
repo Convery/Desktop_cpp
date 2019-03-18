@@ -107,7 +107,7 @@ namespace Events
 
     // A separate stack for each category.
     enum class Engineevent { PAINT, PRESENT, TICK, STARTUP, TERMINATION, MAX };
-    extern Eventstack_t<Engineevent, void(void), void(void), void(void), void(void), void(void)> *Enginestack;
+    extern Eventstack_t<Engineevent, void(void), void(void), void(double), void(void), void(void)> *Enginestack;
     /* TODO(tcn): Add more stacks here */
 
     // Defines to ensure safe operations.
