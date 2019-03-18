@@ -12,7 +12,7 @@ Globalstate_t Global{};
 // TODO(tcn): Move to a more appropriate module.
 namespace Events
 {
-    Eventstack_t<Engineevent, void(void), void(void), void(void), void(void), void(void)> *Enginestack;
+    Eventstack_t<Engineevent, void(void), void(void), void(double), void(void), void(void)> *Enginestack;
 }
 
 // Entrypoint for the application.
@@ -101,6 +101,9 @@ int __cdecl main(int argc, char **argv)
 
             // Notify Windows, we are done painting.
             EndPaint((HWND)Global.Windowhandle, &Updateinformation);
+
+            // Clear the dirty area for the next frame.
+            Region = {};
         }
 
         // If we got an error, terminate.
