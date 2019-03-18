@@ -34,6 +34,7 @@ namespace
 
             // Register the window.
             WNDCLASSEXA Windowclass{};
+            Windowclass.lpfnWndProc = DefWindowProc;
             Windowclass.cbSize = sizeof(WNDCLASSEXA);
             Windowclass.lpszClassName = "Desktop_cpp";
             Windowclass.hInstance = GetModuleHandleA(NULL);
@@ -42,11 +43,6 @@ namespace
             #if !defined(NDEBUG) // If debugging, make transparent areas pink.
             Windowclass.hbrBackground = CreateSolidBrush(RGB(0xFF, 0x00, 0xFF));
             #endif
-            Windowclass.lpfnWndProc = [](HWND Handle, UINT Message, WPARAM wParam, LPARAM lParam) -> LRESULT
-            {
-                if (Message == WM_PAINT) return LRESULT(1);
-                return DefWindowProcA(Handle, Message, wParam, lParam);
-            };
             if (NULL == RegisterClassExA(&Windowclass)) Global.Errorno = Hash::FNV1a_32("RegisterClass");
 
             // Create the window as 'hidden', i.e. size of 0.

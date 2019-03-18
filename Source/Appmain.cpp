@@ -47,9 +47,8 @@ int __cdecl main(int argc, char **argv)
         static auto Lastframe{ std::chrono::high_resolution_clock::now() };
         const auto Thisframe{ std::chrono::high_resolution_clock::now() };
 
-        /*
-            1.  Check input.
-        */
+        // Poll for all messages to the main window.
+        Window::Processmessages();
 
         // Notify the components about there being a new frame.
         Executeevent(Events::Enginestack, Events::Engineevent::TICK, std::chrono::duration<double>(Thisframe - Lastframe).count());
@@ -92,7 +91,8 @@ int __cdecl main(int argc, char **argv)
             #endif
 
             // Present to the window.
-            BitBlt(Devicecontext, (int)Region.x0, (int)Region.y0, (int)(Region.x1 - Region.x0), (int)(Region.y1 - Region.y0), Memorycontext, 0, 0, SRCCOPY);
+            BitBlt(Devicecontext, (int)Region.x0, (int)Region.y0, (int)(Region.x1 - Region.x0),
+                   (int)(Region.y1 - Region.y0), Memorycontext, 0, 0, SRCCOPY);
 
             // Restore the surface and do cleanup.
             SelectObject(Memorycontext, Backup);

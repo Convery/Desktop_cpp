@@ -38,8 +38,8 @@ Globalstate_t
     uint32_t Errorno;
 
     // Note(tcn): Input information is only updated once per frame (~16ms), elements are notified about all events for the frame automatically.
-    using Keyboardflags_t = struct { uint16_t Keydown : 1, Keyrepeat : 1, Keyup : 1, ALTMod : 1, CTRLMod : 1, SHIFTMod : 1, CaretMod : 1, OumlatMod : 1, TildeMod : 1; };
-    using Mouseflags_t    = struct { uint16_t Rightdown : 1, Leftdown : 1, Middledown : 1; };
+    using Keyboardflags_t = struct { uint16_t isKeydown : 1, isKeyrepeat : 1, isKeyup : 1, ALTMod : 1, CTRLMod : 1, SHIFTMod : 1, CaretMod : 1, OumlatMod : 1, TildeMod : 1; };
+    using Mouseflags_t    = struct { uint16_t isRightdown : 1, isLeftdown : 1, isMiddledown : 1; };
     struct { uint16_t Keycode; Keyboardflags_t Flags; } Keyboard;
     struct { vec2_t Position; Mouseflags_t Flags; } Mouse;
 
@@ -62,8 +62,7 @@ constexpr size_t Bytesleft = 64 - sizeof(Globalstate_t);
 // The element-state is updated remotely.
 using Elementstate_t = union { struct {
     unsigned char
-    isHoovered : 1,
-    hasCallbacks : 1,
+    isHoveredover : 1,
     isLeftclicked : 1,
     isRightclicked : 1,
     isMiddleclicked : 1;
@@ -79,6 +78,11 @@ struct Element_t
 
     // Child-elements, generally only a single one.
     absl::InlinedVector<Element_t *, 1> Children{};
+
+    // Callbacks triggered from the engine if they are implemented.
+    std::function<void(const Elementstate_t State)> onStatechange{};
+    std::function<bool(const Elementstate_t State)> isExclusive{};
+    std::function<void(const void *Context)> onRender{};
 };
 
 // Events that panels (or anyone; really) can subscribe to.
@@ -127,11 +131,14 @@ namespace Commands
 // Basic windowing operations.
 namespace Window
 {
-    // Argument can be in pixels or percentage (<= 1.0).
+    // Argument can be in pixels or percentage, with (<= 1.0).
     void Move(vec2_t Newposition, bool Deferredraw = false);
     void Resize(vec2_t Newsize, bool Deferredraw = false);
     void Togglevisibility();
     void Forceredraw();
+
+    // Moved to Inputhandling.cpp
+    void Processmessages();
 }
 
 // Re-enable padding.
