@@ -2,6 +2,9 @@
     Initial author: Convery (tcn@ayria.se)
     Started: 18-03-2019
     License: MIT
+
+    Not even close to production ready.
+    Don't fucking use this shit!
 */
 
 #pragma once
