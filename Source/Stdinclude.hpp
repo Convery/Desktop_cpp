@@ -61,6 +61,7 @@
 #include "Utilities/Variadicstring.hpp"
 #include "Utilities/FNV1Hash.hpp"
 #include "Utilities/Logging.hpp"
+#include "Utilities/Archive.hpp"
 #include "Utilities/Base64.hpp"
 
 // Our components.
