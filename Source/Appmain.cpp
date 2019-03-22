@@ -39,6 +39,7 @@ int __cdecl main(int argc, char **argv)
 
     // DEV
     Global.Dirtyregion = { 0, 0, 1280, 720 };
+    Global.Rootelement = new Element_t();
 
     // Main-loop, quit on error.
     while (true)
