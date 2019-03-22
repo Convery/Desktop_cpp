@@ -146,5 +146,36 @@ namespace Window
     void Processmessages();
 }
 
+// Wrappers for converting code to pretty colors.
+namespace Rendering
+{
+    namespace Gradient
+    {
+        void Outlinepolygon(std::vector<vec2_t> &&Points, rgba_t Color1, rgba_t Color2, uint32_t Steps);
+        void Fillpolygon(std::vector<vec2_t> &&Points, rgba_t Color1, rgba_t Color2, uint32_t Steps);
+        void Line(vec2_t Start, vec2_t Stop, rgba_t Color1, rgba_t Color2, uint32_t Steps);
+        void Outlinerectangle(vec4_t Region, rgba_t Color1, rgba_t Color2, uint32_t Steps);
+        void Fillrectangle(vec4_t Region, rgba_t Color1, rgba_t Color2, uint32_t Steps);
+    }
+
+    namespace Textured
+    {
+        void Outlinepolygon(std::vector<vec2_t> &&Points, vec2_t Anchor, Texture32_t Texture);
+        void Fillpolygon(std::vector<vec2_t> &&Points, vec2_t Anchor, Texture32_t Texture);
+        void Line(vec2_t Start, vec2_t Stop, vec2_t Anchor, Texture32_t Texture);
+        void Outlinerectangle(vec4_t Region, vec2_t Anchor, Texture32_t Texture);
+        void Fillrectangle(vec4_t Region, vec2_t Anchor, Texture32_t Texture);
+    }
+
+    namespace Solid
+    {
+        void Outlinepolygon(std::vector<vec2_t> &&Points, rgba_t Color);
+        void Fillpolygon(std::vector<vec2_t> &&Points, rgba_t Color);
+        void Line(vec2_t Start, vec2_t Stop, rgba_t Color);
+        void Outlinerectangle(vec4_t Region, rgba_t Color);
+        void Fillrectangle(vec4_t Region, rgba_t Color);
+    }
+}
+
 // Re-enable padding.
 #pragma pack(pop)

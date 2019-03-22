@@ -10,9 +10,8 @@ namespace Window
 {
     void Processmessages()
     {
-        MSG Event{};
-
         // Track when the mouse leaves the window.
+        MSG Event{};
         static bool isTracking{};
         static TRACKMOUSEEVENT Tracker
         { sizeof(TRACKMOUSEEVENT), TME_LEAVE, HWND(Global.Windowhandle) };
