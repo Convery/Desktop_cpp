@@ -5,6 +5,7 @@
 */
 
 #include "../Stdinclude.hpp"
+using namespace std::string_literals;
 
 // Keep this around.
 vec4_t Desktoparea;
@@ -136,14 +137,18 @@ namespace Window
                 vec4_t Margins{};
 
                 // If a margin is provided.
-                if (const auto Plaintext = Child->Properties.find("Margins"); Plaintext != Child->Properties.end())
+                for (const auto &Item : Child->Properties)
                 {
-                    try
+                    if (Item.first == "Margins"s)
                     {
-                        std::vector<float> Parsed = nlohmann::json::parse(Plaintext->second);
-                        Parsed.resize(4); Margins = { Parsed[0], Parsed[1], Parsed[2], Parsed[3] };
+                        try
+                        {
+                            std::vector<float> Parsed = nlohmann::json::parse(Item.second);
+                            Parsed.resize(4); Margins = { Parsed[0], Parsed[1], Parsed[2], Parsed[3] };
+                            break;
+                        }
+                        catch (std::exception & e) { (void)e; Errorprint(va("JSON parsing failed with: %s", e.what())); };
                     }
-                    catch (std::exception & e) { (void)e; Errorprint(va("JSON parsing failed with: %s", e.what())); };
                 }
 
                 // Position and size given in pixels or percentage.

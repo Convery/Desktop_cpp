@@ -52,12 +52,10 @@ Globalstate_t
     vec2_t Windowsize;
 
     /*
-        TODO(tcn):
-        2 free bytes here, use them or lose them.
+        NOTE(tcn): 2 free bytes here, use them or lose them.
     */
 };
 extern Globalstate_t Global;
-constexpr size_t Bytesleft = 64 - sizeof(Globalstate_t);
 
 // The element-state is updated remotely.
 using Elementstate_t = union { struct {
@@ -67,25 +65,32 @@ using Elementstate_t = union { struct {
     isRightclicked : 1,
     isMiddleclicked : 1;
 }; unsigned char Raw; };
+
+// Element optimized for size.
 struct Element_t
 {
     // Evaluated properties.
     vec2_t Position, Size{};
     Elementstate_t State{};
 
-    // Keep all properties readable.
-    std::unordered_map<std::string, std::string, std::hash<std::string>> Properties{};
+    // We keep all properties as readable JSON. Vector is 16 bytes, unordered_map is 40.
+    std::vector <std::pair<std::string, std::string>> Properties{};
 
-    // Child-elements, generally only a single one.
+    // We generally only have 1 child, inline it (12 bytes).
     absl::InlinedVector<Element_t *, 1> Children{};
 
+    // Note(tcn): std::function takes up too much memory to be used here.
     // Callbacks triggered from the engine if they are implemented.
-    std::function<void(const Elementstate_t State)> onStatechange{};
-    std::function<bool(const Elementstate_t State)> isExclusive{};
-    std::function<void(const void *Context)> onRender{};
+    void (*onStatechange)(const Elementstate_t State) {};
+    bool (*isExclusive)(const Elementstate_t State) {};
+    void (*onRender)(const vec4_t Viewport) {};
+
+    /*
+        NOTE(tcn): 7 bytes left on the line here.
+    */
 };
 
-// Events that panels (or anyone; really) can subscribe to.
+// Events that elements (or anyone; really) can subscribe to.
 namespace Events
 {
     // A simple event-stack until we have something better.
