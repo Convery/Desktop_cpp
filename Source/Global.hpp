@@ -27,36 +27,6 @@ using pixel24_t = struct { union { struct { uint8_t R, G, B; } RGB; struct { uin
 using Texture32_t = struct { vec2_t Size; pixel32_t *Data; };
 using Texture24_t = struct { vec2_t Size; pixel24_t *Data; };
 
-// Global state for storage on a line.
-struct
-#if defined(NDEBUG)
-    alignas(64)
-#endif
-Globalstate_t
-{
-    // Most commonly accessed property.
-    uint32_t Errorno;
-
-    // Note(tcn): Input information is only updated once per frame (~16ms), elements are notified about all events for the frame automatically.
-    using Keyboardflags_t = struct { uint16_t isKeydown : 1, isKeyrepeat : 1, isKeyup : 1, ALTMod : 1, CTRLMod : 1, SHIFTMod : 1, CaretMod : 1, OumlatMod : 1, TildeMod : 1; };
-    using Mouseflags_t    = struct { uint16_t isRightdown : 1, isLeftdown : 1, isMiddledown : 1; };
-    struct { uint16_t Keycode; Keyboardflags_t Flags; } Keyboard;
-    struct { vec2_t Position; Mouseflags_t Flags; } Mouse;
-
-    // The current implementation only has a single window, create your own class for sub-windows.
-    std::unique_ptr<Gdiplus::Graphics> Drawingcontext;
-    struct Element_t *Rootelement;
-    const void *Windowhandle;
-    vec2_t Windowposition;
-    vec4_t Dirtyregion;
-    vec2_t Windowsize;
-
-    /*
-        NOTE(tcn): 2 free bytes here, use them or lose them.
-    */
-};
-extern Globalstate_t Global;
-
 // The element-state is updated remotely.
 using Elementstate_t = union { struct {
     unsigned char
@@ -77,7 +47,7 @@ struct Element_t
     std::vector <std::pair<std::string, std::string>> Properties{};
 
     // We generally only have 1 child, inline it (12 bytes).
-    absl::InlinedVector<Element_t *, 1> Children{};
+    absl::InlinedVector<std::unique_ptr<Element_t>, 1> Children{};
 
     // Note(tcn): std::function takes up too much memory to be used here.
     // Callbacks triggered from the engine if they are implemented.
@@ -89,6 +59,36 @@ struct Element_t
         NOTE(tcn): 7 bytes left on the line here.
     */
 };
+
+// Global state for storage on a line.
+struct
+#if defined(NDEBUG)
+    alignas(64)
+#endif
+    Globalstate_t
+{
+    // Most commonly accessed property.
+    uint32_t Errorno;
+
+    // Note(tcn): Input information is only updated once per frame (~16ms), elements are notified about all events for the frame automatically.
+    using Keyboardflags_t = struct { uint16_t isKeydown : 1, isKeyrepeat : 1, isKeyup : 1, ALTMod : 1, CTRLMod : 1, SHIFTMod : 1, CaretMod : 1, OumlatMod : 1, TildeMod : 1; };
+    using Mouseflags_t    = struct { uint16_t isRightdown : 1, isLeftdown : 1, isMiddledown : 1; };
+    struct { uint16_t Keycode; Keyboardflags_t Flags; } Keyboard;
+    struct { vec2_t Position; Mouseflags_t Flags; } Mouse;
+
+    // The current implementation only has a single window, create your own class for sub-windows.
+    std::unique_ptr<Gdiplus::Graphics> Drawingcontext;
+    std::unique_ptr<Element_t> Rootelement;
+    const void *Windowhandle;
+    vec2_t Windowposition;
+    vec4_t Dirtyregion;
+    vec2_t Windowsize;
+
+    /*
+        NOTE(tcn): 2 free bytes here, use them or lose them.
+    */
+};
+extern Globalstate_t Global;
 
 // Events that elements (or anyone; really) can subscribe to.
 namespace Events

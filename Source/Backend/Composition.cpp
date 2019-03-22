@@ -6,12 +6,28 @@
 
 #include "../Stdinclude.hpp"
 
-namespace Compositioning
+namespace Composition
 {
-    std::unordered_map<std::string, std::string, std::hash<std::string>> Fonts;
-    std::unordered_map<std::string, std::string, std::hash<std::string>> Images;
-    std::unordered_map<std::string, std::string, std::hash<std::string>> Colors;
+    namespace Assets
+    {
+        // TODO(tcn): Replace with absl::flat_hash_map later.
+        std::unordered_map<std::string, std::basic_string<uint8_t>> Fonts;
+        std::unordered_map<std::string, std::basic_string<uint8_t>> Images;
+    }
 
+    //
+    std::unique_ptr<Element_t> Parseelement(nlohmann::json::value_type Object)
+    {
+
+    }
+
+
+
+
+
+
+
+    #if 0
     bool Loadfromfile(const std::string &Filename)
     {
         if (auto Filehandle = std::fopen(Filename.c_str(), "rb"))
@@ -51,7 +67,7 @@ namespace Compositioning
 
         return false;
     }
-
+    #endif
 
 
 }

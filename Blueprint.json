@@ -1,20 +1,9 @@
 {
-    "Fonts": [ { "Name": "Default", "Data":  "" } ],
-    "Images": [ {  "Name": "Default", "Data":  "" } ],
-    "Colors": [ {  "Name": "Default", "Data":  "#121212" } ],
+    "Width": "1280",
+    "Height": "720",
 
-    "Rootelement":
-    {
-        "Name": "Mainview",
-        "Background-color": "Default",
-        "Elements":
-        [
-            {
-                "Name": "Toolbar",
-                "Margins": [ 0.0, 0.0, 0.0, 20.0 ],
-                "Background-image": "None",
-            }
-        ]
-    }
-
+    "Elements":
+    [
+        { "Name": "Toolbar", "Margins": "[0.0, 0.0, 0.0, 0.055 ]", "Background-color":  "[ 12, 12, 12 ]" }
+    ]
 }

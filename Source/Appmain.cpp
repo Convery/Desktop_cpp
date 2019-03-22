@@ -35,7 +35,7 @@ int __cdecl main(int argc, char **argv)
     #if !defined(NDEBUG)
         // Temporary initialization until composition is done.
         Global.Dirtyregion = { 0, 0, 1280, 720 };
-        Global.Rootelement = new Element_t();
+        Global.Rootelement = std::make_unique<Element_t>();
 
         // Reload the file if it changes.
         std::thread([]()

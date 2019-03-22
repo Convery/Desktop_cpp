@@ -42,7 +42,7 @@ namespace Window
                     {
                         // Log the state-modification if needed, else just handle the next node.
                         if (Node->State.isHoveredover) Modifiedstates[Node].isHoveredover = true;
-                        for (auto &Child : Node->Children) Invalidate(Child);
+                        for (auto &Child : Node->Children) Invalidate(Child.get());
                     };
 
                     // Find if elements are hovered over.
@@ -55,7 +55,7 @@ namespace Window
                             Global.Mouse.Position.y <= std::max(Node->Position.y + Node->Size.y, {}))
                         {
                             // Check if a child wants to sink this event first.
-                            for (const auto &Child : Node->Children) if (Lambda(Child)) return true;
+                            for (const auto &Child : Node->Children) if (Lambda(Child.get())) return true;
 
                             // Log the state-modification if needed and return.
                             Modifiedstates[Node].isHoveredover = Node->State.isHoveredover != true;
@@ -68,7 +68,7 @@ namespace Window
                     };
 
                     // Check all elements from the root down.
-                    Lambda(Global.Rootelement);
+                    Lambda(Global.Rootelement.get());
                     continue;
                 }
                 case WM_MOUSELEAVE:
@@ -79,10 +79,10 @@ namespace Window
                         // Log the state-modification if needed, else just handle the next node.
                         if (Node->State.isHoveredover) Modifiedstates[Node].isHoveredover = true;
                         else if (Modifiedstates[Node].isHoveredover) Modifiedstates[Node].isHoveredover = false;
-                        for (auto &Child : Node->Children) Invalidate(Child);
+                        for (auto &Child : Node->Children) Invalidate(Child.get());
                     };
 
-                    Invalidate(Global.Rootelement);
+                    Invalidate(Global.Rootelement.get());
                     isTracking = false;
                     continue;
                 }

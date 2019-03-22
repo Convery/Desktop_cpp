@@ -162,10 +162,10 @@ namespace Window
                 if (std::abs(Margins.y1) <= 1.0) Child->Position.y = Parentbox.y + (Height - Child->Size.y) * Margins.y1;
 
                 // Update recursively.
-                Lambda(Child);
+                Lambda(Child.get());
             }
         };
-        Lambda(Global.Rootelement);
+        Lambda(Global.Rootelement.get());
 
         // Invalidate everything.
         Global.Dirtyregion = { Global.Windowposition.x, Global.Windowposition.y,
