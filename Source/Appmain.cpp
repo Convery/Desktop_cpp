@@ -31,15 +31,44 @@ int __cdecl main(int argc, char **argv)
     // Notify all listeners that we are starting up.
     Executeevent(Events::Enginestack, Events::Engineevent::STARTUP);
 
-    /*
-        1. Load the blueprint from file.
-        2. Create a thread to poll the file for changes.
-        3. Reload as needed.
-    */
+    // Developers load the configuration from disk.
+    #if !defined(NDEBUG)
+        // Temporary initialization until composition is done.
+        Global.Dirtyregion = { 0, 0, 1280, 720 };
+        Global.Rootelement = new Element_t();
 
-    // DEV
-    Global.Dirtyregion = { 0, 0, 1280, 720 };
-    Global.Rootelement = new Element_t();
+        // Reload the file if it changes.
+        std::thread([]()
+        {
+            FILETIME Lastresult{};
+
+            while (true)
+            {
+                if (auto Filehandle = CreateFileA("../Blueprint.json", GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL))
+                {
+                    FILETIME Localresult{};
+                    GetFileTime(Filehandle, NULL, NULL, &Localresult);
+
+                    if (*(uint64_t *)&Localresult != *(uint64_t *)&Lastresult)
+                    {
+                        DWORD Bytesread{};
+                        Lastresult = Localresult;
+                        const auto Buffer = std::make_unique<char[]>(16 * 1024);
+                        ReadFile(Filehandle, Buffer.get(), 16 * 1024, &Bytesread, NULL);
+
+                        /* TODO(tcn): Load shit. */
+                    }
+
+                    CloseHandle(Filehandle);
+                }
+
+                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            }
+
+        }).detach();
+    #else
+        #error Release-mode is not implemented.
+    #endif
 
     // Main-loop, quit on error.
     while (true)
