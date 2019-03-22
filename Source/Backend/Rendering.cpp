@@ -21,6 +21,11 @@ namespace Rendering
         };
     }
 
+    /*
+        TODO(tcn):
+        We need to build a graph over the elements.
+        So that we don't re-parse the JSON every frame.
+    */
 
     namespace Gradient
     {

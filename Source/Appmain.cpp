@@ -24,6 +24,9 @@ int __cdecl main(int argc, char **argv)
     // As we are single-threaded (in release), boost our priority.
     SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
 
+    // Touch the global state to ensure it's aligned in cache.
+    if (Global.Errorno != 0) Global.Errorno = 0;
+
     // Log the termination for tracing.
     Subscribetostack(Events::Enginestack, Events::Engineevent::TERMINATION, []()
                     { Infoprint(va("Application terminated with code %u.", Global.Errorno)); });
@@ -33,39 +36,39 @@ int __cdecl main(int argc, char **argv)
 
     // Developers load the configuration from disk.
     #if !defined(NDEBUG)
-        // Temporary initialization until composition is done.
-        Global.Dirtyregion = { 0, 0, 1280, 720 };
-        Global.Rootelement = std::make_unique<Element_t>();
+    // Temporary initialization until composition is done.
+    Global.Dirtyregion = { 0, 0, 1280, 720 };
+    Global.Rootelement = std::make_unique<Element_t>();
 
-        // Reload the file if it changes.
-        std::thread([]()
+    // Reload the file if it changes.
+    std::thread([]()
+    {
+        FILETIME Lastresult{};
+
+        while (true)
         {
-            FILETIME Lastresult{};
-
-            while (true)
+            if (auto Filehandle = CreateFileA("../Blueprint.json", GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL))
             {
-                if (auto Filehandle = CreateFileA("../Blueprint.json", GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL))
+                FILETIME Localresult{};
+                GetFileTime(Filehandle, NULL, NULL, &Localresult);
+
+                if (*(uint64_t *)&Localresult != *(uint64_t *)&Lastresult)
                 {
-                    FILETIME Localresult{};
-                    GetFileTime(Filehandle, NULL, NULL, &Localresult);
+                    DWORD Bytesread{};
+                    Lastresult = Localresult;
+                    const auto Buffer = std::make_unique<char[]>(16 * 1024);
+                    ReadFile(Filehandle, Buffer.get(), 16 * 1024, &Bytesread, NULL);
 
-                    if (*(uint64_t *)&Localresult != *(uint64_t *)&Lastresult)
-                    {
-                        DWORD Bytesread{};
-                        Lastresult = Localresult;
-                        const auto Buffer = std::make_unique<char[]>(16 * 1024);
-                        ReadFile(Filehandle, Buffer.get(), 16 * 1024, &Bytesread, NULL);
-
-                        /* TODO(tcn): Load shit. */
-                    }
-
-                    CloseHandle(Filehandle);
+                    /* TODO(tcn): Load shit. */
                 }
 
-                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+                CloseHandle(Filehandle);
             }
 
-        }).detach();
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        }
+
+    }).detach();
     #else
         #error Release-mode is not implemented.
     #endif
