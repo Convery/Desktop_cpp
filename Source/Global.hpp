@@ -47,7 +47,7 @@ struct Element_t
     std::vector <std::pair<std::string, std::string>> Properties{};
 
     // We generally only have 1 child, inline it (12 bytes).
-    absl::InlinedVector<std::unique_ptr<Element_t>, 1> Children{};
+    absl::InlinedVector<std::shared_ptr<Element_t>, 1> Children{};
 
     // Note(tcn): std::function takes up too much memory to be used here.
     // Callbacks triggered from the engine if they are implemented.
@@ -136,6 +136,17 @@ namespace Window
 
     // Moved to Inputhandling.cpp
     void Processmessages();
+}
+
+//
+namespace Composition
+{
+    // Load the settings from JSON.
+    bool ParseJSON(const std::string_view JSON);
+
+    // Add a name for an element (mostly for debugging).
+    void Registerelement(std::string_view Name, std::shared_ptr<Element_t> Element);
+    std::shared_ptr<Element_t> Getelement(std::string_view Name);
 }
 
 // Wrappers for converting code to pretty colors.

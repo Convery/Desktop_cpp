@@ -16,10 +16,25 @@ namespace Composition
         std::unordered_map<std::string, std::basic_string<uint8_t>> Images{};
     }
 
-    // Recursively parse the elements as needed.
-    std::unique_ptr<Element_t> Parseelement(nlohmann::json::value_type Object)
+    // Keep a map for by-string access to the elements.
+    std::unordered_map<std::string_view, std::shared_ptr<Element_t>> Elements;
+
+    // Add a name for an element (mostly for debugging).
+    void Registerelement(std::string_view Name, std::shared_ptr<Element_t> Element)
     {
-        auto Element = std::make_unique<Element_t>();
+        Elements[Name] = Element;
+    }
+    std::shared_ptr<Element_t> Getelement(std::string_view Name)
+    {
+        if (auto Result = Elements.find(Name); Result != Elements.end())
+            return Result->second;
+        else return {};
+    }
+
+    // Recursively parse the elements as needed.
+    std::shared_ptr<Element_t> Parseelement(nlohmann::json::value_type Object)
+    {
+        auto Element = std::make_shared<Element_t>();
 
         // Sanity-checking incase we move to a null-based loop later.
         if (Object.empty()) return Element;
@@ -28,6 +43,10 @@ namespace Composition
         for (const auto &Iterator : Object.items())
             if (Iterator.key() != "Elements"s)
                 Element->Properties.push_back({ Iterator.key(), Iterator.value() });
+
+        // Register the element if named.
+        if (!Object["Name"].is_null())
+            Registerelement(Object["Name"].get<std::string>(), Element);
 
         // Parse all child-elements.
         for (const auto &Item : Object["Elements"])
@@ -43,9 +62,9 @@ namespace Composition
         {
             const auto Parsed = nlohmann::json::parse(JSON);
 
-            // The root can be parsed as any other element and the window-size can also be specified.
+            // The root can be parsed as any other element (but moved) and the window-size can also be specified.
             Global.Windowsize = { Parsed.value("Width", 1280.0f), Parsed.value("Height", 720.0f) };
-            Global.Rootelement = Parseelement(Parsed);
+            Global.Rootelement = std::make_unique<Element_t>(std::move(*Parseelement(Parsed)));
             Window::Resize(Global.Windowsize);
             return true;
         }
@@ -58,55 +77,5 @@ namespace Composition
 
         return true;
     }
-
-
-
-
-
-
-
-    #if 0
-    bool Loadfromfile(const std::string &Filename)
-    {
-        if (auto Filehandle = std::fopen(Filename.c_str(), "rb"))
-        {
-            std::fseek(Filehandle, 0, SEEK_END);
-            const auto Filesize = std::ftell(Filehandle);
-            std::fseek(Filehandle, 0, SEEK_SET);
-
-            auto Buffer = std::make_unique<char[]>(Filesize + 1);
-            std::fread(Buffer.get(), Filesize, 1, Filehandle);
-            std::fclose(Filehandle);
-
-            try
-            {
-                const auto Parsed = nlohmann::json::parse(Buffer.get());
-                for (const auto &Item : Parsed["Fonts"]) Fonts[Item["Name"]] = Item["Data"].get<std::string>();
-                for (const auto &Item : Parsed["Images"]) Images[Item["Name"]] = Item["Data"].get<std::string>();
-                for (const auto &Item : Parsed["Colors"]) Colors[Item["Name"]] = Item["Data"].get<std::string>();
-
-                auto Rootelement = new Element_t();
-                const auto Rootobject = Parsed["Rootelement"];
-                for (const auto &Item : Rootobject)
-                {
-
-                }
-
-
-            } catch(std::exception &e)
-            {
-                (void)e;
-                Errorprint(va("JSON parsing error: %s", e.what()));
-                return false;
-            }
-
-            return true;
-        }
-
-        return false;
-    }
-    #endif
-
-
 }
 
