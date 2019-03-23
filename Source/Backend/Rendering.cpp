@@ -26,6 +26,20 @@ namespace Rendering
         We need to build a graph over the elements.
         So that we don't re-parse the JSON every frame.
     */
+    std::vector<void (*)(const vec4_t Viewport)> Drawcalls{};
+    void Renderframe(const vec4_t Viewport)
+    {
+        for (const auto &Item : Drawcalls) Item(Viewport);
+    }
+    void Buildcallgraph(Element_t *Node)
+    {
+        if (Node->onRender) Drawcalls.push_back(Node->onRender);
+        for (const auto &Child : Node->Children) Buildcallgraph(Child.get());
+    }
+    void Clearcallgraph()
+    {
+        Drawcalls.clear();
+    }
 
     namespace Gradient
     {

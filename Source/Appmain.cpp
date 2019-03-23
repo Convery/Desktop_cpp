@@ -114,9 +114,8 @@ int __cdecl main(int argc, char **argv)
             // Clear the surface to white (chroma-key for transparent).
             Global.Drawingcontext->Clear(Gdiplus::Color::White);
 
-            /*
-                doRendering.
-            */
+            // Render the dirty area.
+            Rendering::Renderframe(Global.Dirtyregion);
 
             #if !defined(NDEBUG)
             // DEBUG: Notify components about presenting.

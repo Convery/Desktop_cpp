@@ -125,14 +125,6 @@ namespace Events
     #define Executeevent(Stack, Event, ...) { Validatestack(Stack); Stack->Execute<Event>(__VA_ARGS__); }
 }
 
-// Callbacks for element-scripts.
-namespace Commands
-{
-    using Callback_t = std::function<void(Element_t *Caller, std::vector<std::string_view> Arguments)>;
-    void Add(std::string Name, Callback_t Function);
-    Callback_t *Find(std::string_view Name);
-}
-
 // Basic windowing operations.
 namespace Window
 {
@@ -149,6 +141,10 @@ namespace Window
 // Wrappers for converting code to pretty colors.
 namespace Rendering
 {
+    void Renderframe(const vec4_t Viewport);
+    void Buildcallgraph(Element_t *Node);
+    void Clearcallgraph();
+
     namespace Gradient
     {
         void Outlinepolygon(std::vector<vec2_t> &&Points, rgba_t Color1, rgba_t Color2, uint32_t Steps);

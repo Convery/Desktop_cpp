@@ -170,5 +170,9 @@ namespace Window
         // Invalidate everything.
         Global.Dirtyregion = { Global.Windowposition.x, Global.Windowposition.y,
             Global.Windowposition.x + Global.Windowsize.x, Global.Windowposition.y + Global.Windowsize.y };
+
+        // Rebuild the callgraph.
+        Rendering::Clearcallgraph();
+        Rendering::Buildcallgraph(Global.Rootelement.get());
     }
 }
