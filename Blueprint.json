@@ -4,6 +4,6 @@
 
     "Elements":
     [
-        { "Name": "Toolbar", "Margins": "[0.0, 0.0, 0.0, 0.055 ]", "Background-color":  "[ 12, 12, 12 ]" }
+        { "Name": "Toolbar", "Margins": "[0.0, 0.944, 0.0, 0.0 ]", "Background-color":  "[ 12, 12, 12 ]" }
     ]
 }

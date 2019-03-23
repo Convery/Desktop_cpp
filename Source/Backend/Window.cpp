@@ -128,10 +128,6 @@ namespace Window
         // Save my fingers and just recurse over the elements.
         std::function<void(Element_t *)> Lambda = [&](Element_t *Node) -> void
         {
-            const vec4_t Parentbox{ Node->Position.x, Node->Position.y, Node->Position.x + Node->Size.x, Node->Position.y + Node->Size.y };
-            const auto Height{ std::abs(Parentbox.y1 - Parentbox.y0) };
-            const auto Width{ std::abs(Parentbox.x1 - Parentbox.x0) };
-
             for (const auto &Child : Node->Children)
             {
                 vec4_t Margins{};
@@ -143,7 +139,7 @@ namespace Window
                     {
                         try
                         {
-                            std::vector<float> Parsed = nlohmann::json::parse(Item.second);
+                            std::vector<float> Parsed = nlohmann::json::parse(Item.second.c_str());
                             Parsed.resize(4); Margins = { Parsed[0], Parsed[1], Parsed[2], Parsed[3] };
                             break;
                         }
@@ -154,12 +150,12 @@ namespace Window
                 // Position and size given in pixels or percentage.
                 if (std::abs(Margins.x0) >  1.0) Child->Size.x = Margins.x0;
                 if (std::abs(Margins.y0) >  1.0) Child->Size.y = Margins.y0;
-                if (std::abs(Margins.x0) <= 1.0) Child->Size.x = Width  * Margins.x0;
-                if (std::abs(Margins.y0) <= 1.0) Child->Size.y = Height * Margins.y0;
-                if (std::abs(Margins.x1) >  1.0) Child->Position.x = Parentbox.x + Margins.x1;
-                if (std::abs(Margins.y1) >  1.0) Child->Position.y = Parentbox.y + Margins.y1;
-                if (std::abs(Margins.x1) <= 1.0) Child->Position.x = Parentbox.x + (Width  - Child->Size.x) * Margins.x1;
-                if (std::abs(Margins.y1) <= 1.0) Child->Position.y = Parentbox.y + (Height - Child->Size.y) * Margins.y1;
+                if (std::abs(Margins.x0) <= 1.0) Child->Size.x = Node->Size.x - (Node->Size.x * Margins.x0);
+                if (std::abs(Margins.y0) <= 1.0) Child->Size.y = Node->Size.y - (Node->Size.y * Margins.y0);
+                if (std::abs(Margins.x1) >  1.0) Child->Position.x = Node->Position.x + Margins.x1;
+                if (std::abs(Margins.y1) >  1.0) Child->Position.y = Node->Position.y + Margins.y1;
+                if (std::abs(Margins.x1) <= 1.0) Child->Position.x = Node->Position.x + (Node->Size.x - Child->Size.x) * Margins.x1;
+                if (std::abs(Margins.y1) <= 1.0) Child->Position.y = Node->Position.y + (Node->Size.y - Child->Size.y) * Margins.y1;
 
                 // Update recursively.
                 Lambda(Child.get());

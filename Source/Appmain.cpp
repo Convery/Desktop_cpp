@@ -37,7 +37,6 @@ int __cdecl main(int argc, char **argv)
     // Developers load the configuration from disk.
     #if !defined(NDEBUG)
     // Temporary initialization until composition is done.
-    Global.Dirtyregion = { 0, 0, 1280, 720 };
     Global.Rootelement = std::make_unique<Element_t>();
 
     // Reload the file if it changes.
@@ -58,8 +57,7 @@ int __cdecl main(int argc, char **argv)
                     Lastresult = Localresult;
                     const auto Buffer = std::make_unique<char[]>(16 * 1024);
                     ReadFile(Filehandle, Buffer.get(), 16 * 1024, &Bytesread, NULL);
-
-                    /* TODO(tcn): Load shit. */
+                    Composition::ParseJSON(Buffer.get());
                 }
 
                 CloseHandle(Filehandle);
@@ -109,7 +107,7 @@ int __cdecl main(int argc, char **argv)
 
             // Create a graphics object and set the screen transformation.
             Global.Drawingcontext = std::make_unique<Gdiplus::Graphics>(Memorycontext);
-            Global.Drawingcontext->TranslateTransform(-Region.x0 - Global.Windowposition.x, -Region.y0 - Global.Windowposition.y);
+            Global.Drawingcontext->TranslateTransform(-Global.Windowposition.x, -Global.Windowposition.y);
 
             // Clear the surface to white (chroma-key for transparent).
             Global.Drawingcontext->Clear(Gdiplus::Color::White);
@@ -117,13 +115,19 @@ int __cdecl main(int argc, char **argv)
             // Render the dirty area.
             Rendering::Renderframe(Global.Dirtyregion);
 
+            // DEV(tcn): Testing the world to screen.
+            if (auto Item = Composition::Getelement("Toolbar"))
+            {
+                Rendering::Solid::Fillrectangle({ Item->Position.x, Item->Position.y, Item->Position.x + Item->Size.x, Item->Position.y + Item->Size.y }, { 0.9, 0.9, 0.9, 0.5 });
+            }
+
             #if !defined(NDEBUG)
             // DEBUG: Notify components about presenting.
             Executeevent(Events::Enginestack, Events::Engineevent::PRESENT);
             #endif
 
             // Present to the window.
-            BitBlt(Devicecontext, (int)Region.x0, (int)Region.y0, (int)(Region.x1 - Region.x0),
+            BitBlt(Devicecontext, (int)Region.x0 - Global.Windowposition.x, (int)Region.y0 - Global.Windowposition.y, (int)(Region.x1 - Region.x0),
                    (int)(Region.y1 - Region.y0), Memorycontext, 0, 0, SRCCOPY);
 
             // Restore the surface and do cleanup.

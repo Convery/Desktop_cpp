@@ -145,8 +145,8 @@ namespace Composition
     bool ParseJSON(const std::string_view JSON);
 
     // Add a name for an element (mostly for debugging).
-    void Registerelement(std::string_view Name, std::shared_ptr<Element_t> Element);
-    std::shared_ptr<Element_t> Getelement(std::string_view Name);
+    void Registerelement(std::string Name, std::shared_ptr<Element_t> Element);
+    std::shared_ptr<Element_t> Getelement(std::string Name);
 }
 
 // Wrappers for converting code to pretty colors.

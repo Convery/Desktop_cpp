@@ -17,14 +17,14 @@ namespace Composition
     }
 
     // Keep a map for by-string access to the elements.
-    std::unordered_map<std::string_view, std::shared_ptr<Element_t>> Elements;
+    std::unordered_map<std::string, std::shared_ptr<Element_t>> Elements;
 
     // Add a name for an element (mostly for debugging).
-    void Registerelement(std::string_view Name, std::shared_ptr<Element_t> Element)
+    void Registerelement(std::string Name, std::shared_ptr<Element_t> Element)
     {
         Elements[Name] = Element;
     }
-    std::shared_ptr<Element_t> Getelement(std::string_view Name)
+    std::shared_ptr<Element_t> Getelement(std::string Name)
     {
         if (auto Result = Elements.find(Name); Result != Elements.end())
             return Result->second;
@@ -60,11 +60,12 @@ namespace Composition
     {
         try
         {
-            const auto Parsed = nlohmann::json::parse(JSON);
+            const auto Parsed = nlohmann::json::parse(JSON.data());
+            Elements.clear();
 
-            // The root can be parsed as any other element (but moved) and the window-size can also be specified.
-            Global.Windowsize = { Parsed.value("Width", 1280.0f), Parsed.value("Height", 720.0f) };
-            Global.Rootelement = std::make_unique<Element_t>(std::move(*Parseelement(Parsed)));
+            // The root can be parsed as any other element, but it has to be moved because specs, and the window-size can also be specified.
+            Global.Windowsize = { (float)atof(Parsed.value("Width", "1280").c_str()), (float)atof(Parsed.value("Height", "720").c_str()) };
+            Global.Rootelement = std::make_unique<Element_t>(*Parseelement(Parsed));
             Window::Resize(Global.Windowsize);
             return true;
         }
@@ -74,8 +75,6 @@ namespace Composition
             Errorprint(va("JSON parsing error: %s", e.what()));
             return false;
         }
-
-        return true;
     }
 }
 
