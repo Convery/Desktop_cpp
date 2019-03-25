@@ -28,45 +28,41 @@ namespace Composition
     {
         if (auto Result = Elements.find(Name); Result != Elements.end())
             return Result->second;
-        else return {};
+        else return nullptr;
     }
 
-    // Recursively parse the elements as needed.
-    std::shared_ptr<Element_t> Parseelement(nlohmann::json::value_type Object)
+    // Parse the JSON and update the elements.
+    void Parseelement(nlohmann::json::value_type Object)
     {
-        auto Element = std::make_shared<Element_t>();
+        // Ensure that the element has a name to lookup.
+        if (Object["Name"].is_null()) return;
 
-        // Sanity-checking incase we move to a null-based loop later.
-        if (Object.empty()) return Element;
+        // Check if we have an element with the name.
+        auto Element = Getelement(Object["Name"]);
+        if (!Element) return;
 
-        // Load all POD properties.
+        // Update all requested properties.
         for (const auto &Iterator : Object.items())
-            if (Iterator.key() != "Elements"s)
-                Element->Properties.push_back({ Iterator.key(), Iterator.value() });
-
-        // Register the element if named.
-        if (!Object["Name"].is_null())
-            Registerelement(Object["Name"].get<std::string>(), Element);
-
-        // Parse all child-elements.
-        for (const auto &Item : Object["Elements"])
-            Element->Children.push_back(Parseelement(Item));
-
-        return Element;
+            for (auto &[Key, Value] : Element->Properties)
+                if (Key == Iterator.key())
+                    Value = Iterator.value().get<std::string>();
     }
 
-    // TODO(tcn): This should probably be constexpr in the future.
+    // DEV(tcn): Updates all elements properties.
     bool ParseJSON(const std::string_view JSON)
     {
         try
         {
             const auto Parsed = nlohmann::json::parse(JSON.data());
-            Elements.clear();
+            if (!Global.Rootelement) Global.Rootelement = std::make_unique<Element_t>();
 
-            // The root can be parsed as any other element, but it has to be moved because specs, and the window-size can also be specified.
+            // Iterate over all elements and modify them.
+            for (const auto &Item : Parsed["Elements"]) Parseelement(Item);
+
+            // Update the window-size if needed.
             Global.Windowsize = { (float)atof(Parsed.value("Width", "1280").c_str()), (float)atof(Parsed.value("Height", "720").c_str()) };
-            Global.Rootelement = std::make_unique<Element_t>(*Parseelement(Parsed));
             Window::Resize(Global.Windowsize);
+
             return true;
         }
         catch (std::exception &e)

@@ -25,7 +25,7 @@ int __cdecl main(int argc, char **argv)
     SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
 
     // Touch the global state to ensure it's aligned in cache.
-    if (Global.Errorno != 0) Global.Errorno = 0;
+    if (Global.Errorno == 0) Global.Rootelement = std::make_unique<Element_t>();
 
     // Log the termination for tracing.
     Subscribetostack(Events::Enginestack, Events::Engineevent::TERMINATION, []()
@@ -36,8 +36,6 @@ int __cdecl main(int argc, char **argv)
 
     // Developers load the configuration from disk.
     #if !defined(NDEBUG)
-    // Temporary initialization until composition is done.
-    Global.Rootelement = std::make_unique<Element_t>();
 
     // Reload the file if it changes.
     std::thread([]()
@@ -67,8 +65,6 @@ int __cdecl main(int argc, char **argv)
         }
 
     }).detach();
-    #else
-        #error Release-mode is not implemented.
     #endif
 
     // Main-loop, quit on error.
@@ -110,7 +106,7 @@ int __cdecl main(int argc, char **argv)
             Global.Drawingcontext->TranslateTransform(-Global.Windowposition.x, -Global.Windowposition.y);
 
             // Clear the surface to white (chroma-key for transparent).
-            Global.Drawingcontext->Clear(Gdiplus::Color::White);
+            Global.Drawingcontext->Clear(Gdiplus::Color::Black);
 
             // Render the dirty area.
             Rendering::Renderframe(Global.Dirtyregion);
