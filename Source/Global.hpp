@@ -122,7 +122,7 @@ namespace Events
     // Defines to ensure safe operations.
     #define Validatestack(Stack) { if(!Stack) Stack = new std::remove_pointer_t<decltype(Stack)>(); assert(Stack); }
     #define Subscribetostack(Stack, Event, Callback) { Validatestack(Stack); Stack->Subscribe<Event>(Callback); }
-    #define Executeevent(Stack, Event, ...) { Validatestack(Stack); Stack->Execute<Event>(__VA_ARGS__); }
+    #define Executeevent(Stack, Event, ...) { Stack->Execute<Event>(__VA_ARGS__); }
 }
 
 // Basic windowing operations.
