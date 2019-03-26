@@ -43,9 +43,22 @@ namespace Composition
 
         // Update all requested properties.
         for (const auto &Iterator : Object.items())
+        {
+            // Check if it's in the vector already.
             for (auto &[Key, Value] : Element->Properties)
+            {
                 if (Key == Iterator.key())
+                {
                     Value = Iterator.value().get<std::string>();
+                    goto LABEL_UPDATED;
+                }
+            }
+
+            // Else we just add it.
+            Element->Properties.push_back({ Iterator.key(), Iterator.value().get<std::string>() });
+
+            LABEL_UPDATED:;
+        }
     }
 
     // DEV(tcn): Updates all elements properties.
