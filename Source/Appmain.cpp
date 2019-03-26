@@ -106,16 +106,10 @@ int __cdecl main(int argc, char **argv)
             Global.Drawingcontext->TranslateTransform(-Global.Windowposition.x, -Global.Windowposition.y);
 
             // Clear the surface to white (chroma-key for transparent).
-            Global.Drawingcontext->Clear(Gdiplus::Color::Black);
+            Global.Drawingcontext->Clear(Gdiplus::Color::White);
 
             // Render the dirty area.
             Rendering::Renderframe(Global.Dirtyregion);
-
-            // DEV(tcn): Testing the world to screen.
-            if (auto Item = Composition::Getelement("Toolbar"))
-            {
-                Rendering::Solid::Fillrectangle({ Item->Position.x, Item->Position.y, Item->Position.x + Item->Size.x, Item->Position.y + Item->Size.y }, { 0.9, 0.9, 0.9, 0.5 });
-            }
 
             #if !defined(NDEBUG)
             // DEBUG: Notify components about presenting.
