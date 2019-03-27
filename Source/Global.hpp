@@ -59,6 +59,10 @@ struct Element_t
         NOTE(tcn): 7 bytes left on the line here.
     */
 };
+inline vec4_t Elementbox(const std::shared_ptr<Element_t> Item)
+{
+    return { Item->Position.x, Item->Position.y, Item->Position.x + Item->Size.x, Item->Position.y + Item->Size.y };
+}
 
 // Global state for storage on a line.
 struct
