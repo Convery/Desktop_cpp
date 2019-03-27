@@ -135,6 +135,14 @@ namespace Window
                 }
             }
 
+            // If Windows wants us to redraw, we oblige.
+            if (Event.message == WM_PAINT)
+            {
+                // Invalidate everything.
+                Global.Dirtyregion = { Global.Windowposition.x, Global.Windowposition.y,
+                    Global.Windowposition.x + Global.Windowsize.x, Global.Windowposition.y + Global.Windowsize.y };
+            }
+
             // If we should quit, break the loop without processing the rest of the queue.
             if (Event.message == WM_SYSCOMMAND && Event.wParam == SC_CLOSE)
             { Global.Errorno = Hash::FNV1a_32("WM_QUIT"); return; }
