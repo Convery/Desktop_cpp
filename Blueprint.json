@@ -4,6 +4,9 @@
 
     "Elements":
     [
-        { "Name": "Toolbar", "Margins": "[0.0, 0.944, 0.0, 0.0 ]", "Background-color":  "[ 12, 12, 12 ]" }
+        {
+            "Name": "Toolbar.Maxbutton",
+            "Margins": "[0.975, 0.5, 0.972, 0.0 ]"
+        }
     ]
 }
