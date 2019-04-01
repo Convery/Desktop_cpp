@@ -15,8 +15,6 @@ namespace
 {
     struct Startup
     {
-        ULONG_PTR Token;
-
         Startup()
         {
             RECT Area{};
@@ -30,7 +28,7 @@ namespace
             const auto Width{ std::abs(Desktoparea.x1 - Desktoparea.x0) };
 
             // Initialize GDI.
-            Gdiplus::GdiplusStartupInput Input;
+            Gdiplus::GdiplusStartupInput Input; ULONG_PTR Token;
             Gdiplus::GdiplusStartup(&Token, &Input, NULL);
 
             // Register the window.
@@ -41,9 +39,6 @@ namespace
             Windowclass.hInstance = GetModuleHandleA(NULL);
             Windowclass.hCursor = LoadCursor(NULL, IDC_ARROW);
             Windowclass.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-            #if !defined(NDEBUG) // If debugging, make transparent areas pink.
-            Windowclass.hbrBackground = CreateSolidBrush(RGB(0xFF, 0x00, 0xFF));
-            #endif
             if (NULL == RegisterClassExA(&Windowclass)) Global.Errorno = Hash::FNV1a_32("RegisterClass");
 
             // Create the window as 'hidden', i.e. size of 0.
@@ -61,11 +56,6 @@ namespace
             Global.Windowposition = { Desktoparea.x + (Width - 1280) * 0.5f, Desktoparea.y + (Height - 720) * 0.5f };
             SetWindowPos(Windowhandle, NULL, (int)Global.Windowposition.x, (int)Global.Windowposition.y, 1280, 720, SWP_NOSENDCHANGING);
             ShowWindow(Windowhandle, SW_SHOWNORMAL);
-        }
-        ~Startup()
-        {
-            // Windows 10 gets upset if not called directly when treated as a UWP app.
-            Gdiplus::GdiplusShutdown(Token);
         }
     };
     static Startup Loader{};
