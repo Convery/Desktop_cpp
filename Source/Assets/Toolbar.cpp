@@ -6,13 +6,41 @@
 
 #include "../Stdinclude.hpp"
 
+inline void Createnavigation()
+{
+    static auto Navigation = Composition::Getelement("Toolbar")->Children.emplace_back(std::make_shared<Element_t>());
+    Navigation->Properties.push_back({ "Margins", "[0.8, 0.0, 0.0, 0.0 ]" });
+    Navigation->onRender = []() -> void
+    {
+        Rendering::Solid::Fillrectangle(Elementbox(Navigation), { 0x00, 0xED, 0xFF, 1 });
+    };
+    Composition::Registerelement("Toolbar.Navigation", Navigation);
+
+    static auto Backbutton = Navigation->Children.emplace_back(std::make_shared<Element_t>());
+    Backbutton->Properties.push_back({ "Margins", "[0.7, 0.0, 0.0, 0.0 ]" });
+    Backbutton->onRender = []() -> void
+    {
+        Rendering::Solid::Fillrectangle(Elementbox(Backbutton), { 0xFF, 0x33, 0xFF, 1 });
+    };
+    Composition::Registerelement("Toolbar.Navigation.Backbutton", Backbutton);
+
+    static auto Frontbutton = Navigation->Children.emplace_back(std::make_shared<Element_t>());
+    Frontbutton->Properties.push_back({ "Margins", "[0.7, 0.0, 1.0, 0.0 ]" });
+    Frontbutton->onRender = []() -> void
+    {
+        Rendering::Solid::Fillrectangle(Elementbox(Frontbutton), { 0xFF, 0xEE, 0xFF, 1 });
+    };
+    Composition::Registerelement("Toolbar.Navigation.Frontbutton", Frontbutton);
+}
 inline void Createbuttons()
 {
     static auto Closebutton = Composition::Getelement("Toolbar")->Children.emplace_back(std::make_shared<Element_t>());
     Closebutton->Properties.push_back({ "Margins", "[ 0.975, 0.5, 1.0, 0.0 ]" });
-    Closebutton->onRender = [](const vec4_t Viewport) -> void
+    Closebutton->onRender = []() -> void
     {
-        Rendering::Solid::Fillrectangle(Elementbox(Closebutton), { 0x00, 0xED, 0xFF, 1 });
+        if (Closebutton->State.isLeftclicked) Rendering::Solid::Fillrectangle(Elementbox(Closebutton), { 0xFF, 0x00, 0x00, 0.3 });
+        if (Closebutton->State.isHoveredover) Rendering::Solid::Fillrectangle(Elementbox(Closebutton), { 0x00, 0xFF, 0x00, 1 });
+        // TODO(tcn): Render texture / font 'X'
     };
     Closebutton->isExclusive = [](Elementstate_t State) -> bool
     {
@@ -24,12 +52,15 @@ inline void Createbuttons()
         {
             Global.Errorno = Hash::FNV1a_32("Toolbar.Closebutton");
         }
+
+        // Invalidate the area if hovering changed or clicked.
+        if (State.isLeftclicked || State.isHoveredover) Invalidatewindow();
     };
     Composition::Registerelement("Toolbar.Closebutton", Closebutton);
 
     static auto Maxbutton = Composition::Getelement("Toolbar")->Children.emplace_back(std::make_shared<Element_t>());
     Maxbutton->Properties.push_back({ "Margins", "[ 0.975, 0.5, 0.972, 0.0 ]" });
-    Maxbutton->onRender = [](const vec4_t Viewport) -> void
+    Maxbutton->onRender = []() -> void
     {
         Rendering::Solid::Fillrectangle(Elementbox(Maxbutton), { 0xFF, 0xED, 0x00, 1 });
     };
@@ -37,7 +68,7 @@ inline void Createbuttons()
 
     static auto Minbutton = Composition::Getelement("Toolbar")->Children.emplace_back(std::make_shared<Element_t>());
     Minbutton->Properties.push_back({ "Margins", "[ 0.975, 0.5, 0.945, 0.0 ]" });
-    Minbutton->onRender = [](const vec4_t Viewport) -> void
+    Minbutton->onRender = []() -> void
     {
         Rendering::Solid::Fillrectangle(Elementbox(Minbutton), { 0xFF, 0x00, 0xFF, 1 });
     };
@@ -69,13 +100,14 @@ static void Createtoolbar()
             Previous = {};
         }
     });
-    Toolbar->onRender = [](const vec4_t Viewport) -> void
+    Toolbar->onRender = []() -> void
     {
         Rendering::Solid::Fillrectangle(Elementbox(Toolbar), { 0x11, 0x0f, 0x0c, 1 });
     };
     Composition::Registerelement("Toolbar", Toolbar);
 
     Createbuttons();
+    Createnavigation();
 }
 
 // Create a callback for initialization on startup.
