@@ -6,10 +6,20 @@
 
 #include "../Stdinclude.hpp"
 
+inline void Createsearchbar()
+{
+    static auto Searchbar = Composition::Getelement("Toolbar")->Children.emplace_back(std::make_shared<Element_t>());
+    Searchbar->Properties.push_back({ "Margins", "[ 0.7, 0.0, 0.285, 0.0 ]" });
+    Searchbar->onRender = []() -> void
+    {
+        Rendering::Solid::Fillrectangle(Elementbox(Searchbar), { 0xFF, 0xFF, 0x00, 1 });
+    };
+    Composition::Registerelement("Toolbar.Searchbar", Searchbar);
+}
 inline void Createnavigation()
 {
     static auto Navigation = Composition::Getelement("Toolbar")->Children.emplace_back(std::make_shared<Element_t>());
-    Navigation->Properties.push_back({ "Margins", "[0.8, 0.0, 0.0, 0.0 ]" });
+    Navigation->Properties.push_back({ "Margins", "[ 0.8, 0.0, 0.0, 0.0 ]" });
     Navigation->onRender = []() -> void
     {
         Rendering::Solid::Fillrectangle(Elementbox(Navigation), { 0x00, 0xED, 0xFF, 1 });
@@ -17,7 +27,7 @@ inline void Createnavigation()
     Composition::Registerelement("Toolbar.Navigation", Navigation);
 
     static auto Backbutton = Navigation->Children.emplace_back(std::make_shared<Element_t>());
-    Backbutton->Properties.push_back({ "Margins", "[0.7, 0.0, 0.0, 0.0 ]" });
+    Backbutton->Properties.push_back({ "Margins", "[ 0.7, 0.0, 0.0, 0.0 ]" });
     Backbutton->onRender = []() -> void
     {
         Rendering::Solid::Fillrectangle(Elementbox(Backbutton), { 0xFF, 0x33, 0xFF, 1 });
@@ -25,7 +35,7 @@ inline void Createnavigation()
     Composition::Registerelement("Toolbar.Navigation.Backbutton", Backbutton);
 
     static auto Frontbutton = Navigation->Children.emplace_back(std::make_shared<Element_t>());
-    Frontbutton->Properties.push_back({ "Margins", "[0.7, 0.0, 1.0, 0.0 ]" });
+    Frontbutton->Properties.push_back({ "Margins", "[ 0.7, 0.0, 1.0, 0.0 ]" });
     Frontbutton->onRender = []() -> void
     {
         Rendering::Solid::Fillrectangle(Elementbox(Frontbutton), { 0xFF, 0xEE, 0xFF, 1 });
@@ -78,7 +88,7 @@ static void Createtoolbar()
 {
     // Root-level component.
     static auto Toolbar = Global.Rootelement->Children.emplace_back(std::make_shared<Element_t>());
-    Toolbar->Properties.push_back({ "Margins", "[0.0, 0.944, 0.0, 0.0 ]" });
+    Toolbar->Properties.push_back({ "Margins", "[ 0.0, 0.944, 0.0, 0.0 ]" });
 
     Subscribetostack(Events::Enginestack, Events::Engineevent::TICK, [](const double)
     {
@@ -108,6 +118,7 @@ static void Createtoolbar()
 
     Createbuttons();
     Createnavigation();
+    Createsearchbar();
 }
 
 // Create a callback for initialization on startup.

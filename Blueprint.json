@@ -5,8 +5,8 @@
     "Elements":
     [
         {
-            "Name": "NA",
-            "Margins": "[0.7, 0.0, 0.0, 0.0 ]"
+            "Name": "Toolbar.Searchbar",
+            "Margins": "[0.7, 0.0, 0.285, 0.0 ]"
         }
     ]
 }
