@@ -8,6 +8,13 @@
 
 namespace Window
 {
+    inline bool Hitcheck(Element_t *Node)
+    {
+        return { Global.Mouse.Position.x >= std::max(Node->Position.x, {}) &&
+                 Global.Mouse.Position.y >= std::max(Node->Position.y, {}) &&
+                 Global.Mouse.Position.x <= std::max(Node->Position.x + Node->Size.x, {}) &&
+                 Global.Mouse.Position.y <= std::max(Node->Position.y + Node->Size.y, {}) };
+    }
     void Processmessages()
     {
         // Track when the mouse leaves the window.
@@ -22,117 +29,86 @@ namespace Window
         // Non-blocking polling for messages.
         while (PeekMessageA(&Event, (HWND)Global.Windowhandle, NULL, NULL, PM_REMOVE) > 0)
         {
-            // Mouse-movement events.
-            switch (Event.message)
+            // Process the most common cases first.
+            if (Event.message == WM_MOUSEMOVE)
             {
-                case WM_MOUSEMOVE:
+                Global.Mouse.Position =
                 {
-                    // Check if we need to track the mouse again.
-                    if (!isTracking)
+                    Global.Windowposition.x + float(LOWORD(Event.lParam)),
+                    Global.Windowposition.y + float(HIWORD(Event.lParam))
+                };
+
+                // Check if we need to track the mouse again.
+                if (!isTracking)
+                {
+                    isTracking = true;
+                    TrackMouseEvent(&Tracker);
+                }
+
+                // Check all elements from the root down.
+                std::function<bool(Element_t *)> Lambda = [&](Element_t *Node) -> bool
+                {
+                    const auto isHit{ Hitcheck(Node) };
+
+                    // Check if a child wants to sink this event first.
+                    for (const auto &Child : Node->Children) if (Lambda(Child.get())) return true;
+
+                    // Else we may sink it.
+                    if (Node->State.isHoveredover != isHit)
                     {
-                        isTracking = true;
-                        TrackMouseEvent(&Tracker);
+                        Modifiedstates[Node].isHoveredover = true;
+                        return Node->isExclusive && Node->isExclusive(Modifiedstates[Node]);
                     }
-
-                    // Update the global state.
-                    Global.Mouse.Position = { float(LOWORD(Event.lParam)), float(HIWORD(Event.lParam)) };
-
-                    // Invalidate all children if the parent is bad.
-                    std::function<void(Element_t *)> Invalidate = [&](Element_t * Node) -> void
-                    {
-                        // Log the state-modification if needed, else just handle the next node.
-                        if (Node->State.isHoveredover) Modifiedstates[Node].isHoveredover = true;
-                        for (auto &Child : Node->Children) Invalidate(Child.get());
-                    };
-
-                    // Find if elements are hovered over.
-                    std::function<bool(Element_t *)> Lambda = [&](Element_t * Node) -> bool
-                    {
-                        // Check if the entity is hit.
-                        if (Global.Mouse.Position.x >= std::max(Node->Position.x, {}) &&
-                            Global.Mouse.Position.y >= std::max(Node->Position.y, {}) &&
-                            Global.Mouse.Position.x <= std::max(Node->Position.x + Node->Size.x, {}) &&
-                            Global.Mouse.Position.y <= std::max(Node->Position.y + Node->Size.y, {}))
-                        {
-                            // Check if a child wants to sink this event first.
-                            for (const auto &Child : Node->Children) if (Lambda(Child.get())) return true;
-
-                            // Log the state-modification if needed and return.
-                            Modifiedstates[Node].isHoveredover = Node->State.isHoveredover != true;
-                            return Node->isExclusive && Node->isExclusive(Modifiedstates[Node]);
-                        }
-
-                        // Else we invalidate it and its children.
-                        Invalidate(Node);
-                        return false;
-                    };
-
-                    // Check all elements from the root down.
-                    Lambda(Global.Rootelement.get());
-                    continue;
-                }
-                case WM_MOUSELEAVE:
+                    return false;
+                };
+                Lambda(Global.Rootelement.get());
+                continue;
+            }
+            if (Event.message == WM_MOUSELEAVE)
+            {
+                // Invalidate all states.
+                std::function<void(Element_t *)> Lambda = [&](Element_t *Node)
                 {
-                    // Invalidate all children.
-                    std::function<void(Element_t *)> Invalidate = [&](Element_t *Node) -> void
-                    {
-                        // Log the state-modification if needed, else just handle the next node.
-                        if (Node->State.isHoveredover) Modifiedstates[Node].isHoveredover = true;
-                        else if (Modifiedstates[Node].isHoveredover) Modifiedstates[Node].isHoveredover = false;
-                        for (auto &Child : Node->Children) Invalidate(Child.get());
-                    };
-
-                    Invalidate(Global.Rootelement.get());
-                    isTracking = false;
-                    continue;
-                }
+                    if (Node->State.Raw) Modifiedstates[Node].Raw = Node->State.Raw &= 0xFF;
+                    for (const auto &Item : Node->Children) Lambda(Item.get());
+                };
+                Lambda(Global.Rootelement.get());
+                isTracking = false;
+                continue;
             }
 
             // Mouse-clicking events.
-            switch (Event.message)
+            if (Event.message >= WM_LBUTTONDOWN && Event.message < WM_MOUSELAST)
             {
-                case WM_RBUTTONDOWN:
+                // Update the global state.
+                switch (Event.message)
                 {
-                    Global.Mouse.Flags.isRightdown = true;
-                    for (auto &[Node, State] : Modifiedstates)
-                    if (!Node->State.isRightclicked) State.isRightclicked = true;
-                    continue;
+                    case WM_MBUTTONDOWN: Global.Mouse.Flags.isMiddledown = true; break;
+                    case WM_RBUTTONDOWN: Global.Mouse.Flags.isRightdown = true; break;
+                    case WM_LBUTTONDOWN: Global.Mouse.Flags.isLeftdown = true; break;
+                    case WM_MBUTTONUP: Global.Mouse.Flags.isMiddledown = false; break;
+                    case WM_RBUTTONUP: Global.Mouse.Flags.isRightdown = false; break;
+                    case WM_LBUTTONUP: Global.Mouse.Flags.isLeftdown = false; break;
                 }
-                case WM_LBUTTONDOWN:
+
+                // Check all elements from the root down.
+                std::function<bool(Element_t *)> Lambda = [&](Element_t *Node) -> bool
                 {
-                    Global.Mouse.Flags.isLeftdown = true;
-                    for (auto &[Node, State] : Modifiedstates)
-                    if (!Node->State.isLeftclicked) State.isLeftclicked = true;
-                    continue;
-                }
-                case WM_MBUTTONDOWN:
-                {
-                    Global.Mouse.Flags.isMiddledown = true;
-                    for (auto &[Node, State] : Modifiedstates)
-                    if (!Node->State.isMiddleclicked) State.isMiddleclicked = true;
-                    continue;
-                }
-                case WM_RBUTTONUP:
-                {
-                    Global.Mouse.Flags.isRightdown = false;
-                    for (auto &[Node, State] : Modifiedstates)
-                    if (Node->State.isRightclicked) State.isRightclicked = true;
-                    continue;
-                }
-                case WM_LBUTTONUP:
-                {
-                    Global.Mouse.Flags.isLeftdown = false;
-                    for (auto &[Node, State] : Modifiedstates)
-                    if (Node->State.isLeftclicked) State.isLeftclicked = true;
-                    continue;
-                }
-                case WM_MBUTTONUP:
-                {
-                    Global.Mouse.Flags.isMiddledown = false;
-                    for (auto &[Node, State] : Modifiedstates)
-                    if (Node->State.isMiddleclicked) State.isMiddleclicked = true;
-                    continue;
-                }
+                    const auto isHit{ Hitcheck(Node) };
+
+                    // Check if a child wants to sink this event first.
+                    for (const auto &Child : Node->Children) if (Lambda(Child.get())) return true;
+
+                    // Set the local state and check if this element wants to sink the event.
+                    if (Node->State.isLeftclicked != Global.Mouse.Flags.isLeftdown) Modifiedstates[Node].isLeftclicked = true;
+                    if (Node->State.isRightclicked != Global.Mouse.Flags.isRightdown) Modifiedstates[Node].isRightclicked = true;
+                    if (Node->State.isMiddleclicked != Global.Mouse.Flags.isMiddledown) Modifiedstates[Node].isMiddleclicked = true;
+                    if (Modifiedstates.find(Node) != Modifiedstates.end()) return Node->isExclusive && Node->isExclusive(Modifiedstates[Node]);
+
+                    return false;
+                };
+                Lambda(Global.Rootelement.get());
+                continue;
             }
 
             // If Windows wants us to redraw, we oblige.
