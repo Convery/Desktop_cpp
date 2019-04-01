@@ -26,10 +26,10 @@ namespace Rendering
         We need to build a graph over the elements.
         So that we don't re-parse the JSON every frame.
     */
-    std::vector<void (*)(const vec4_t Viewport)> Drawcalls{};
-    void Renderframe(const vec4_t Viewport)
+    std::vector<void (*)()> Drawcalls{};
+    void Renderframe()
     {
-        for (const auto &Item : Drawcalls) Item(Viewport);
+        for (const auto &Item : Drawcalls) Item();
     }
     void Buildcallgraph(Element_t *Node)
     {

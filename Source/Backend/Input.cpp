@@ -113,12 +113,7 @@ namespace Window
             }
 
             // If Windows wants us to redraw, we oblige.
-            if (Event.message == WM_PAINT)
-            {
-                // Invalidate everything.
-                Global.Dirtyregion = { Global.Windowposition.x, Global.Windowposition.y,
-                    Global.Windowposition.x + Global.Windowsize.x, Global.Windowposition.y + Global.Windowsize.y };
-            }
+            if (Event.message == WM_PAINT) Global.Dirtyframe = true;
 
             // If we should quit, break the loop without processing the rest of the queue.
             if (Event.message == WM_SYSCOMMAND && Event.wParam == SC_CLOSE)

@@ -81,8 +81,7 @@ int __cdecl main(int argc, char **argv)
         Executeevent(Events::Enginestack, Events::Engineevent::TICK, std::chrono::duration<double>(Thisframe - Lastframe).count());
 
         // Check if we need to redraw the window-area.
-        auto &Region{ Global.Dirtyregion };
-        if (*(uint64_t *)&Region.Raw[0] || *(uint64_t *)&Region.Raw[2])
+        if (Global.Dirtyframe)
         {
             #if !defined(NDEBUG)
             // DEBUG: Notify components that we are going to repaint.
@@ -98,7 +97,7 @@ int __cdecl main(int argc, char **argv)
             auto Memorycontext = CreateCompatibleDC(Devicecontext);
 
             // Create a surface that we can draw to.
-            auto Surface = CreateCompatibleBitmap(Devicecontext, (int)(Region.x1 - Region.x0), (int)(Region.y1 - Region.y0));
+            auto Surface = CreateCompatibleBitmap(Devicecontext, (int)Global.Windowsize.x, (int)Global.Windowsize.y);
             auto Backup = (HBITMAP)SelectObject(Memorycontext, Surface);
 
             // Create a graphics object and set the screen transformation.
@@ -109,7 +108,7 @@ int __cdecl main(int argc, char **argv)
             Global.Drawingcontext->Clear(Gdiplus::Color::White);
 
             // Render the dirty area.
-            Rendering::Renderframe(Global.Dirtyregion);
+            Rendering::Renderframe();
 
             #if !defined(NDEBUG)
             // DEBUG: Notify components about presenting.
@@ -117,8 +116,7 @@ int __cdecl main(int argc, char **argv)
             #endif
 
             // Present to the window.
-            BitBlt(Devicecontext, (int)Region.x0 - Global.Windowposition.x, (int)Region.y0 - Global.Windowposition.y, (int)(Region.x1 - Region.x0),
-                   (int)(Region.y1 - Region.y0), Memorycontext, 0, 0, SRCCOPY);
+            BitBlt(Devicecontext, 0, 0, (int)Global.Windowsize.x, (int)Global.Windowsize.y, Memorycontext, 0, 0, SRCCOPY);
 
             // Restore the surface and do cleanup.
             SelectObject(Memorycontext, Backup);
@@ -128,8 +126,8 @@ int __cdecl main(int argc, char **argv)
             // Notify Windows, we are done painting.
             EndPaint((HWND)Global.Windowhandle, &Updateinformation);
 
-            // Clear the dirty area for the next frame.
-            Region = {};
+            // This frame is cleeeean.
+            Global.Dirtyframe = false;
         }
 
         // If we got an error, terminate.

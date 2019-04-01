@@ -53,7 +53,7 @@ struct Element_t
     // Callbacks triggered from the engine if they are implemented.
     void (*onStatechange)(const Elementstate_t State) {};
     bool (*isExclusive)(const Elementstate_t State) {};
-    void (*onRender)(const vec4_t Viewport) {};
+    void (*onRender)() {};
 
     /*
         NOTE(tcn): 7 bytes left on the line here.
@@ -85,14 +85,18 @@ struct
     std::unique_ptr<Element_t> Rootelement;
     const void *Windowhandle;
     vec2_t Windowposition;
-    vec4_t Dirtyregion;
     vec2_t Windowsize;
+    bool Dirtyframe;
 
     /*
-        NOTE(tcn): 2 free bytes here, use them or lose them.
+        NOTE(tcn): 17 free bytes here, use them or lose them.
     */
 };
 extern Globalstate_t Global;
+inline void Invalidatewindow()
+{
+    Global.Dirtyframe = true;
+}
 
 // Events that elements (or anyone; really) can subscribe to.
 namespace Events
@@ -156,9 +160,9 @@ namespace Composition
 // Wrappers for converting code to pretty colors.
 namespace Rendering
 {
-    void Renderframe(const vec4_t Viewport);
     void Buildcallgraph(Element_t *Node);
     void Clearcallgraph();
+    void Renderframe();
 
     namespace Gradient
     {

@@ -153,9 +153,8 @@ namespace Window
         };
         Lambda(Global.Rootelement.get());
 
-        // Invalidate everything.
-        Global.Dirtyregion = { Global.Windowposition.x, Global.Windowposition.y,
-            Global.Windowposition.x + Global.Windowsize.x, Global.Windowposition.y + Global.Windowsize.y };
+        // We need to repaint =(
+        Global.Dirtyframe = true;
 
         // Rebuild the callgraph.
         Rendering::Clearcallgraph();
