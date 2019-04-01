@@ -94,16 +94,17 @@ namespace Window
                 // Check all elements from the root down.
                 std::function<bool(Element_t *)> Lambda = [&](Element_t *Node) -> bool
                 {
-                    const auto isHit{ Hitcheck(Node) };
+                    if (Hitcheck(Node))
+                    {
+                        // Check if a child wants to sink this event first.
+                        for (const auto &Child : Node->Children) if (Lambda(Child.get())) return true;
 
-                    // Check if a child wants to sink this event first.
-                    for (const auto &Child : Node->Children) if (Lambda(Child.get())) return true;
-
-                    // Set the local state and check if this element wants to sink the event.
-                    if (Node->State.isLeftclicked != Global.Mouse.Flags.isLeftdown) Modifiedstates[Node].isLeftclicked = true;
-                    if (Node->State.isRightclicked != Global.Mouse.Flags.isRightdown) Modifiedstates[Node].isRightclicked = true;
-                    if (Node->State.isMiddleclicked != Global.Mouse.Flags.isMiddledown) Modifiedstates[Node].isMiddleclicked = true;
-                    if (Modifiedstates.find(Node) != Modifiedstates.end()) return Node->isExclusive && Node->isExclusive(Modifiedstates[Node]);
+                        // Set the local state and check if this element wants to sink the event.
+                        if (Node->State.isLeftclicked != Global.Mouse.Flags.isLeftdown) Modifiedstates[Node].isLeftclicked = true;
+                        if (Node->State.isRightclicked != Global.Mouse.Flags.isRightdown) Modifiedstates[Node].isRightclicked = true;
+                        if (Node->State.isMiddleclicked != Global.Mouse.Flags.isMiddledown) Modifiedstates[Node].isMiddleclicked = true;
+                        if (Modifiedstates.find(Node) != Modifiedstates.end()) return Node->isExclusive && Node->isExclusive(Modifiedstates[Node]);
+                    }
 
                     return false;
                 };
