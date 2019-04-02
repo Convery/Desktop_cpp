@@ -51,6 +51,7 @@
 
 // Third-party includes.
 #include <absl/container/inlined_vector.h>
+#include <parallel_hashmap/phmap.h>
 #include <nlohmann/json.hpp>
 
 // Restore warnings.

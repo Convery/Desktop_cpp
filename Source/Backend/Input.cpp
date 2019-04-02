@@ -24,7 +24,7 @@ namespace Window
         { sizeof(TRACKMOUSEEVENT), TME_LEAVE, HWND(Global.Windowhandle) };
 
         // Used for delayed element-modification until all are notified.
-        std::unordered_map<Element_t *, Elementstate_t> Modifiedstates;
+        phmap::flat_hash_map<Element_t *, Elementstate_t, std::hash<Element_t *>> Modifiedstates;
 
         // Non-blocking polling for messages.
         while (PeekMessageA(&Event, (HWND)Global.Windowhandle, NULL, NULL, PM_REMOVE) > 0)

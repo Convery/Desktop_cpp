@@ -11,13 +11,12 @@ namespace Composition
 {
     namespace Assets
     {
-        // TODO(tcn): Replace with absl::flat_hash_map later.
-        std::unordered_map<std::string, std::basic_string<uint8_t>> Fonts{};
-        std::unordered_map<std::string, std::basic_string<uint8_t>> Images{};
+        phmap::flat_hash_map<std::string, std::basic_string<uint8_t>> Fonts{};
+        phmap::flat_hash_map<std::string, std::basic_string<uint8_t>> Images{};
     }
 
     // Keep a map for by-string access to the elements.
-    std::unordered_map<std::string, std::shared_ptr<Element_t>> Elements;
+    phmap::flat_hash_map<std::string, std::shared_ptr<Element_t>> Elements;
 
     // Add a name for an element (mostly for debugging).
     void Registerelement(std::string Name, std::shared_ptr<Element_t> Element)
