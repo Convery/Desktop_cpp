@@ -6,7 +6,7 @@
 
 #include "../Stdinclude.hpp"
 
-inline void Createsearchbar()
+static void Createsearchbar()
 {
     static auto Searchbar = Composition::Getelement("Toolbar")->Children.emplace_back(std::make_shared<Element_t>());
     Searchbar->Properties.push_back({ "Margins", "[ 0.7, 0.0, 0.285, 0.0 ]" });
@@ -16,7 +16,7 @@ inline void Createsearchbar()
     };
     Composition::Registerelement("Toolbar.Searchbar", Searchbar);
 }
-inline void Createnavigation()
+static void Createnavigation()
 {
     static auto Navigation = Composition::Getelement("Toolbar")->Children.emplace_back(std::make_shared<Element_t>());
     Navigation->Properties.push_back({ "Margins", "[ 0.8, 0.0, 0.0, 0.0 ]" });
@@ -42,7 +42,7 @@ inline void Createnavigation()
     };
     Composition::Registerelement("Toolbar.Navigation.Frontbutton", Frontbutton);
 }
-inline void Createbuttons()
+static void Createbuttons()
 {
     static auto Closebutton = Composition::Getelement("Toolbar")->Children.emplace_back(std::make_shared<Element_t>());
     Closebutton->Properties.push_back({ "Margins", "[ 0.975, 0.5, 1.0, 0.0 ]" });
