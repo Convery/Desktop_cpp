@@ -86,18 +86,24 @@ inline void Createbuttons()
 }
 static void Createtoolbar()
 {
-    // Root-level component.
+    static bool shouldMove = false;
     static auto Toolbar = Global.Rootelement->Children.emplace_back(std::make_shared<Element_t>());
     Toolbar->Properties.push_back({ "Margins", "[ 0.0, 0.944, 0.0, 0.0 ]" });
+    Toolbar->onStatechange = [](const Elementstate_t State)
+    {
+        if (State.isLeftclicked) shouldMove ^= 1;
+    };
 
-    Subscribetostack(Events::Enginestack, Events::Engineevent::TICK, [](const double)
+    Subscribetostack(Events::Enginestack, Events::Engineevent::TICK, [](const double) -> void
     {
         static vec2_t Previous{};
 
-        if (Toolbar->State.isLeftclicked)
+        if (shouldMove)
         {
+            POINT Workaround{};
+            GetCursorPos(&Workaround);
             auto Windowpos{ Global.Windowposition };
-            const auto Current{ Global.Mouse.Position };
+            const vec2_t Current = instantiate(vec2_t, $.x = (float)Workaround.x, $.y = (float)Workaround.y);
             if (Previous.x + Previous.y == 0) Previous = Current;
 
             Windowpos.x += (Current.x - Previous.x);

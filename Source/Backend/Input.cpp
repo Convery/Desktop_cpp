@@ -69,7 +69,7 @@ namespace Window
                 // Invalidate all states.
                 std::function<void(Element_t *)> Lambda = [&](Element_t *Node)
                 {
-                    if (Node->State.Raw) Modifiedstates[Node].Raw = Node->State.Raw &= 0xFF;
+                    if (Node->State.Raw) Modifiedstates[Node].Raw = Node->State.Raw;
                     for (const auto &Item : Node->Children) Lambda(Item.get());
                 };
                 Lambda(Global.Rootelement.get());
