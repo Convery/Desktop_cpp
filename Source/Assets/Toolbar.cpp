@@ -6,6 +6,32 @@
 
 #include "../Stdinclude.hpp"
 
+static void Createdropdown()
+{
+    static auto Notificationbutton = Composition::Getelement("Toolbar")->Children.emplace_back(std::make_shared<Element_t>());
+    Notificationbutton->Properties.push_back({ "Margins", "[ 0.965, 0.0, 0.9035, 0.0 ]" });
+    Notificationbutton->onRender = []() -> void
+    {
+        Rendering::Solid::Fillrectangle(Elementbox(Notificationbutton), { 0xFF, 0xFF, 0x00, 1 });
+    };
+    Composition::Registerelement("Toolbar.Notificationbutton", Notificationbutton);
+
+    static auto Socialbutton = Composition::Getelement("Toolbar")->Children.emplace_back(std::make_shared<Element_t>());
+    Socialbutton->Properties.push_back({ "Margins", "[ 0.965, 0.0, 0.866, 0.0 ]" });
+    Socialbutton->onRender = []() -> void
+    {
+        Rendering::Solid::Fillrectangle(Elementbox(Socialbutton), { 0xFF, 0xFF, 0x00, 1 });
+    };
+    Composition::Registerelement("Toolbar.Socialbutton", Socialbutton);
+
+    static auto Accountbutton = Composition::Getelement("Toolbar")->Children.emplace_back(std::make_shared<Element_t>());
+    Accountbutton->Properties.push_back({ "Margins", "[ 0.965, 0.0, 0.829, 0.0 ]" });
+    Accountbutton->onRender = []() -> void
+    {
+        Rendering::Solid::Fillrectangle(Elementbox(Accountbutton), { 0xFF, 0xFF, 0x00, 1 });
+    };
+    Composition::Registerelement("Toolbar.Accountbutton", Accountbutton);
+}
 static void Createsearchbar()
 {
     static auto Searchbar = Composition::Getelement("Toolbar")->Children.emplace_back(std::make_shared<Element_t>());
@@ -45,11 +71,13 @@ static void Createnavigation()
 static void Createbuttons()
 {
     static auto Closebutton = Composition::Getelement("Toolbar")->Children.emplace_back(std::make_shared<Element_t>());
-    Closebutton->Properties.push_back({ "Margins", "[ 0.975, 0.5, 1.0, 0.0 ]" });
+    Closebutton->Properties.push_back({ "Margins", "[ 0.97, 0.5, 1.0, 0.0 ]" });
     Closebutton->onRender = []() -> void
     {
-        if (Closebutton->State.isLeftclicked) Rendering::Solid::Fillrectangle(Elementbox(Closebutton), { 0xFF, 0x00, 0x00, 0.3 });
-        if (Closebutton->State.isHoveredover) Rendering::Solid::Fillrectangle(Elementbox(Closebutton), { 0x00, 0xFF, 0x00, 1 });
+        Rendering::Solid::Fillrectangle(Elementbox(Closebutton), { 0xFF, 0x00, 0x00, 0.6 });
+        if (Closebutton->State.isHoveredover) Rendering::Solid::Fillrectangle(Elementbox(Closebutton), { 0xFF, 0xFF, 0xFF, 0.3 });
+        if (Closebutton->State.isLeftclicked) Rendering::Solid::Fillrectangle(Elementbox(Closebutton), { 0xFF, 0xFF, 0xFF, 0.3 });
+
         // TODO(tcn): Render texture / font 'X'
     };
     Closebutton->isExclusive = [](Elementstate_t State) -> bool
@@ -69,7 +97,7 @@ static void Createbuttons()
     Composition::Registerelement("Toolbar.Closebutton", Closebutton);
 
     static auto Maxbutton = Composition::Getelement("Toolbar")->Children.emplace_back(std::make_shared<Element_t>());
-    Maxbutton->Properties.push_back({ "Margins", "[ 0.975, 0.5, 0.972, 0.0 ]" });
+    Maxbutton->Properties.push_back({ "Margins", "[ 0.97, 0.5, 0.9685, 0.0 ]" });
     Maxbutton->onRender = []() -> void
     {
         Rendering::Solid::Fillrectangle(Elementbox(Maxbutton), { 0xFF, 0xED, 0x00, 1 });
@@ -77,7 +105,7 @@ static void Createbuttons()
     Composition::Registerelement("Toolbar.Maxbutton", Maxbutton);
 
     static auto Minbutton = Composition::Getelement("Toolbar")->Children.emplace_back(std::make_shared<Element_t>());
-    Minbutton->Properties.push_back({ "Margins", "[ 0.975, 0.5, 0.945, 0.0 ]" });
+    Minbutton->Properties.push_back({ "Margins", "[ 0.97, 0.5, 0.9365, 0.0 ]" });
     Minbutton->onRender = []() -> void
     {
         Rendering::Solid::Fillrectangle(Elementbox(Minbutton), { 0xFF, 0x00, 0xFF, 1 });
@@ -125,6 +153,7 @@ static void Createtoolbar()
     Createbuttons();
     Createnavigation();
     Createsearchbar();
+    Createdropdown();
 }
 
 // Create a callback for initialization on startup.

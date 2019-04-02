@@ -5,8 +5,8 @@
     "Elements":
     [
         {
-            "Name": "NA",
-            "Margins": "[ 0.0, 0.93, 0.0, 1.0 ]"
+            "Name": "Toolbar.Minbuttonw",
+            "Margins": "[ 0.97, 0.5, 0.9365, 0.0 ]"
         }
     ]
 }
