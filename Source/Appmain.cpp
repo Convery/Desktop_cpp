@@ -24,8 +24,24 @@ int __cdecl main(int argc, char **argv)
     // As we are single-threaded (in release), boost our priority.
     SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
 
-    // Touch the global state to ensure it's aligned in cache.
-    if (Global.Errorno == 0) Global.Rootelement = std::make_unique<Element_t>();
+    // NOTE(tcn): This is always true, we just touch Global to have it aligned in cache.
+    if (Global.Errorno == 0)
+    {
+        // Create the default panels that components can attach to.
+        Global.Rootelement = std::make_unique<Element_t>();
+
+        auto Rightbar = Global.Rootelement->Children.emplace_back(std::make_shared<Element_t>());
+        auto Leftbar = Global.Rootelement->Children.emplace_back(std::make_shared<Element_t>());
+        auto Toolbar = Global.Rootelement->Children.emplace_back(std::make_shared<Element_t>());
+
+        Rightbar->Properties.push_back({ "Margins", "[ 0.8, 0.056, 0.0, 0.0 ]" });
+        Leftbar->Properties.push_back({ "Margins", "[ 0.8, 0.056, 0.0, 1.0 ]" });
+        Toolbar->Properties.push_back({ "Margins", "[ 0.0, 0.944, 0.0, 0.0 ]" });
+
+        Composition::Registerelement("Rightbar", Rightbar);
+        Composition::Registerelement("Leftbar", Leftbar);
+        Composition::Registerelement("Toolbar", Toolbar);
+    }
 
     // Log the termination for tracing.
     Subscribetostack(Events::Enginestack, Events::Engineevent::TERMINATION, []()
@@ -34,10 +50,8 @@ int __cdecl main(int argc, char **argv)
     // Notify all listeners that we are starting up.
     Executeevent(Events::Enginestack, Events::Engineevent::STARTUP);
 
-    // Developers load the configuration from disk.
+    // Developers can load the configuration from disk.
     #if !defined(NDEBUG)
-
-    // Reload the file if it changes.
     std::thread([]()
     {
         FILETIME Lastresult{};
@@ -66,6 +80,9 @@ int __cdecl main(int argc, char **argv)
 
     }).detach();
     #endif
+
+    // Ensure that everything's initialized for the frame.
+    Window::Forceredraw();
 
     // Main-loop, quit on error.
     while (true)

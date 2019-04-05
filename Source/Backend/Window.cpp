@@ -53,6 +53,7 @@ namespace
 
             // Resize the window to the default size (1280*720).
             // TODO(tcn): Save the window size and load from a config.
+            Global.Windowsize = { 1280, 720 };
             Global.Windowposition = { Desktoparea.x + (Width - 1280) * 0.5f, Desktoparea.y + (Height - 720) * 0.5f };
             SetWindowPos(Windowhandle, NULL, (int)Global.Windowposition.x, (int)Global.Windowposition.y, 1280, 720, SWP_NOSENDCHANGING);
             ShowWindow(Windowhandle, SW_SHOWNORMAL);
