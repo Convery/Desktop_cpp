@@ -1,3 +1,4 @@
+# Convery (tcn@ayria.se)
 cmake_minimum_required(VERSION 3.1)
 project(Desktop_cpp)
 
@@ -17,7 +18,7 @@ set(CMAKE_DEBUG_POSTFIX "d")
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" OR ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
 	set(CORE_LIBS dl pthread)
 else()
-	set(CORE_LIBS)
+	set(CORE_LIBS gdiplus)
 endif()
 
 # Extra flags for compiling and linking.
@@ -30,8 +31,8 @@ if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" OR ${CMAKE_CXX_COMPILER_ID} STREQUAL
 		set(EXTRA_LNKFLAGS ${EXTRA_LNKFLAGS} "-m64 -static-libgcc -static-libstdc++")
     endif()
 else()
-	set(EXTRA_CMPFLAGS ${EXTRA_CMPFLAGS} "/permissive- /Gy /Gw /GS /GA /GL /guard:cf /F 262144")
-	set(EXTRA_LNKFLAGS ${EXTRA_LNKFLAGS} "/subsystem:windows /entry:mainCRTStartup /LTCG /safeseh:no /filealign:512 /opt:ref /guard:cf /incremental:no /stack:262144")
+    set(EXTRA_CMPFLAGS ${EXTRA_CMPFLAGS} "/permissive- /Gy /Gv /Gw /GS- /GL")
+    set(EXTRA_LNKFLAGS ${EXTRA_LNKFLAGS} "/subsystem:windows /entry:mainCRTStartup /LTCG /safeseh:no /filealign:512 /opt:ref /incremental:no")
 endif()
 
 # Set warningflags per compiler.
@@ -60,10 +61,11 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 endif()
 
 # Third-party libraries, prefer find_library() and find_path().
-#find_path(JSON_INC nlohmann/json.hpp)
-#set(MODULE_INCS ${JSON_INC})
-set(MODULE_LIBS ${MODULE_LIBS})
-include_directories(${MODULE_INCS})
+find_path(HASHMAP_INC parallel_hashmap)
+find_path(JSON_INC nlohmann)
+find_path(ABSL_INC absl)
+set(MODULE_LIBS )
+include_directories(${JSON_INC} ${HASHMAP_INC} ${ABSL_INC})
 
 # Just pull all the files from /Source
 file(GLOB_RECURSE SOURCES "Source/*.cpp")
