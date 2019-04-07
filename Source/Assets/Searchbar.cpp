@@ -9,7 +9,7 @@
 static void Createsearchbar()
 {
     static auto Searchbar = Composition::Getelement("Toolbar")->Children.emplace_back(std::make_shared<Element_t>());
-    Searchbar->Properties.push_back({ "Margins", "[ 0.7, 0.0, 0.285, 0.0 ]" });
+    Searchbar->Margins = { 0.7, 0.0, 0.285, 0.0 };
     Searchbar->onRender = []() -> void
     {
         Rendering::Solid::Fillrectangle(Elementbox(Searchbar), { 0xFF, 0xFF, 0x00, 1 });
