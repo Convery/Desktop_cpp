@@ -43,8 +43,8 @@ struct Element_t
     vec2_t Position, Size{};
     Elementstate_t State{};
 
-    // We keep all properties as readable JSON. Vector is 16 bytes, unordered_map is 40.
-    std::vector <std::pair<std::string, std::string>> Properties{};
+    // Parsed margins rather than having them readable.
+    vec4_t Margins;
 
     // We generally only have 1 child, inline it (12 bytes).
     absl::InlinedVector<std::shared_ptr<Element_t>, 1> Children{};
