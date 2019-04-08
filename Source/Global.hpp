@@ -175,6 +175,9 @@ namespace Rendering
 
     void Drawimage(vec2_t Position, vec2_t Size, void *Pixels, vec2_t Offset = {});
     Texture32_t Creategradient(rgba_t Color1, rgba_t Color2, uint32_t Steps);
+
+    void Registerfont(std::basic_string_view<uint8_t> Data);
+    void Drawtext(vec2_t Position, size_t Size, rgba_t Color, std::wstring_view Fontname, std::wstring_view Text);
 }
 
 // Re-enable padding.
