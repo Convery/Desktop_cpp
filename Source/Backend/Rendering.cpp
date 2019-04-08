@@ -160,14 +160,15 @@ namespace Rendering
         return Result;
     };
 
-    Gdiplus::PrivateFontCollection Fontcollection;
+    Gdiplus::PrivateFontCollection *Fontcollection;
     void Registerfont(std::basic_string_view<uint8_t> Data)
     {
-        Fontcollection.AddMemoryFont(Data.data(), Data.size());
+        if (!Fontcollection) Fontcollection = new Gdiplus::PrivateFontCollection;
+        Fontcollection->AddMemoryFont(Data.data(), Data.size());
     }
     void Drawtext(vec2_t Position, size_t Size, rgba_t Color, std::wstring_view Fontname, std::wstring_view Text)
     {
-        const auto Font = new Gdiplus::Font(Fontname.data(), Size, 0, Gdiplus::UnitPixel, &Fontcollection);
+        const auto Font = new Gdiplus::Font(Fontname.data(), Size, 0, Gdiplus::UnitPixel, Fontcollection);
         const auto Brush = new Gdiplus::SolidBrush(fromRGBA(Color));
 
         Gdiplus::PointF Point(Position.x, Position.y);
