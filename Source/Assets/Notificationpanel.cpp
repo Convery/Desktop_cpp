@@ -20,7 +20,7 @@ static void Createnotifications()
     Notificationdropdown->Margins = { 0.0, 0.0, 0.0, -4000.0 };
     Notificationdropdown->onRender = []() -> void
     {
-        Rendering::Solid::Fillrectangle(Elementbox(Notificationdropdown), { 0x0, 0x0, 0x88, 1 });
+        Rendering::Solid::Fillrectangle(Elementbox(Notificationdropdown), { 0x0, 0x0, 0x88, 0.3 });
     };
     Composition::Registerelement("Rightbar.Notificationdropdown", Notificationdropdown);
 

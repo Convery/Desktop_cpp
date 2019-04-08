@@ -20,7 +20,7 @@ static void Createsocial()
     Socialdropdown->Margins = { 0.0, 0.0, 0.0, -4000.0 };
     Socialdropdown->onRender = []() -> void
     {
-        Rendering::Solid::Fillrectangle(Elementbox(Socialdropdown), { 0x00, 0x88, 0x00, 1 });
+        Rendering::Solid::Fillrectangle(Elementbox(Socialdropdown), { 0x00, 0x88, 0x00, 0.3 });
     };
     Composition::Registerelement("Rightbar.Socialdropdown", Socialdropdown);
 

@@ -20,7 +20,7 @@ static void Createaccountview()
     Accountdropdown->Margins = { 0.0, 0.0, 0.0, -4000.0 };
     Accountdropdown->onRender = []() -> void
     {
-        Rendering::Solid::Fillrectangle(Elementbox(Accountdropdown), { 0x88, 0x00, 0x00, 1 });
+        Rendering::Solid::Fillrectangle(Elementbox(Accountdropdown), { 0x88, 0x00, 0x00, 0.3 });
     };
     Composition::Registerelement("Rightbar.Accountdropdown", Accountdropdown);
 
