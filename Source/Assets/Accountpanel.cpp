@@ -12,7 +12,8 @@ static void Createaccountview()
     Accountbutton->Margins = { 0.965, 0.0, 0.829, 0.0 };
     Accountbutton->onRender = []() -> void
     {
-        Rendering::Solid::Fillrectangle(Elementbox(Accountbutton), { 0x886, 0x00, 0x00, 1 });
+        Rendering::Solid::Outlinerectangle(Elementbox(Accountbutton), { 100, 100, 0, 0.6 });
+        if (Accountbutton->State.isHoveredover) Rendering::Solid::Fillrectangle(Elementbox(Accountbutton), { 100, 100, 0, 0.6 });
     };
     Composition::Registerelement("Toolbar.Accountbutton", Accountbutton);
 
@@ -44,6 +45,8 @@ static void Createaccountview()
             if(Tick) Speed = (0 - Accountdropdown->Margins.y1) / Remainingtime;
             else Speed = (-Accountdropdown->Size.y - Accountdropdown->Margins.y1) / Remainingtime;
         }
+
+        Invalidatewindow();
     };
     Subscribetostack(Events::Enginestack, Events::Engineevent::TICK, [](const double Deltatime) -> void
     {

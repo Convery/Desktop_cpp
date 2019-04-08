@@ -12,9 +12,8 @@ static void Createbuttons()
     Closebutton->Margins = { 0.97, 0.5, 1.0, 0.0 };
     Closebutton->onRender = []() -> void
     {
-        Rendering::Solid::Fillrectangle(Elementbox(Closebutton), { 0xFF, 0x00, 0x00, 0.6 });
-        if (Closebutton->State.isHoveredover) Rendering::Solid::Fillrectangle(Elementbox(Closebutton), { 0xFF, 0xFF, 0xFF, 0.3 });
-        if (Closebutton->State.isLeftclicked) Rendering::Solid::Fillrectangle(Elementbox(Closebutton), { 0xFF, 0xFF, 0xFF, 0.3 });
+        Rendering::Solid::Outlinerectangle(Elementbox(Closebutton), { 100, 100, 0, 0.6 });
+        if(Closebutton->State.isHoveredover) Rendering::Solid::Fillrectangle(Elementbox(Closebutton), { 100, 100, 0, 0.6 });
 
         // TODO(tcn): Render texture / font 'X'
     };
@@ -38,16 +37,20 @@ static void Createbuttons()
     Maxbutton->Margins = { 0.97, 0.5, 0.9685, 0.0 };
     Maxbutton->onRender = []() -> void
     {
-        Rendering::Solid::Fillrectangle(Elementbox(Maxbutton), { 0xFF, 0xED, 0x00, 1 });
+        Rendering::Solid::Outlinerectangle(Elementbox(Maxbutton), { 100, 100, 0, 0.6 });
+        if (Maxbutton->State.isHoveredover) Rendering::Solid::Fillrectangle(Elementbox(Maxbutton), { 100, 100, 0, 0.6 });
     };
+    Maxbutton->onStatechange = [](Elementstate_t) { Invalidatewindow(); };
     Composition::Registerelement("Toolbar.Maxbutton", Maxbutton);
 
     static auto Minbutton = Composition::Getelement("Toolbar")->Children.emplace_back(std::make_shared<Element_t>());
     Minbutton->Margins = { 0.97, 0.5, 0.9365, 0.0 };
     Minbutton->onRender = []() -> void
     {
-        Rendering::Solid::Fillrectangle(Elementbox(Minbutton), { 0xFF, 0x00, 0xFF, 1 });
+        Rendering::Solid::Outlinerectangle(Elementbox(Minbutton), { 100, 100, 0, 0.6 });
+        if (Minbutton->State.isHoveredover) Rendering::Solid::Fillrectangle(Elementbox(Minbutton), { 100, 100, 0, 0.6 });
     };
+    Minbutton->onStatechange = [](Elementstate_t) { Invalidatewindow(); };
     Composition::Registerelement("Toolbar.Minbutton", Minbutton);
 }
 static void Createtoolbar()

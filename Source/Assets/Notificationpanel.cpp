@@ -12,7 +12,8 @@ static void Createnotifications()
     Notificationbutton->Margins = { 0.965, 0.0, 0.9035, 0.0 };
     Notificationbutton->onRender = []() -> void
     {
-        Rendering::Solid::Fillrectangle(Elementbox(Notificationbutton), { 0x00, 0x00, 0x88, 1 });
+        Rendering::Solid::Outlinerectangle(Elementbox(Notificationbutton), { 100, 100, 0, 0.6 });
+        if (Notificationbutton->State.isHoveredover) Rendering::Solid::Fillrectangle(Elementbox(Notificationbutton), { 100, 100, 0, 0.6 });
     };
     Composition::Registerelement("Toolbar.Notificationbutton", Notificationbutton);
 
@@ -44,6 +45,7 @@ static void Createnotifications()
             if(Tick) Speed = (0 - Notificationdropdown->Margins.y1) / Remainingtime;
             else Speed = (-Notificationdropdown->Size.y - Notificationdropdown->Margins.y1) / Remainingtime;
         }
+        Invalidatewindow();
     };
     Subscribetostack(Events::Enginestack, Events::Engineevent::TICK, [](const double Deltatime) -> void
     {

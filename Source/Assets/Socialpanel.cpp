@@ -12,7 +12,8 @@ static void Createsocial()
     Socialbutton->Margins = { 0.965, 0.0, 0.866, 0.0 };
     Socialbutton->onRender = []() -> void
     {
-        Rendering::Solid::Fillrectangle(Elementbox(Socialbutton), { 0x00, 0x88, 0x00, 1 });
+        Rendering::Solid::Outlinerectangle(Elementbox(Socialbutton), { 100, 100, 0, 0.6 });
+        if (Socialbutton->State.isHoveredover) Rendering::Solid::Fillrectangle(Elementbox(Socialbutton), { 100, 100, 0, 0.6 });
     };
     Composition::Registerelement("Toolbar.Socialbutton", Socialbutton);
 
@@ -44,6 +45,7 @@ static void Createsocial()
             if(Tick) Speed = (0 - Socialdropdown->Margins.y1) / Remainingtime;
             else Speed = (-Socialdropdown->Size.y - Socialdropdown->Margins.y1) / Remainingtime;
         }
+        Invalidatewindow();
     };
     Subscribetostack(Events::Enginestack, Events::Engineevent::TICK, [](const double Deltatime) -> void
     {
