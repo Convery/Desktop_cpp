@@ -9,7 +9,7 @@
 static void Createbuttons()
 {
     static auto Closebutton = Composition::Getelement("Toolbar")->Children.emplace_back(std::make_shared<Element_t>());
-    Closebutton->Properties.push_back({ "Margins", "[ 0.97, 0.5, 1.0, 0.0 ]" });
+    Closebutton->Margins = { 0.97, 0.5, 1.0, 0.0 };
     Closebutton->onRender = []() -> void
     {
         Rendering::Solid::Fillrectangle(Elementbox(Closebutton), { 0xFF, 0x00, 0x00, 0.6 });
@@ -35,7 +35,7 @@ static void Createbuttons()
     Composition::Registerelement("Toolbar.Closebutton", Closebutton);
 
     static auto Maxbutton = Composition::Getelement("Toolbar")->Children.emplace_back(std::make_shared<Element_t>());
-    Maxbutton->Properties.push_back({ "Margins", "[ 0.97, 0.5, 0.9685, 0.0 ]" });
+    Maxbutton->Margins = { 0.97, 0.5, 0.9685, 0.0 };
     Maxbutton->onRender = []() -> void
     {
         Rendering::Solid::Fillrectangle(Elementbox(Maxbutton), { 0xFF, 0xED, 0x00, 1 });
@@ -43,7 +43,7 @@ static void Createbuttons()
     Composition::Registerelement("Toolbar.Maxbutton", Maxbutton);
 
     static auto Minbutton = Composition::Getelement("Toolbar")->Children.emplace_back(std::make_shared<Element_t>());
-    Minbutton->Properties.push_back({ "Margins", "[ 0.97, 0.5, 0.9365, 0.0 ]" });
+    Minbutton->Margins = { 0.97, 0.5, 0.9365, 0.0 };
     Minbutton->onRender = []() -> void
     {
         Rendering::Solid::Fillrectangle(Elementbox(Minbutton), { 0xFF, 0x00, 0xFF, 1 });
@@ -78,7 +78,7 @@ static void Createtoolbar()
     });
     Toolbar->onRender = []() -> void
     {
-        Rendering::Solid::Fillrectangle(Elementbox(Toolbar), { 0x11, 0x0f, 0x0c, 1 });
+        Rendering::Solid::Fillrectangle(Elementbox(Toolbar), { 10, 15, 21, 1 });
     };
     Toolbar->onStatechange = [](const Elementstate_t State) -> void
     {

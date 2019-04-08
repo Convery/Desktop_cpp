@@ -40,23 +40,11 @@ namespace Composition
         auto Element = Getelement(Object["Name"]);
         if (!Element) return;
 
-        // Update all requested properties.
-        for (const auto &Iterator : Object.items())
+        // Just update the margins for now.
+        if (!Object["Margins"].is_null())
         {
-            // Check if it's in the vector already.
-            for (auto &[Key, Value] : Element->Properties)
-            {
-                if (Key == Iterator.key())
-                {
-                    Value = Iterator.value().get<std::string>();
-                    goto LABEL_UPDATED;
-                }
-            }
-
-            // Else we just add it.
-            Element->Properties.push_back({ Iterator.key(), Iterator.value().get<std::string>() });
-
-            LABEL_UPDATED:;
+            std::vector<float> Parsed = Object["Margins"];
+            Parsed.resize(4); Element->Margins = { Parsed[0], Parsed[1], Parsed[2], Parsed[3] };
         }
     }
 

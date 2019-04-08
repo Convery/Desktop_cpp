@@ -5,8 +5,8 @@
     "Elements":
     [
         {
-            "Name": "Leftbar.Statusw",
-            "Margins": "[ 0.0, 0.95, 0.0, 1 ]"
+            "Name": "Leftbar.Stats2",
+            "Margins": [ 0.02, 0.95, 0.5, 0.113 ]
         }
     ]
 }

@@ -43,8 +43,8 @@ struct Element_t
     vec2_t Position, Size{};
     Elementstate_t State{};
 
-    // We keep all properties as readable JSON. Vector is 16 bytes, unordered_map is 40.
-    std::vector <std::pair<std::string, std::string>> Properties{};
+    // Parsed margins rather than having them readable.
+    vec4_t Margins;
 
     // We generally only have 1 child, inline it (12 bytes).
     absl::InlinedVector<std::shared_ptr<Element_t>, 1> Children{};
@@ -164,24 +164,6 @@ namespace Rendering
     void Clearcallgraph();
     void Renderframe();
 
-    namespace Gradient
-    {
-        void Outlinepolygon(std::vector<vec2_t> &&Points, rgba_t Color1, rgba_t Color2, uint32_t Steps);
-        void Fillpolygon(std::vector<vec2_t> &&Points, rgba_t Color1, rgba_t Color2, uint32_t Steps);
-        void Line(vec2_t Start, vec2_t Stop, rgba_t Color1, rgba_t Color2, uint32_t Steps);
-        void Outlinerectangle(vec4_t Region, rgba_t Color1, rgba_t Color2, uint32_t Steps);
-        void Fillrectangle(vec4_t Region, rgba_t Color1, rgba_t Color2, uint32_t Steps);
-    }
-
-    namespace Textured
-    {
-        void Outlinepolygon(std::vector<vec2_t> &&Points, vec2_t Anchor, Texture32_t Texture);
-        void Fillpolygon(std::vector<vec2_t> &&Points, vec2_t Anchor, Texture32_t Texture);
-        void Line(vec2_t Start, vec2_t Stop, vec2_t Anchor, Texture32_t Texture);
-        void Outlinerectangle(vec4_t Region, vec2_t Anchor, Texture32_t Texture);
-        void Fillrectangle(vec4_t Region, vec2_t Anchor, Texture32_t Texture);
-    }
-
     namespace Solid
     {
         void Outlinepolygon(std::vector<vec2_t> &&Points, rgba_t Color);
@@ -190,6 +172,13 @@ namespace Rendering
         void Outlinerectangle(vec4_t Region, rgba_t Color);
         void Fillrectangle(vec4_t Region, rgba_t Color);
     }
+
+    void Drawimage(vec2_t Position, vec2_t Size, void *Pixels, vec2_t Offset = {});
+    Texture32_t Creategradient(rgba_t Color1, rgba_t Color2, uint32_t Steps);
+
+    void Registerfont(std::basic_string_view<uint8_t> Data);
+    void Drawtext(vec2_t Position, size_t Size, rgba_t Color, std::wstring_view Fontname, std::wstring_view Text);
+    void Drawtextcentered(vec2_t Position, size_t Size, rgba_t Color, std::wstring_view Fontname, std::wstring_view Text);
 }
 
 // Re-enable padding.

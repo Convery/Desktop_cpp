@@ -34,9 +34,9 @@ int __cdecl main(int argc, char **argv)
         auto Leftbar = Global.Rootelement->Children.emplace_back(std::make_shared<Element_t>());
         auto Toolbar = Global.Rootelement->Children.emplace_back(std::make_shared<Element_t>());
 
-        Rightbar->Properties.push_back({ "Margins", "[ 0.8, 0.056, 0.0, 0.0 ]" });
-        Leftbar->Properties.push_back({ "Margins", "[ 0.8, 0.056, 0.0, 1.0 ]" });
-        Toolbar->Properties.push_back({ "Margins", "[ 0.0, 0.944, 0.0, 0.0 ]" });
+        Rightbar->Margins = { 0.8, 0.056, 1.0, 1.0 };
+        Leftbar->Margins = { 0.8, 0.056, 0.0, 1.0 };
+        Toolbar->Margins = { 0.0, 0.944, 0.0, 0.0 };
 
         Composition::Registerelement("Rightbar", Rightbar);
         Composition::Registerelement("Leftbar", Leftbar);
