@@ -5,8 +5,8 @@
     "Elements":
     [
         {
-            "Name": "Rightbar.Socialdropdown2",
-            "Margins": [ 0.0, 0.0, 0.0, 400.0 ]
+            "Name": "Leftbar.Stats2",
+            "Margins": [ 0.02, 0.95, 0.5, 0.113 ]
         }
     ]
 }

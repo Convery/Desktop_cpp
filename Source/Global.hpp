@@ -178,6 +178,7 @@ namespace Rendering
 
     void Registerfont(std::basic_string_view<uint8_t> Data);
     void Drawtext(vec2_t Position, size_t Size, rgba_t Color, std::wstring_view Fontname, std::wstring_view Text);
+    void Drawtextcentered(vec2_t Position, size_t Size, rgba_t Color, std::wstring_view Fontname, std::wstring_view Text);
 }
 
 // Re-enable padding.

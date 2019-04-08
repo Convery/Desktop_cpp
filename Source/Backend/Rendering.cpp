@@ -177,4 +177,18 @@ namespace Rendering
         delete Font;
         delete Brush;
     }
+    void Drawtextcentered(vec2_t Position, size_t Size, rgba_t Color, std::wstring_view Fontname, std::wstring_view Text)
+    {
+        const auto Font = new Gdiplus::Font(Fontname.data(), Size, 0, Gdiplus::UnitPixel, Fontcollection);
+        const auto Brush = new Gdiplus::SolidBrush(fromRGBA(Color));
+
+        Gdiplus::StringFormat Stringformat;
+        Stringformat.SetAlignment(Gdiplus::StringAlignmentCenter);
+
+        Gdiplus::PointF Point(Position.x, Position.y);
+        Global.Drawingcontext->DrawString(Text.data(), -1, Font, Point, &Stringformat, Brush);
+
+        delete Font;
+        delete Brush;
+    }
 }
