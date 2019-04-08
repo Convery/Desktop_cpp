@@ -5,6 +5,7 @@
 */
 
 #include "../Stdinclude.hpp"
+#include "Assets.hpp"
 
 static void Createnavigationbuttons()
 {
@@ -13,6 +14,8 @@ static void Createnavigationbuttons()
     Navigation->onRender = []() -> void
     {
         // TODO(tcn): Render an Ayria logo here.
+        static Texture32_t Background = { {256, 40}, (pixel32_t *)Assets::NavigationBG.data() };
+        Rendering::Textured::Fillrectangle(Elementbox(Navigation), Navigation->Position, Background);
     };
     Composition::Registerelement("Toolbar.Navigation", Navigation);
 
@@ -20,7 +23,7 @@ static void Createnavigationbuttons()
     Backbutton->Margins = { 0.7, 0.0, 0.0, 0.0 };
     Backbutton->onRender = []() -> void
     {
-        Rendering::Solid::Fillrectangle(Elementbox(Backbutton), { 0xFF, 0x33, 0xFF, 1 });
+        //Rendering::Solid::Fillrectangle(Elementbox(Backbutton), { 0xFF, 0x33, 0xFF, 1 });
     };
     Composition::Registerelement("Toolbar.Navigation.Backbutton", Backbutton);
 
@@ -28,7 +31,7 @@ static void Createnavigationbuttons()
     Frontbutton->Margins = { 0.7, 0.0, 1.0, 0.0 };
     Frontbutton->onRender = []() -> void
     {
-        Rendering::Solid::Fillrectangle(Elementbox(Frontbutton), { 0xFF, 0xEE, 0xFF, 1 });
+        //Rendering::Solid::Fillrectangle(Elementbox(Frontbutton), { 0xFF, 0xEE, 0xFF, 1 });
     };
     Composition::Registerelement("Toolbar.Navigation.Frontbutton", Frontbutton);
 

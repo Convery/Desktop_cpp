@@ -56,7 +56,17 @@ namespace Rendering
         void Fillpolygon(std::vector<vec2_t> &&Points, vec2_t Anchor, Texture32_t Texture);
         void Line(vec2_t Start, vec2_t Stop, vec2_t Anchor, Texture32_t Texture);
         void Outlinerectangle(vec4_t Region, vec2_t Anchor, Texture32_t Texture);
-        void Fillrectangle(vec4_t Region, vec2_t Anchor, Texture32_t Texture);
+        void Fillrectangle(vec4_t Region, vec2_t Anchor, Texture32_t Texture)
+        {
+            BITMAPINFO BMI{ sizeof(BITMAPINFO), Texture.Size.x, -Texture.Size.y, 1, 32 };
+            vec2_t Position{ Region.x0 - Anchor.x, Region.y0 - Anchor.y };
+
+            auto Context = Global.Drawingcontext->GetHDC();
+            SetDIBitsToDevice(Context, Position.x, Position.y,
+                              std::min(Region.x1 - Region.x0, Texture.Size.x), std::min(Region.y1 - Region.y0, Texture.Size.y),
+                              0, 0, 0, Texture.Size.y, Texture.Data, &BMI, DIB_RGB_COLORS);
+            Global.Drawingcontext->ReleaseHDC(Context);
+        }
     }
 
     namespace Solid
