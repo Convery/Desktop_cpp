@@ -164,15 +164,6 @@ namespace Rendering
     void Clearcallgraph();
     void Renderframe();
 
-    namespace Gradient
-    {
-        void Outlinepolygon(std::vector<vec2_t> &&Points, rgba_t Color1, rgba_t Color2, uint32_t Steps);
-        void Fillpolygon(std::vector<vec2_t> &&Points, rgba_t Color1, rgba_t Color2, uint32_t Steps);
-        void Line(vec2_t Start, vec2_t Stop, rgba_t Color1, rgba_t Color2, uint32_t Steps);
-        void Outlinerectangle(vec4_t Region, rgba_t Color1, rgba_t Color2, uint32_t Steps);
-        void Fillrectangle(vec4_t Region, rgba_t Color1, rgba_t Color2, uint32_t Steps);
-    }
-
     namespace Solid
     {
         void Outlinepolygon(std::vector<vec2_t> &&Points, rgba_t Color);
@@ -183,6 +174,7 @@ namespace Rendering
     }
 
     void Drawimage(vec2_t Position, vec2_t Size, void *Pixels, vec2_t Offset = {});
+    Texture32_t Creategradient(rgba_t Color1, rgba_t Color2, uint32_t Steps);
 }
 
 // Re-enable padding.

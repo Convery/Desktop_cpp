@@ -78,7 +78,7 @@ static void Createtoolbar()
     });
     Toolbar->onRender = []() -> void
     {
-        Rendering::Solid::Fillrectangle(Elementbox(Toolbar), { 0x11, 0x0f, 0x0c, 1 });
+        Rendering::Solid::Fillrectangle(Elementbox(Toolbar), { 10, 15, 21, 1 });
     };
     Toolbar->onStatechange = [](const Elementstate_t State) -> void
     {

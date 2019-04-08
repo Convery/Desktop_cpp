@@ -20,6 +20,16 @@ namespace Rendering
             uint8_t(Color.B <= 1 ? Color.B * 255 : Color.B)
         };
     }
+    inline pixel32_t toPixel(const rgba_t Color)
+    {
+        return
+        {
+            uint8_t(Color.B <= 1 ? Color.B * 255 : Color.B),
+            uint8_t(Color.G <= 1 ? Color.G * 255 : Color.G),
+            uint8_t(Color.R <= 1 ? Color.R * 255 : Color.R),
+            uint8_t(Color.A <= 1 ? Color.A * 255 : Color.A)
+        };
+    }
 
     /*
         TODO(tcn):
@@ -39,15 +49,6 @@ namespace Rendering
     void Clearcallgraph()
     {
         Drawcalls.clear();
-    }
-
-    namespace Gradient
-    {
-        void Outlinepolygon(std::vector<vec2_t> &&Points, rgba_t Color1, rgba_t Color2, uint32_t Steps);
-        void Fillpolygon(std::vector<vec2_t> &&Points, rgba_t Color1, rgba_t Color2, uint32_t Steps);
-        void Line(vec2_t Start, vec2_t Stop, rgba_t Color1, rgba_t Color2, uint32_t Steps);
-        void Outlinerectangle(vec4_t Region, rgba_t Color1, rgba_t Color2, uint32_t Steps);
-        void Fillrectangle(vec4_t Region, rgba_t Color1, rgba_t Color2, uint32_t Steps);
     }
 
     namespace Solid
@@ -129,4 +130,33 @@ namespace Rendering
         DeleteObject(Bitmap);
         DeleteDC(Memory);
     }
+    Texture32_t Creategradient(rgba_t Color1, rgba_t Color2, uint32_t Steps)
+    {
+        pixel32_t pColor1{ toPixel(Color1) }, pColor2{ toPixel(Color2) };
+        Texture32_t Result{ {Steps, 1}, new pixel32_t[Steps] };
+        size_t Count = 0;
+
+        for (double i = 0; i < 1; i += (1.0 / (Steps / 2)))
+        {
+            rgba_t Blended;
+            Blended.R = (pColor1.BGRA.R * i) + (pColor2.BGRA.R * (1 - i));
+            Blended.G = (pColor1.BGRA.G * i) + (pColor2.BGRA.G * (1 - i));
+            Blended.B = (pColor1.BGRA.B * i) + (pColor2.BGRA.B * (1 - i));
+            Blended.A = 1;
+
+            Result.Data[Count++] = toPixel(Blended);
+        }
+        for (double i = 0; i < 1; i += (1.0 / (Steps / 2)))
+        {
+            rgba_t Blended;
+            Blended.R = (pColor2.BGRA.R * i) + (pColor1.BGRA.R * (1 - i));
+            Blended.G = (pColor2.BGRA.G * i) + (pColor1.BGRA.G * (1 - i));
+            Blended.B = (pColor2.BGRA.B * i) + (pColor1.BGRA.B * (1 - i));
+            Blended.A = 1;
+
+            Result.Data[Count++] = toPixel(Blended);
+        }
+
+        return Result;
+    };
 }
