@@ -50,25 +50,6 @@ namespace Rendering
         void Fillrectangle(vec4_t Region, rgba_t Color1, rgba_t Color2, uint32_t Steps);
     }
 
-    namespace Textured
-    {
-        void Outlinepolygon(std::vector<vec2_t> &&Points, vec2_t Anchor, Texture32_t Texture);
-        void Fillpolygon(std::vector<vec2_t> &&Points, vec2_t Anchor, Texture32_t Texture);
-        void Line(vec2_t Start, vec2_t Stop, vec2_t Anchor, Texture32_t Texture);
-        void Outlinerectangle(vec4_t Region, vec2_t Anchor, Texture32_t Texture);
-        void Fillrectangle(vec4_t Region, vec2_t Anchor, Texture32_t Texture)
-        {
-            BITMAPINFO BMI{ sizeof(BITMAPINFO), Texture.Size.x, -Texture.Size.y, 1, 32 };
-            vec2_t Position{ Region.x0 - Anchor.x, Region.y0 - Anchor.y };
-
-            auto Context = Global.Drawingcontext->GetHDC();
-            SetDIBitsToDevice(Context, Position.x, Position.y,
-                              std::min(Region.x1 - Region.x0, Texture.Size.x), std::min(Region.y1 - Region.y0, Texture.Size.y),
-                              0, 0, 0, Texture.Size.y, Texture.Data, &BMI, DIB_RGB_COLORS);
-            Global.Drawingcontext->ReleaseHDC(Context);
-        }
-    }
-
     namespace Solid
     {
         void Outlinepolygon(std::vector<vec2_t> &&Points, rgba_t Color);
@@ -109,5 +90,43 @@ namespace Rendering
 
             Global.Drawingcontext->FillRectangle(Brush, Region.x0, Region.y0, Region.x1 - Region.x0, Region.y1 - Region.y0);
         }
+    }
+
+    void Drawimage(vec2_t Position, vec2_t Size, void *Pixels, vec2_t Offset)
+    {
+        BITMAPINFO BMI{ sizeof(BITMAPINFO), Size.x, -Size.y, 1, 32 };
+        auto Devicecontext = Global.Drawingcontext->GetHDC();
+        auto Memory = CreateCompatibleDC(Devicecontext);
+        void *Backbuffer;
+
+        // World to screen and bumping..
+        Position.x -= Global.Windowposition.x;
+        Position.y -= Global.Windowposition.y;
+        Position.x += Offset.x;
+        Position.y += Offset.y;
+
+        // Allocate memory for the region we want to draw.
+        auto Bitmap = CreateDIBSection(Memory, &BMI, DIB_RGB_COLORS, &Backbuffer, NULL, NULL);
+        SelectObject(Memory, Bitmap);
+
+        // Take a copy of the backbuffer.
+        BitBlt(Memory, 0, 0, Size.x, Size.y, Devicecontext, Position.x, Position.y, SRCCOPY);
+
+        // Blend with the input.
+        for (size_t i = 0; i < Size.x * Size.y; ++i)
+        {
+            const auto Color = ((pixel32_t *)Pixels)[i];
+
+            #define BLEND(A, B) A += int32_t((((B - A) * Color.Raw[3]))) >> 8;
+            BLEND(((pixel32_t *)Backbuffer)[i].Raw[0], Color.Raw[0]);
+            BLEND(((pixel32_t *)Backbuffer)[i].Raw[1], Color.Raw[1]);
+            BLEND(((pixel32_t *)Backbuffer)[i].Raw[2], Color.Raw[2]);
+        }
+
+        // Return the modified backbuffer.
+        BitBlt(Devicecontext, Position.x, Position.y, Size.x, Size.y, Memory, 0, 0, SRCCOPY);
+        Global.Drawingcontext->ReleaseHDC(Devicecontext);
+        DeleteObject(Bitmap);
+        DeleteDC(Memory);
     }
 }

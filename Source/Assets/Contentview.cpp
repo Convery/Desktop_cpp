@@ -13,9 +13,7 @@ static void Createnavigationbuttons()
     Navigation->Margins = { 0.8, 0.0, 0.0, 0.0 };
     Navigation->onRender = []() -> void
     {
-        // TODO(tcn): Render an Ayria logo here.
-        static Texture32_t Background = { {256, 40}, (pixel32_t *)Assets::NavigationBG.data() };
-        Rendering::Textured::Fillrectangle(Elementbox(Navigation), Navigation->Position, Background);
+        Rendering::Drawimage(Navigation->Position, { 256, 40 }, Assets::NavigationBG.data());
     };
     Composition::Registerelement("Toolbar.Navigation", Navigation);
 
@@ -23,16 +21,24 @@ static void Createnavigationbuttons()
     Backbutton->Margins = { 0.7, 0.0, 0.0, 0.0 };
     Backbutton->onRender = []() -> void
     {
-        //Rendering::Solid::Fillrectangle(Elementbox(Backbutton), { 0xFF, 0x33, 0xFF, 1 });
+        if (Backbutton->State.isHoveredover)
+        {
+            Rendering::Drawimage(Backbutton->Position, { 77, 40 }, Assets::Navleft.data(), {3, 0});
+        }
     };
+    Backbutton->onStatechange = [](Elementstate_t State) { Invalidatewindow(); };
     Composition::Registerelement("Toolbar.Navigation.Backbutton", Backbutton);
 
     static auto Frontbutton = Navigation->Children.emplace_back(std::make_shared<Element_t>());
     Frontbutton->Margins = { 0.7, 0.0, 1.0, 0.0 };
     Frontbutton->onRender = []() -> void
     {
-        //Rendering::Solid::Fillrectangle(Elementbox(Frontbutton), { 0xFF, 0xEE, 0xFF, 1 });
+        if (Frontbutton->State.isHoveredover)
+        {
+            Rendering::Drawimage(Frontbutton->Position, { 77, 40 }, Assets::Navright.data(), { -3, 0 });
+        }
     };
+    Frontbutton->onStatechange = [](Elementstate_t State) { Invalidatewindow(); };
     Composition::Registerelement("Toolbar.Navigation.Frontbutton", Frontbutton);
 
     static auto Homebutton = Composition::Getelement("Leftbar")->Children.emplace_back(std::make_shared<Element_t>());

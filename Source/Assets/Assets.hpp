@@ -26,4 +26,6 @@ namespace Assets
 
     // Images
     extern std::array<unsigned char, 40960> NavigationBG;
+    extern std::array<unsigned char, 12320> Navright;
+    extern std::array<unsigned char, 12320> Navleft;
 }

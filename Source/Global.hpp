@@ -173,15 +173,6 @@ namespace Rendering
         void Fillrectangle(vec4_t Region, rgba_t Color1, rgba_t Color2, uint32_t Steps);
     }
 
-    namespace Textured
-    {
-        void Outlinepolygon(std::vector<vec2_t> &&Points, vec2_t Anchor, Texture32_t Texture);
-        void Fillpolygon(std::vector<vec2_t> &&Points, vec2_t Anchor, Texture32_t Texture);
-        void Line(vec2_t Start, vec2_t Stop, vec2_t Anchor, Texture32_t Texture);
-        void Outlinerectangle(vec4_t Region, vec2_t Anchor, Texture32_t Texture);
-        void Fillrectangle(vec4_t Region, vec2_t Anchor, Texture32_t Texture);
-    }
-
     namespace Solid
     {
         void Outlinepolygon(std::vector<vec2_t> &&Points, rgba_t Color);
@@ -190,6 +181,8 @@ namespace Rendering
         void Outlinerectangle(vec4_t Region, rgba_t Color);
         void Fillrectangle(vec4_t Region, rgba_t Color);
     }
+
+    void Drawimage(vec2_t Position, vec2_t Size, void *Pixels, vec2_t Offset = {});
 }
 
 // Re-enable padding.
